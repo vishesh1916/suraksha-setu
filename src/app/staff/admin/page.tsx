@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import type { User, SourceHealth, AuditEvent, Report, Incident, DisasterPredictionResult, ActionCategory } from '@/types';
+import type { User, SourceHealth, AuditEvent, Report, Incident, DisasterPredictionResult, ActionCategory, ActionLogItem } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { generateDisasterPrediction } from '@/lib/prediction';
 import styles from '../staff.module.css';
@@ -48,7 +48,7 @@ export default function AdminPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [statsRes, sourcesRes, usersRes, auditRes, reportsRes, incidentsRes] = await Promise.all([
+      const results = await Promise.allSettled([
         fetch('/api/stats'),
         fetch('/api/admin/sources'),
         fetch('/api/admin/users'),
@@ -57,32 +57,34 @@ export default function AdminPage() {
         fetch('/api/incidents'),
       ]);
 
-      if (statsRes.ok) {
-        const data = await statsRes.json();
+      const [statsRes, sourcesRes, usersRes, auditRes, reportsRes, incidentsRes] = results;
+
+      if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+        const data = await statsRes.value.json();
         setStats(data.data || {});
       }
-      if (sourcesRes.ok) {
-        const data = await sourcesRes.json();
+      if (sourcesRes.status === 'fulfilled' && sourcesRes.value.ok) {
+        const data = await sourcesRes.value.json();
         setSources(data.data || []);
       }
-      if (usersRes.ok) {
-        const data = await usersRes.json();
+      if (usersRes.status === 'fulfilled' && usersRes.value.ok) {
+        const data = await usersRes.value.json();
         setUsers(data.data || []);
       }
-      if (auditRes.ok) {
-        const data = await auditRes.json();
+      if (auditRes.status === 'fulfilled' && auditRes.value.ok) {
+        const data = await auditRes.value.json();
         setAuditLog(data.data || []);
       }
-      if (reportsRes.ok) {
-        const data = await reportsRes.json();
+      if (reportsRes.status === 'fulfilled' && reportsRes.value.ok) {
+        const data = await reportsRes.value.json();
         setReports(data.data || []);
       }
-      if (incidentsRes.ok) {
-        const data = await incidentsRes.json();
+      if (incidentsRes.status === 'fulfilled' && incidentsRes.value.ok) {
+        const data = await incidentsRes.value.json();
         setIncidents(data.data || []);
       }
-    } catch {
-      // Graceful
+    } catch (e) {
+      console.warn('Admin fetchData error:', e);
     } finally {
       setLoading(false);
     }
@@ -234,6 +236,66 @@ export default function AdminPage() {
   };
 
   const handleTakeReportAction = async (reportId: string, action: ActionCategory, notes: string = '') => {
+    // 1. Optimistic local UI update so buttons respond instantly with 0 latency
+    const timestamp = new Date().toISOString();
+    const actionLog: ActionLogItem = {
+      id: 'act_' + Date.now(),
+      action,
+      actorName: 'Emergency Administrator',
+      notes,
+      timestamp,
+    };
+
+    setReports((prev) =>
+      prev.map((r) => {
+        if (r.id !== reportId) return r;
+        const isFalse = action === 'Flagged False Alarm / Dismissed';
+        const isResolved = action === 'Hazard Resolved';
+        return {
+          ...r,
+          verificationStatus: isFalse
+            ? 'FLAGGED_FALSE_REPORT'
+            : isResolved
+            ? r.verificationStatus
+            : 'VERIFIED_GENUINE',
+          status: isFalse ? 'DISMISSED' : isResolved ? 'RESOLVED' : 'REVIEWED',
+          currentActionCategory: action,
+          firstActionTaken:
+            r.firstActionTaken &&
+            r.firstActionTaken !== 'Pending Verification' &&
+            r.firstActionTaken !== 'Verified Genuine — Pending Tactical Action'
+              ? r.firstActionTaken
+              : action,
+          actionHistory: [actionLog, ...(r.actionHistory || [])],
+          updatedAt: timestamp,
+        };
+      })
+    );
+
+    // Also optimistically update incidents if clustered
+    setIncidents((prev) =>
+      prev.map((inc) => {
+        const hasReport = inc.reports.some((r) => r.id === reportId);
+        if (!hasReport) return inc;
+        const isFalse = action === 'Flagged False Alarm / Dismissed';
+        const isResolved = action === 'Hazard Resolved';
+        return {
+          ...inc,
+          state: isFalse ? 'DISMISSED' : isResolved ? 'RESOLVED' : 'ESCALATED',
+          verificationStatus: isFalse ? 'FLAGGED_FALSE_REPORT' : 'VERIFIED_GENUINE',
+          currentActionCategory: action,
+          firstActionTaken:
+            inc.firstActionTaken &&
+            inc.firstActionTaken !== 'Pending Verification' &&
+            inc.firstActionTaken !== 'Verified Genuine — Pending Tactical Action'
+              ? inc.firstActionTaken
+              : action,
+          actionHistory: [actionLog, ...(inc.actionHistory || [])],
+          updatedAt: timestamp,
+        };
+      })
+    );
+
     try {
       const res = await fetch('/api/reports', {
         method: 'PATCH',
@@ -249,10 +311,12 @@ export default function AdminPage() {
         showToast(`Action "${action}" recorded and synchronized to citizen tracking!`);
         fetchData();
       } else {
-        showToast('Failed to record report action');
+        showToast('Failed to record report action on server');
+        fetchData();
       }
     } catch {
       showToast('Error recording report action');
+      fetchData();
     }
   };
 
@@ -287,16 +351,49 @@ export default function AdminPage() {
   );
 
   // Workflow Categorization by First Action Taken & Verification Status
-  const pendingVerificationReports = reports.filter(r => !r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION');
-  const falseAlarmReports = reports.filter(r => r.verificationStatus === 'FLAGGED_FALSE_REPORT' || r.status === 'DISMISSED' || r.firstActionTaken === 'Flagged False Alarm / Dismissed');
-  const verifiedPendingReports = reports.filter(r => (r.verificationStatus === 'VERIFIED_GENUINE' || r.firstActionTaken === 'Verified Genuine — Pending Tactical Action') && (!r.firstActionTaken || r.firstActionTaken === 'Verified Genuine — Pending Tactical Action' || r.firstActionTaken === 'Pending Verification'));
+  const pendingVerificationReports = reports.filter(r => 
+    (!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
+    r.status !== 'DISMISSED' &&
+    r.status !== 'RESOLVED'
+  );
+  const falseAlarmReports = reports.filter(r => 
+    r.verificationStatus === 'FLAGGED_FALSE_REPORT' || 
+    r.status === 'DISMISSED' || 
+    r.firstActionTaken === 'Flagged False Alarm / Dismissed' ||
+    r.currentActionCategory === 'Flagged False Alarm / Dismissed'
+  );
+  const verifiedPendingReports = reports.filter(r => 
+    r.verificationStatus === 'VERIFIED_GENUINE' &&
+    r.status !== 'DISMISSED' &&
+    r.status !== 'RESOLVED' &&
+    (!r.currentActionCategory || r.currentActionCategory === 'Verified Genuine — Pending Tactical Action' || r.currentActionCategory === 'Pending Verification')
+  );
 
-  const evacuationReports = reports.filter(r => r.firstActionTaken === 'Evacuation Ordered');
-  const dewateringReports = reports.filter(r => r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched');
-  const capWarningReports = reports.filter(r => r.firstActionTaken === 'Public Warning Issued (CAP 1.2)');
-  const sarReports = reports.filter(r => r.firstActionTaken === 'Search & Rescue Deployed');
-  const monitoringReports = reports.filter(r => r.firstActionTaken === 'Meteorological Monitoring');
-  const resolvedReports = reports.filter(r => r.firstActionTaken === 'Hazard Resolved' || r.status === 'RESOLVED');
+  const evacuationReports = reports.filter(r => 
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Evacuation Ordered' || (r.firstActionTaken === 'Evacuation Ordered' && r.currentActionCategory !== 'Hazard Resolved'))
+  );
+  const dewateringReports = reports.filter(r => 
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Dewatering & Municipal Crew Dispatched' || (r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched' && r.currentActionCategory !== 'Hazard Resolved'))
+  );
+  const capWarningReports = reports.filter(r => 
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Public Warning Issued (CAP 1.2)' || (r.firstActionTaken === 'Public Warning Issued (CAP 1.2)' && r.currentActionCategory !== 'Hazard Resolved'))
+  );
+  const sarReports = reports.filter(r => 
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Search & Rescue Deployed' || (r.firstActionTaken === 'Search & Rescue Deployed' && r.currentActionCategory !== 'Hazard Resolved'))
+  );
+  const monitoringReports = reports.filter(r => 
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Meteorological Monitoring' || (r.firstActionTaken === 'Meteorological Monitoring' && r.currentActionCategory !== 'Hazard Resolved'))
+  );
+  const resolvedReports = reports.filter(r => 
+    r.status === 'RESOLVED' || 
+    r.currentActionCategory === 'Hazard Resolved' || 
+    r.firstActionTaken === 'Hazard Resolved'
+  );
 
   if (!authenticated) {
     return (

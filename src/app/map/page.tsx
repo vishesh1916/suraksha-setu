@@ -28,161 +28,8 @@ export interface HazardPlace {
   reportCount: number;
 }
 
-// Built-in benchmark verified hazard locations across India with authentic photography
-const BENCHMARK_HAZARDS: HazardPlace[] = [
-  {
-    id: 'hz_delhi_minto',
-    category: 'WATERLOGGING',
-    severity: 4,
-    landmark: 'Minto Bridge Underpass, Connaught Place',
-    cityName: 'New Delhi',
-    stateName: 'Delhi NCR',
-    lat: 28.6360,
-    lng: 77.2250,
-    waterDepthFeet: 4.5,
-    rainfallRateMmH: 58.0,
-    windGustsKmh: 46.0,
-    photoUrl: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
-    description: 'Minto Bridge underpass completely submerged in 4.5 ft floodwater. DTC bus stranded. Traffic police road blockade active.',
-    safetyGuidance: 'Underpass impassable. All vehicular traffic diverted to Barakhamba Road and Tolstoy Marg flyovers.',
-    verifiedAt: '12 min ago',
-    source: 'Delhi Traffic Police & IMD Safdarjung',
-    reportCount: 3,
-  },
-  {
-    id: 'hz_mumbai_hindmata',
-    category: 'WATERLOGGING',
-    severity: 4,
-    landmark: 'Hindmata Flyover Junction, Dadar East',
-    cityName: 'Mumbai',
-    stateName: 'Maharashtra',
-    lat: 18.9932,
-    lng: 72.8456,
-    waterDepthFeet: 3.5,
-    rainfallRateMmH: 62.0,
-    windGustsKmh: 54.0,
-    photoUrl: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=800&auto=format&fit=crop&q=80',
-    description: 'Knee-deep water on Hindmata road below flyover. Multiple vehicles stranded in fast-rising monsoon tide.',
-    safetyGuidance: 'Avoid lower carriageway of Hindmata. Use Eastern Freeway or Dr. Ambedkar Road for north-bound commute.',
-    verifiedAt: '8 min ago',
-    source: 'MCGM Disaster Management Cell',
-    reportCount: 4,
-  },
-  {
-    id: 'hz_mumbai_sion',
-    category: 'FLOODING',
-    severity: 5,
-    landmark: 'Sion Station Road Underpass',
-    cityName: 'Mumbai',
-    stateName: 'Maharashtra',
-    lat: 19.0432,
-    lng: 72.8628,
-    waterDepthFeet: 4.8,
-    rainfallRateMmH: 68.0,
-    windGustsKmh: 58.0,
-    photoUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80',
-    description: 'Dangerous fast-moving flood current entering commercial ground floors near Sion railway station. Central line delays.',
-    safetyGuidance: 'Severe flood danger. Avoid station approach road. Residents advised to stay on higher floors until water recedes.',
-    verifiedAt: '15 min ago',
-    source: 'Central Railway & DDMA Mumbai',
-    reportCount: 5,
-  },
-  {
-    id: 'hz_bglr_bellandur',
-    category: 'FLOODING',
-    severity: 4,
-    landmark: 'Bellandur EcoSpace Tech Corridor, Outer Ring Road',
-    cityName: 'Bengaluru',
-    stateName: 'Karnataka',
-    lat: 12.9260,
-    lng: 77.6834,
-    waterDepthFeet: 3.2,
-    rainfallRateMmH: 48.0,
-    windGustsKmh: 38.0,
-    photoUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=80',
-    description: 'Bellandur lake drainage overflow inundating outer ring road. Tech employees evacuated on rescue tractors.',
-    safetyGuidance: 'ORR traffic diverted via Marathahalli and Sarjapur road. Work-from-home advisory in effect for Mahadevapura tech zone.',
-    verifiedAt: '20 min ago',
-    source: 'BBMP Control Room & Bengaluru Traffic Police',
-    reportCount: 3,
-  },
-  {
-    id: 'hz_chn_velachery',
-    category: 'FLOODING',
-    severity: 4,
-    landmark: 'Velachery 100ft Bypass Canal Road',
-    cityName: 'Chennai',
-    stateName: 'Tamil Nadu',
-    lat: 12.9815,
-    lng: 80.2180,
-    waterDepthFeet: 3.0,
-    rainfallRateMmH: 52.0,
-    windGustsKmh: 42.0,
-    photoUrl: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=800&auto=format&fit=crop&q=80',
-    description: 'Stormwater canal overflowing across Velachery main road into residential apartment parking areas.',
-    safetyGuidance: 'Avoid Velachery bypass. Heavy dewatering pump operation underway. Move parked vehicles to elevated bridges.',
-    verifiedAt: '25 min ago',
-    source: 'Greater Chennai Corporation (GCC)',
-    reportCount: 4,
-  },
-  {
-    id: 'hz_shimla_dhalli',
-    category: 'CLOUDBURST',
-    severity: 4,
-    landmark: 'Dhalli Tunnel Bypass, NH-5 Himalayan Highway',
-    cityName: 'Shimla',
-    stateName: 'Himachal Pradesh',
-    lat: 31.1150,
-    lng: 77.1950,
-    waterDepthFeet: 1.5,
-    rainfallRateMmH: 74.0,
-    windGustsKmh: 64.0,
-    photoUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&auto=format&fit=crop&q=80',
-    description: 'Torrential cloudburst downpour causing mud slurry and rock debris slide across national highway.',
-    safetyGuidance: 'NH-5 one lane blocked. JCB clearance in progress. All hill commuters advised to postpone travel until rain subsides.',
-    verifiedAt: '18 min ago',
-    source: 'HP State Disaster Management Authority (HPSDMA)',
-    reportCount: 2,
-  },
-  {
-    id: 'hz_kolkata_parkst',
-    category: 'SEVERE_RAIN',
-    severity: 4,
-    landmark: 'Park Street & Camac Street Junction',
-    cityName: 'Kolkata',
-    stateName: 'West Bengal',
-    lat: 22.5512,
-    lng: 88.3533,
-    waterDepthFeet: 1.8,
-    rainfallRateMmH: 45.0,
-    windGustsKmh: 62.0,
-    photoUrl: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?w=800&auto=format&fit=crop&q=80',
-    description: 'Severe squall with gale winds over Park Street. Ancient banyan tree branch snapped onto electric cables. Power cut.',
-    safetyGuidance: 'High-voltage cable hazard. Avoid waterlogged sidewalks on Camac Street. CESC emergency repair crew on site.',
-    verifiedAt: '30 min ago',
-    source: 'Kolkata Municipal Corporation (KMC)',
-    reportCount: 3,
-  },
-  {
-    id: 'hz_guwahati_anil',
-    category: 'FLOODING',
-    severity: 5,
-    landmark: 'Anil Nagar Bharalu Channel Basin',
-    cityName: 'Guwahati',
-    stateName: 'Assam',
-    lat: 26.1750,
-    lng: 91.7820,
-    waterDepthFeet: 4.2,
-    rainfallRateMmH: 60.0,
-    windGustsKmh: 35.0,
-    photoUrl: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=800&auto=format&fit=crop&q=80',
-    description: 'Brahmaputra tributary backflow inundating Anil Nagar residential lanes. Ground floor submergence.',
-    safetyGuidance: 'SDRF rescue boats deployed. Power supply disconnected to prevent electrocution in inundated wards.',
-    verifiedAt: '10 min ago',
-    source: 'Assam State Disaster Management Authority (ASDMA)',
-    reportCount: 4,
-  },
-];
+// Real production state: No mock hazard places. Only real citizen reports from /api/reports are rendered.
+const BENCHMARK_HAZARDS: HazardPlace[] = [];
 
 type BaseLayer = 'street' | 'satellite' | 'dark';
 
@@ -589,9 +436,11 @@ export default function AllIndiaMapPage() {
             boxShadow: '0 0 12px rgba(2, 132, 199, 0.45)',
           }}
           onClick={() => {
-            const target = selectedPlace || hazards[0] || BENCHMARK_HAZARDS[0];
-            setSelectedPlace(target);
-            setStreetViewPlace(target);
+            const target = selectedPlace || hazards[0];
+            if (target) {
+              setSelectedPlace(target);
+              setStreetViewPlace(target);
+            }
           }}
           title="Inspect real 360-degree ground-level street photography and road panoramas"
         >
@@ -645,40 +494,75 @@ export default function AllIndiaMapPage() {
         </button>
         <button
           className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(77.2250, 28.6360, 14.5, 'hz_delhi_minto')}
+          onClick={() => flyToRegion(77.2090, 28.6139, 11)}
         >
-          📍 Delhi (Minto Bridge 4.5ft)
+          📍 Delhi NCR
         </button>
         <button
           className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(72.8456, 18.9932, 14.5, 'hz_mumbai_hindmata')}
+          onClick={() => flyToRegion(72.8777, 19.0760, 11)}
         >
-          📍 Mumbai (Hindmata 3.5ft)
+          📍 Mumbai
         </button>
         <button
           className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(77.6834, 12.9260, 14.5, 'hz_bglr_bellandur')}
+          onClick={() => flyToRegion(77.5946, 12.9716, 11)}
         >
-          📍 Bengaluru (Bellandur ORR)
+          📍 Bengaluru
         </button>
         <button
           className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(80.2180, 12.9815, 14.5, 'hz_chn_velachery')}
+          onClick={() => flyToRegion(80.2707, 13.0827, 11)}
         >
-          📍 Chennai (Velachery Canal)
+          📍 Chennai
         </button>
         <button
           className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(77.1950, 31.1150, 14.5, 'hz_shimla_dhalli')}
+          onClick={() => flyToRegion(88.3639, 22.5726, 11)}
         >
-          📍 Shimla (Dhalli Cloudburst)
+          📍 Kolkata
         </button>
+        {hazards.slice(0, 3).map((h) => (
+          <button
+            key={h.id}
+            className={styles.quickJumpBtn}
+            style={{ borderColor: '#EF4444', color: '#FCA5A5' }}
+            onClick={() => flyToRegion(h.lng, h.lat, 14.5, h.id)}
+          >
+            ⚠️ {h.landmark.split(',')[0]} (L{h.severity})
+          </button>
+        ))}
       </div>
 
       {/* Interactive Map Layout */}
       <div className={styles.mapLayout}>
         {/* Full-bleed WebGL Map Canvas Container */}
         <div ref={mapContainerRef} className={styles.mapCanvasWrapper} />
+
+        {/* Live Zero-Hazard State Indicator */}
+        {hazards.length === 0 && (
+          <div style={{
+            position: 'absolute',
+            top: '16px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            background: 'rgba(7, 21, 36, 0.92)',
+            border: '1px solid rgba(56, 189, 248, 0.4)',
+            borderRadius: '999px',
+            padding: '7px 18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#F7F6F2',
+            fontSize: '12px',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+          }}>
+            <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#34D399' }} />
+            <span>Radar &amp; Telemetry Gateway Live · Zero active hazards reported. New citizen reports submitted at <Link href="/report" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'underline' }}>/report</Link> appear here automatically.</span>
+          </div>
+        )}
 
         {/* Floating Quick Legend */}
         <div className={styles.floatingLegend}>

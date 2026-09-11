@@ -112,6 +112,8 @@ export default function ReportPage() {
       severity,
       description,
       location,
+      landmark: locationName || undefined,
+      mediaUrl: photoPreview || undefined,
       consent: true,
     };
 
