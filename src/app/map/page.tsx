@@ -129,6 +129,8 @@ function MapContent() {
   const markersRef = useRef<any[]>([]);
 
   const [activeLayer, setActiveLayer] = useState<BaseLayer>('street');
+  const [mapReady, setMapReady] = useState(false);
+  const [showResolvedArchive, setShowResolvedArchive] = useState(false);
   const [hazards, setHazards] = useState<HazardPlace[]>(BENCHMARK_HAZARDS);
   const [selectedPlace, setSelectedPlace] = useState<HazardPlace | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -151,7 +153,7 @@ function MapContent() {
   const fetchLiveHazards = useCallback(async () => {
     try {
       const [reportsRes, alertsRes] = await Promise.all([
-        fetch('/api/reports?limit=50'),
+        fetch('/api/reports?limit=100'),
         fetch('/api/alerts?status=active'),
       ]);
 
@@ -167,8 +169,14 @@ function MapContent() {
           const lng = Number(rep.location.longitude);
           if (isNaN(lat) || isNaN(lng)) return;
 
-          // Dismissed false alarms are excluded from live risk map
-          if (rep.verificationStatus === 'FLAGGED_FALSE_REPORT' || rep.status === 'DISMISSED') return;
+          const isResolved = rep.status === 'RESOLVED' || rep.currentActionCategory === 'Hazard Resolved';
+          const isDismissed = rep.verificationStatus === 'FLAGGED_FALSE_REPORT' || rep.status === 'DISMISSED';
+
+          // Dismissed false alarms are completely excluded from live risk map
+          if (isDismissed) return;
+
+          // Crucial user requirement: Once solved by admin or meteorologist, hazard stops displaying on the live risk map!
+          if (isResolved && !showResolvedArchive) return;
 
           const isVerified = rep.verificationStatus === 'VERIFIED_GENUINE';
           const landmarkText = rep.landmark || `Hazard near ${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E`;
@@ -190,19 +198,19 @@ function MapContent() {
             windGustsKmh: 40 + rep.severity * 4,
             photoUrl: rep.mediaUrl || 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
             description: rep.description || 'Ground hazard reported by citizen.',
-            safetyGuidance: rep.currentActionCategory 
-              ? `${rep.currentActionCategory} — Municipal Emergency Response Active` 
-              : isVerified 
-                ? 'Verified Genuine Incident. Emergency municipal response active.' 
-                : 'Reported by local citizen. Verification in progress.',
-            verifiedAt: isVerified ? 'Verified by Officer' : 'Reported Just now',
+            safetyGuidance: isResolved
+              ? 'Hazard Resolved & Danger Subsided. Municipal all-clear confirmed.'
+              : rep.currentActionCategory 
+                ? `${rep.currentActionCategory} — Municipal Emergency Response Active` 
+                : isVerified 
+                  ? 'Verified Genuine Incident. Emergency municipal response active.' 
+                  : 'Reported by local citizen. Reviewer verification in progress.',
+            verifiedAt: isResolved ? 'Resolved / All Clear' : isVerified ? 'Verified by Officer' : 'Reported Just now',
             source: isVerified ? 'Verified Citizen Ground Report' : 'Citizen Ground Sensor & Corroboration Engine',
             reportCount: 1,
           };
 
-          const existingIndex = newHazards.findIndex(
-            (h) => h.id === rep.id || (Math.abs(h.lat - lat) < 0.005 && Math.abs(h.lng - lng) < 0.005)
-          );
+          const existingIndex = newHazards.findIndex((h) => h.id === rep.id);
 
           if (existingIndex >= 0) {
             newHazards[existingIndex] = hazardItem;
@@ -216,11 +224,11 @@ function MapContent() {
     } catch {
       // Graceful fallback
     }
-  }, []);
+  }, [showResolvedArchive]);
 
   useEffect(() => {
     fetchLiveHazards();
-    const interval = setInterval(fetchLiveHazards, 4000);
+    const interval = setInterval(fetchLiveHazards, 3000);
     return () => clearInterval(interval);
   }, [fetchLiveHazards]);
 
@@ -275,6 +283,12 @@ function MapContent() {
         'top-right'
       );
 
+      map.on('load', () => {
+        if (isMounted) {
+          setMapReady(true);
+        }
+      });
+
       if (isMounted) {
         mapRef.current = map;
       }
@@ -299,9 +313,9 @@ function MapContent() {
   };
 
 
-  // Render markers whenever hazards or filter changes
+  // Render markers whenever hazards, active filter, or map readiness changes
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !mapReady) return;
 
     async function drawMarkers() {
       const maplibreglModule = (await import('maplibre-gl')) as any;
@@ -356,7 +370,7 @@ function MapContent() {
     }
 
     drawMarkers();
-  }, [hazards, activeHazardCategory]);
+  }, [hazards, activeHazardCategory, mapReady]);
 
   // Fly to region preset
   const flyToRegion = (lng: number, lat: number, zoom: number, hazardId?: string) => {
@@ -529,6 +543,18 @@ function MapContent() {
             onClick={() => setActiveHazardCategory('SEVERE_RAIN')}
           >
             🌧️ Severe Rain
+          </button>
+          <button
+            className={`${styles.filterChip} ${showResolvedArchive ? styles.filterChipActive : ''}`}
+            style={{
+              borderColor: showResolvedArchive ? '#34D399' : 'rgba(52, 211, 153, 0.3)',
+              color: showResolvedArchive ? '#34D399' : '#86EFAC',
+              background: showResolvedArchive ? 'rgba(52, 211, 153, 0.18)' : 'transparent',
+            }}
+            onClick={() => setShowResolvedArchive(!showResolvedArchive)}
+            title="Toggle viewing historical resolved hazards archive"
+          >
+            {showResolvedArchive ? '✅ Viewing Resolved Archive' : '🏁 View Resolved History'}
           </button>
         </div>
       </div>

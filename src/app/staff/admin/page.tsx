@@ -37,6 +37,7 @@ export default function AdminPage() {
   const [auditLog, setAuditLog] = useState<AuditEvent[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [indiaRiskScan, setIndiaRiskScan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -124,9 +125,10 @@ export default function AdminPage() {
         fetch('/api/admin/audit'),
         fetch('/api/reports?limit=100'),
         fetch('/api/incidents'),
+        fetch('/api/risk/india'),
       ]);
 
-      const [statsRes, sourcesRes, usersRes, auditRes, reportsRes, incidentsRes] = results;
+      const [statsRes, sourcesRes, usersRes, auditRes, reportsRes, incidentsRes, indiaRiskRes] = results;
 
       if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
         const data = await statsRes.value.json();
@@ -151,6 +153,10 @@ export default function AdminPage() {
       if (incidentsRes.status === 'fulfilled' && incidentsRes.value.ok) {
         const data = await incidentsRes.value.json();
         setIncidents(data.data || []);
+      }
+      if (indiaRiskRes.status === 'fulfilled' && indiaRiskRes.value.ok) {
+        const data = await indiaRiskRes.value.json();
+        setIndiaRiskScan(data.data || null);
       }
     } catch (e) {
       console.warn('Admin fetchData error:', e);
@@ -1140,6 +1146,170 @@ export default function AdminPage() {
             </Link>
           </div>
         </header>
+
+        {/* 🇮🇳 Pan-India Real-Time Weather Risk Sentinel & Executive Alert Desk */}
+        <div style={{
+          margin: '0 24px 20px',
+          background: 'linear-gradient(135deg, rgba(7, 21, 36, 0.95) 0%, rgba(15, 30, 50, 0.9) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.35)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          boxShadow: '0 4px 25px rgba(0, 0, 0, 0.4)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.4rem' }}>🇮🇳</span>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#F7F6F2', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>Pan-India Real-Time Weather Risk Sentinel</span>
+                  <span style={{
+                    background: 'rgba(34, 197, 94, 0.15)',
+                    border: '1px solid #22C55E',
+                    color: '#22C55E',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }}></span>
+                    11 Indian Hubs Monitored Live
+                  </span>
+                </h3>
+                <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#8A99A8' }}>
+                  Continuous Doppler radar, satellite precipitation, and wind telemetry across major vulnerable Indian basins
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{
+                background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.15)',
+                border: `1px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#38BDF8'}`,
+                color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FCA5A5' : '#38BDF8',
+                padding: '4px 12px',
+                borderRadius: '8px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+              }}>
+                {(indiaRiskScan?.criticalZonesCount || 0) > 0
+                  ? `🚨 ${indiaRiskScan.criticalZonesCount} Critical Zone(s) Detected`
+                  : '✅ All 11 Zones Monitored & Stable'}
+              </span>
+            </div>
+          </div>
+
+          {/* National Executive Briefing */}
+          {indiaRiskScan?.nationalExecutiveBriefing && (
+            <div style={{
+              background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(56, 189, 248, 0.08)',
+              borderLeft: `4px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#38BDF8'}`,
+              padding: '10px 14px',
+              borderRadius: '0 8px 8px 0',
+              marginBottom: '14px',
+              fontSize: '0.86rem',
+              color: '#F1F5F9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}>
+              <div>
+                <strong>Executive Intelligence:</strong> {indiaRiskScan.nationalExecutiveBriefing}
+              </div>
+              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                Telemetry Timestamp: {new Date(indiaRiskScan.scanTimestamp).toLocaleTimeString()}
+              </span>
+            </div>
+          )}
+
+          {/* Live Strip of 11 Indian Zones */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+            gap: '10px',
+            maxHeight: '260px',
+            overflowY: 'auto',
+            padding: '2px',
+          }}>
+            {indiaRiskScan?.zones?.map((zone: any) => {
+              const isCritical = zone.riskLevel === 'CRITICAL';
+              const isHigh = zone.riskLevel === 'HIGH';
+              const isModerate = zone.riskLevel === 'MODERATE';
+              const statusColor = isCritical ? '#EF4444' : isHigh ? '#F59E0B' : isModerate ? '#38BDF8' : '#34D399';
+
+              return (
+                <div
+                  key={zone.zoneId}
+                  style={{
+                    background: isCritical
+                      ? 'rgba(239, 68, 68, 0.12)'
+                      : isHigh
+                      ? 'rgba(245, 158, 11, 0.1)'
+                      : 'rgba(255, 255, 255, 0.03)',
+                    border: `1px solid ${statusColor}40`,
+                    borderRadius: '8px',
+                    padding: '10px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '6px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <strong style={{ color: '#F7F6F2', fontSize: '0.86rem', display: 'block' }}>{zone.zoneName}</strong>
+                      <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{zone.state}</span>
+                    </div>
+                    <span style={{
+                      background: `${statusColor}20`,
+                      color: statusColor,
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      border: `1px solid ${statusColor}60`,
+                    }}>
+                      {zone.riskLevel}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: '#CBD5E1' }}>
+                    <span>💧 {zone.currentWeather?.rainRateMmH} mm/h</span>
+                    <span>💨 {zone.currentWeather?.windGustKmh} km/h</span>
+                    <span>🌡️ {zone.currentWeather?.tempC}°C</span>
+                  </div>
+
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', lineHeight: 1.2 }}>
+                    {zone.currentWeather?.conditionText}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                    <Link
+                      href={`/map?lat=${zone.lat}&lng=${zone.lng}`}
+                      className="btn btn-secondary"
+                      style={{ flex: 1, fontSize: '0.72rem', padding: '3px 6px', textAlign: 'center' }}
+                    >
+                      🗺️ Map
+                    </Link>
+                    {(isCritical || isHigh) && (
+                      <Link
+                        href={`/staff/alerts?compose=true&headline=${encodeURIComponent('🚨 SEVERE WEATHER ADVISORY: ' + zone.zoneName)}&area=${encodeURIComponent(zone.zoneName)}&severity=${isCritical ? 5 : 4}&category=SEVERE_RAIN`}
+                        className="btn btn-primary"
+                        style={{ flex: 1, fontSize: '0.72rem', padding: '3px 6px', textAlign: 'center', background: '#DC2626', borderColor: '#EF4444' }}
+                      >
+                        📢 Alert
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Categorized Workflow Navigation Tabs */}
         <div className={styles.adminTabsNav} style={{ overflowX: 'auto', display: 'flex', gap: '6px', paddingBottom: '8px' }}>

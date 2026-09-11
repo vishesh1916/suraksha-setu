@@ -185,7 +185,10 @@ class DataStore {
         auditEvents: this.auditEvents,
         savedAt: new Date().toISOString(),
       };
-      fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+      // Atomic write: write to temp file then renameSync to avoid file corruption or read races
+      const tempPath = `${dbPath}.tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
+      fs.renameSync(tempPath, dbPath);
       try {
         const stats = fs.statSync(dbPath);
         this.lastLoadedMtime = stats.mtimeMs;
@@ -208,6 +211,7 @@ class DataStore {
       id: generateId(),
       verificationStatus: 'PENDING_VERIFICATION',
       currentActionCategory: 'Pending Verification',
+      status: 'RECEIVED',
       actionHistory: [
         {
           id: generateId(),
@@ -256,7 +260,6 @@ class DataStore {
         duplicateImageDetected: false,
         locationMismatch: false,
       });
-      report.status = 'ATTACHED';
       return match;
     } else {
       const confidence = computeConfidenceScore({
@@ -308,7 +311,6 @@ class DataStore {
       };
 
       this.incidents.unshift(newInc);
-      report.status = 'ATTACHED';
       return newInc;
     }
   }
@@ -328,7 +330,13 @@ class DataStore {
   getReports(filters?: { status?: ReportStatus; category?: HazardCategory; h3Index?: string }): Report[] {
     this.checkAndReload();
     let result = [...this.reports];
-    if (filters?.status) result = result.filter(r => r.status === filters.status);
+    if (filters?.status) {
+      if (filters.status === 'RECEIVED') {
+        result = result.filter(r => r.status === 'RECEIVED' || r.status === 'ATTACHED' || r.status === 'QUEUED');
+      } else {
+        result = result.filter(r => r.status === filters.status);
+      }
+    }
     if (filters?.category) result = result.filter(r => r.category === filters.category);
     if (filters?.h3Index) result = result.filter(r => r.h3Index === filters.h3Index);
     return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -433,7 +441,28 @@ class DataStore {
     let result = [...this.incidents];
     if (filters?.state) result = result.filter(i => i.state === filters.state);
     if (filters?.category) result = result.filter(i => i.category === filters.category);
-    return result.sort((a, b) => b.confidenceScore.total - a.confidenceScore.total);
+
+    const stateWeight: Record<IncidentState, number> = {
+      CANDIDATE: 5,
+      VERIFIED: 4,
+      ESCALATED: 3,
+      FOLLOW_UP_REQUIRED: 2,
+      RESOLVED: 1,
+      DISMISSED: 0,
+    };
+
+    return result.sort((a, b) => {
+      // 1. Group active candidate queue first, then verified/escalated, then resolved/dismissed
+      const weightDiff = (stateWeight[b.state] ?? 0) - (stateWeight[a.state] ?? 0);
+      if (weightDiff !== 0) return weightDiff;
+
+      // 2. Within same state, sort newest first so newly filed hazards immediately appear at top!
+      const timeDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (timeDiff !== 0) return timeDiff;
+
+      // 3. Tie-breaker: higher confidence/impact
+      return b.confidenceScore.total - a.confidenceScore.total;
+    });
   }
 
   addReviewAction(incidentId: string, action: Omit<ReviewAction, 'id' | 'createdAt'>): ReviewAction | undefined {
