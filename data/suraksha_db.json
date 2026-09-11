@@ -48,7 +48,53 @@
         "resolutionNotes": "Water drained and road reopened."
       },
       "createdAt": "2026-09-11T22:42:57.967Z"
+    },
+    {
+      "id": "id_mtxjxv1f_ngqh2jj",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxjxv1f_bgd8zw0",
+      "action": "CREATE",
+      "metadata": {
+        "category": "WATERLOGGING"
+      },
+      "createdAt": "2026-09-11T22:52:54.243Z"
+    },
+    {
+      "id": "id_mtxjxv1h_gqjz203",
+      "actorId": "user_reviewer_1",
+      "actorRole": "REVIEWER",
+      "entityType": "incident",
+      "entityId": "inc_real_mtxjxv1g_i39l",
+      "action": "VERIFY",
+      "metadata": {},
+      "createdAt": "2026-09-11T22:52:54.245Z"
+    },
+    {
+      "id": "id_mtxjxv1j_jpeyibg",
+      "actorId": "Executive Commander",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxjxv1f_bgd8zw0",
+      "action": "Dewatering & Municipal Crew Dispatched",
+      "metadata": {
+        "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM)."
+      },
+      "createdAt": "2026-09-11T22:52:54.247Z"
+    },
+    {
+      "id": "id_mtxjxv1k_wl5105a",
+      "actorId": "admin_exec",
+      "actorRole": "ADMIN",
+      "entityType": "incident",
+      "entityId": "inc_real_mtxjxv1g_i39l",
+      "action": "RESOLVE",
+      "metadata": {
+        "resolutionNotes": "Water drained and road reopened."
+      },
+      "createdAt": "2026-09-11T22:52:54.248Z"
     }
   ],
-  "savedAt": "2026-09-11T22:42:57.968Z"
+  "savedAt": "2026-09-11T22:52:54.249Z"
 }
