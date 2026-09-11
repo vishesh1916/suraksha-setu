@@ -115,20 +115,56 @@ class DataStore {
     this.loadFromDisk();
   }
 
+  private lastLoadedMtime: number = 0;
+
   private getDbFilePath(): string {
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      const tmpPath = path.join('/tmp', 'suraksha_db.json');
+      // If /tmp doesn't have it yet, seed from bundled file if exists
+      if (!fs.existsSync(tmpPath)) {
+        try {
+          const bundledPath = path.join(process.cwd(), 'data', 'suraksha_db.json');
+          if (fs.existsSync(bundledPath)) {
+            const bundledData = fs.readFileSync(bundledPath, 'utf-8');
+            fs.writeFileSync(tmpPath, bundledData, 'utf-8');
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return tmpPath;
+    }
     return path.join(process.cwd(), 'data', 'suraksha_db.json');
+  }
+
+  private checkAndReload(): void {
+    try {
+      const dbPath = this.getDbFilePath();
+      if (fs.existsSync(dbPath)) {
+        const stats = fs.statSync(dbPath);
+        if (stats.mtimeMs > this.lastLoadedMtime) {
+          this.loadFromDisk();
+        }
+      }
+    } catch {
+      // In case of transient lock or read error, keep current memory state
+    }
   }
 
   private loadFromDisk(): void {
     try {
       const dbPath = this.getDbFilePath();
       if (fs.existsSync(dbPath)) {
+        const stats = fs.statSync(dbPath);
         const raw = fs.readFileSync(dbPath, 'utf-8');
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed.reports)) this.reports = parsed.reports;
-        if (Array.isArray(parsed.incidents)) this.incidents = parsed.incidents;
-        if (Array.isArray(parsed.alerts)) this.alerts = parsed.alerts;
-        if (Array.isArray(parsed.auditEvents)) this.auditEvents = parsed.auditEvents;
+        if (raw.trim()) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.reports)) this.reports = parsed.reports;
+          if (Array.isArray(parsed.incidents)) this.incidents = parsed.incidents;
+          if (Array.isArray(parsed.alerts)) this.alerts = parsed.alerts;
+          if (Array.isArray(parsed.auditEvents)) this.auditEvents = parsed.auditEvents;
+          this.lastLoadedMtime = stats.mtimeMs;
+        }
       }
     } catch (e) {
       console.warn('Database load warning (falling back to memory):', e);
@@ -150,6 +186,12 @@ class DataStore {
         savedAt: new Date().toISOString(),
       };
       fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+      try {
+        const stats = fs.statSync(dbPath);
+        this.lastLoadedMtime = stats.mtimeMs;
+      } catch {
+        this.lastLoadedMtime = Date.now();
+      }
     } catch (e) {
       // In serverless environments with read-only storage, degrade gracefully to in-memory
       console.warn('Database persistence write warning:', e);
@@ -160,6 +202,7 @@ class DataStore {
   // —— Report Operations ——
 
   createReport(data: Omit<Report, 'id' | 'createdAt' | 'updatedAt'>): Report {
+    this.checkAndReload();
     const report: Report = {
       ...data,
       id: generateId(),
@@ -271,16 +314,19 @@ class DataStore {
   }
 
   clearAllIncidentsAndReports(): void {
+    this.checkAndReload();
     this.incidents = [];
     this.reports = [];
     this.persist();
   }
 
   getReport(id: string): Report | undefined {
-    return this.reports.find(r => r.id === id);
+    this.checkAndReload();
+    return this.reports.find(r => r.id === id || r.id.toLowerCase() === id.toLowerCase());
   }
 
   getReports(filters?: { status?: ReportStatus; category?: HazardCategory; h3Index?: string }): Report[] {
+    this.checkAndReload();
     let result = [...this.reports];
     if (filters?.status) result = result.filter(r => r.status === filters.status);
     if (filters?.category) result = result.filter(r => r.category === filters.category);
@@ -289,6 +335,7 @@ class DataStore {
   }
 
   updateReportStatus(id: string, status: ReportStatus): Report | undefined {
+    this.checkAndReload();
     const report = this.reports.find(r => r.id === id);
     if (report) {
       report.status = status;
@@ -304,6 +351,7 @@ class DataStore {
     notes: string = '',
     actorName: string = 'Duty Responder'
   ): Report | undefined {
+    this.checkAndReload();
     const report = this.reports.find(r => r.id === reportId);
     if (!report) return undefined;
 
@@ -376,10 +424,12 @@ class DataStore {
   // —— Incident Operations ——
 
   getIncident(id: string): Incident | undefined {
+    this.checkAndReload();
     return this.incidents.find(i => i.id === id);
   }
 
   getIncidents(filters?: { state?: IncidentState; category?: HazardCategory }): Incident[] {
+    this.checkAndReload();
     let result = [...this.incidents];
     if (filters?.state) result = result.filter(i => i.state === filters.state);
     if (filters?.category) result = result.filter(i => i.category === filters.category);
@@ -387,6 +437,7 @@ class DataStore {
   }
 
   addReviewAction(incidentId: string, action: Omit<ReviewAction, 'id' | 'createdAt'>): ReviewAction | undefined {
+    this.checkAndReload();
     const incident = this.incidents.find(i => i.id === incidentId);
     if (!incident) return undefined;
 
@@ -457,6 +508,7 @@ class DataStore {
   }
 
   resolveIncident(incidentId: string, resolutionNotes: string, actorId: string): Incident | undefined {
+    this.checkAndReload();
     const incident = this.incidents.find(i => i.id === incidentId);
     if (!incident) return undefined;
 
@@ -506,6 +558,7 @@ class DataStore {
   }
 
   executeMunicipalOrder(incidentId: string, orderDetails: { pumpUnits: number; pumpHp: number; trafficBarricades: boolean }, actorId: string): Incident | undefined {
+    this.checkAndReload();
     const incident = this.incidents.find(i => i.id === incidentId);
     if (!incident) return undefined;
 
@@ -558,6 +611,7 @@ class DataStore {
   }
 
   broadcastIncidentAlert(incidentId: string, alertId: string, actorId: string): Incident | undefined {
+    this.checkAndReload();
     const incident = this.incidents.find(i => i.id === incidentId);
     if (!incident) return undefined;
 
@@ -603,6 +657,7 @@ class DataStore {
   }
 
   restoreIncident(incidentId: string): Incident | undefined {
+    this.checkAndReload();
     const incident = this.incidents.find(i => i.id === incidentId);
     if (!incident) return undefined;
     incident.state = 'CANDIDATE';
@@ -625,10 +680,12 @@ class DataStore {
   // —— Alert Operations ——
 
   getAlert(id: string): Alert | undefined {
+    this.checkAndReload();
     return this.alerts.find(a => a.id === id);
   }
 
   getActiveAlerts(): Alert[] {
+    this.checkAndReload();
     const now = new Date().toISOString();
     return this.alerts.filter(
       a => a.status === 'PUBLISHED' && a.expiresAt > now
@@ -636,6 +693,7 @@ class DataStore {
   }
 
   getAllAlerts(): Alert[] {
+    this.checkAndReload();
     return [...this.alerts].sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
@@ -646,6 +704,7 @@ class DataStore {
   }
 
   createAlert(data: Omit<Alert, 'id' | 'createdAt' | 'updatedAt'>): Alert {
+    this.checkAndReload();
     const alert: Alert = {
       ...data,
       id: generateId(),
@@ -658,6 +717,7 @@ class DataStore {
   }
 
   publishAlert(id: string, publishedBy: string): Alert | undefined {
+    this.checkAndReload();
     const alert = this.alerts.find(a => a.id === id);
     if (alert) {
       alert.status = 'PUBLISHED';
@@ -670,6 +730,7 @@ class DataStore {
   }
 
   cancelAlert(id: string, reason: string, actorId: string): Alert | undefined {
+    this.checkAndReload();
     const alert = this.alerts.find(a => a.id === id);
     if (alert) {
       alert.status = 'CANCELLED';
@@ -681,6 +742,7 @@ class DataStore {
   }
 
   extendAlert(id: string, hours: number, actorId: string): Alert | undefined {
+    this.checkAndReload();
     const alert = this.alerts.find(a => a.id === id);
     if (alert) {
       const currentExpiry = Math.max(Date.now(), new Date(alert.expiresAt).getTime());
@@ -742,6 +804,7 @@ class DataStore {
   }
 
   getAuditEvents(filters?: { entityType?: string; entityId?: string; actorId?: string }): AuditEvent[] {
+    this.checkAndReload();
     let result = [...this.auditEvents];
     if (filters?.entityType) result = result.filter(e => e.entityType === filters.entityType);
     if (filters?.entityId) result = result.filter(e => e.entityId === filters.entityId);
@@ -752,6 +815,7 @@ class DataStore {
   // —— Statistics ——
 
   getStats() {
+    this.checkAndReload();
     const now = Date.now();
     return {
       totalReports: this.reports.length,

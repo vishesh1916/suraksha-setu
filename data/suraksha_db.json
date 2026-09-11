@@ -1,6 +1,421 @@
 {
-  "reports": [],
-  "incidents": [],
+  "reports": [
+    {
+      "reporterId": "anon_1789167877868",
+      "reporterPseudonym": "Citizen-002",
+      "category": "FLOODING",
+      "severity": 5,
+      "description": "Severe river overflow into residential colony, 5 feet water depth.",
+      "location": {
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "accuracy": 10
+      },
+      "h3Index": "882a4af05105fffff",
+      "landmark": "Kurla West Colony, Mumbai",
+      "waterDepthFeet": 5,
+      "consent": true,
+      "status": "REVIEWED",
+      "id": "id_mtxkcxyk_i9ec2cc",
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Evacuation Ordered",
+      "actionHistory": [
+        {
+          "id": "id_mtxkcy18_a7b4qhb",
+          "action": "Evacuation Ordered",
+          "actorName": "Civil Defense Command",
+          "notes": "Immediate evacuation ordered for ground floor residents.",
+          "timestamp": "2026-09-11T23:04:37.964Z"
+        },
+        {
+          "id": "id_mtxkcy0b_xvcp88j",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Duty Admin",
+          "notes": "Doppler AWS confirms heavy 65mm/hr precipitation in Kurla sector.",
+          "timestamp": "2026-09-11T23:04:37.931Z"
+        },
+        {
+          "id": "id_mtxkcxyk_hix66g7",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-11T23:04:37.868Z"
+        }
+      ],
+      "createdAt": "2026-09-11T23:04:37.868Z",
+      "updatedAt": "2026-09-11T23:04:37.964Z",
+      "firstActionTaken": "Evacuation Ordered",
+      "verificationRationale": "Doppler AWS confirms heavy 65mm/hr precipitation in Kurla sector."
+    },
+    {
+      "reporterId": "citizen_test_99",
+      "reporterPseudonym": "Citizen-099",
+      "category": "WATERLOGGING",
+      "severity": 4,
+      "description": "Underpass completely flooded, 4.2 feet water depth. Commuters stranded.",
+      "location": {
+        "latitude": 28.636,
+        "longitude": 77.225,
+        "accuracy": 5
+      },
+      "h3Index": "883da11299fffff",
+      "landmark": "Minto Bridge Underpass, Connaught Place, New Delhi",
+      "waterDepthFeet": 4.2,
+      "consent": true,
+      "status": "RESOLVED",
+      "id": "id_mtxk9x2l_fg4ej45",
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxk9x2q_glyc8su",
+          "action": "Hazard Resolved",
+          "actorName": "Duty Responder",
+          "notes": "Water receded completely. Roadway cleared and opened for regular traffic.",
+          "timestamp": "2026-09-11T23:02:16.754Z"
+        },
+        {
+          "id": "id_mtxk9x2p_vqeefzo",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Duty Responder",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-11T23:02:16.753Z"
+        },
+        {
+          "id": "id_mtxk9x2o_yh5r1ks",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Duty Responder",
+          "notes": "Doppler AWS radar reflectivity (52 dBZ) confirms severe inundation.",
+          "timestamp": "2026-09-11T23:02:16.752Z"
+        },
+        {
+          "id": "id_mtxk9x2l_qrx3g6f",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-11T23:02:16.749Z"
+        }
+      ],
+      "createdAt": "2026-09-11T23:02:16.749Z",
+      "updatedAt": "2026-09-11T23:02:16.754Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+      "verificationRationale": "Doppler AWS radar reflectivity (52 dBZ) confirms severe inundation."
+    }
+  ],
+  "incidents": [
+    {
+      "id": "inc_real_mtxkcxyk_7fk8",
+      "h3Parent": "882a4af05105fffff",
+      "category": "FLOODING",
+      "state": "ESCALATED",
+      "confidenceScore": {
+        "total": 27,
+        "factors": [
+          {
+            "name": "Report Completeness",
+            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Description ✓, Photo missing (optional)",
+            "contribution": 21,
+            "maxContribution": 25,
+            "explanation": "5 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
+          },
+          {
+            "name": "Spatial Corroboration",
+            "signal": "No nearby reports",
+            "contribution": 0,
+            "maxContribution": 30,
+            "explanation": "No other reports of the same hazard within 500m and 20 minutes. Single report — awaiting corroboration."
+          },
+          {
+            "name": "Reporter History",
+            "signal": "New reporter",
+            "contribution": 2,
+            "maxContribution": 15,
+            "explanation": "First-time reporter. Base credibility assigned. Reports are never suppressed solely due to no history."
+          },
+          {
+            "name": "Weather Evidence",
+            "signal": "No weather data available",
+            "contribution": 0,
+            "maxContribution": 20,
+            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
+            "freshness": "unavailable"
+          },
+          {
+            "name": "Contradiction Check",
+            "signal": "No flags detected",
+            "contribution": 4,
+            "maxContribution": 10,
+            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
+          }
+        ],
+        "computedAt": "2026-09-11T23:04:37.868Z"
+      },
+      "impactLevel": "CRITICAL",
+      "reportCount": 1,
+      "reports": [
+        {
+          "reporterId": "anon_1789167877868",
+          "reporterPseudonym": "Citizen-002",
+          "category": "FLOODING",
+          "severity": 5,
+          "description": "Severe river overflow into residential colony, 5 feet water depth.",
+          "location": {
+            "latitude": 19.076,
+            "longitude": 72.8777,
+            "accuracy": 10
+          },
+          "h3Index": "882a4af05105fffff",
+          "landmark": "Kurla West Colony, Mumbai",
+          "waterDepthFeet": 5,
+          "consent": true,
+          "status": "REVIEWED",
+          "id": "id_mtxkcxyk_i9ec2cc",
+          "verificationStatus": "VERIFIED_GENUINE",
+          "currentActionCategory": "Evacuation Ordered",
+          "actionHistory": [
+            {
+              "id": "id_mtxkcy18_a7b4qhb",
+              "action": "Evacuation Ordered",
+              "actorName": "Civil Defense Command",
+              "notes": "Immediate evacuation ordered for ground floor residents.",
+              "timestamp": "2026-09-11T23:04:37.964Z"
+            },
+            {
+              "id": "id_mtxkcy0b_xvcp88j",
+              "action": "Verified Genuine — Pending Tactical Action",
+              "actorName": "Duty Admin",
+              "notes": "Doppler AWS confirms heavy 65mm/hr precipitation in Kurla sector.",
+              "timestamp": "2026-09-11T23:04:37.931Z"
+            },
+            {
+              "id": "id_mtxkcxyk_hix66g7",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-11T23:04:37.868Z"
+            }
+          ],
+          "createdAt": "2026-09-11T23:04:37.868Z",
+          "updatedAt": "2026-09-11T23:04:37.964Z",
+          "firstActionTaken": "Evacuation Ordered",
+          "verificationRationale": "Doppler AWS confirms heavy 65mm/hr precipitation in Kurla sector."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "id_mtxkcxyk_i6ndmyc",
+          "reportId": "id_mtxkcxyk_i9ec2cc",
+          "type": "WEATHER",
+          "source": "Doppler Weather Radar & Automated Rain Gauge",
+          "observedAt": "2026-09-11T23:04:37.868Z",
+          "freshnessSeconds": 45,
+          "value": {
+            "reflectivityDbz": 53,
+            "rainRateMmH": 55
+          },
+          "provenance": "Automated Weather Corroboration Engine"
+        }
+      ],
+      "reviewActions": [],
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Evacuation Ordered",
+      "actionHistory": [
+        {
+          "id": "id_mtxkcy18_a7b4qhb",
+          "action": "Evacuation Ordered",
+          "actorName": "Civil Defense Command",
+          "notes": "Immediate evacuation ordered for ground floor residents.",
+          "timestamp": "2026-09-11T23:04:37.964Z"
+        },
+        {
+          "id": "id_mtxkcy0b_xvcp88j",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Duty Admin",
+          "notes": "Doppler AWS confirms heavy 65mm/hr precipitation in Kurla sector.",
+          "timestamp": "2026-09-11T23:04:37.931Z"
+        },
+        {
+          "id": "id_mtxkcxyk_58bozqp",
+          "action": "Pending Verification",
+          "actorName": "Cluster Engine",
+          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
+          "timestamp": "2026-09-11T23:04:37.868Z"
+        }
+      ],
+      "landmark": "Kurla West Colony, Mumbai",
+      "location": {
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "accuracy": 10
+      },
+      "createdAt": "2026-09-11T23:04:37.868Z",
+      "updatedAt": "2026-09-11T23:04:37.964Z",
+      "firstActionTaken": "Evacuation Ordered"
+    },
+    {
+      "id": "inc_real_mtxk9x2m_udlx",
+      "h3Parent": "883da11299fffff",
+      "category": "WATERLOGGING",
+      "state": "RESOLVED",
+      "confidenceScore": {
+        "total": 27,
+        "factors": [
+          {
+            "name": "Report Completeness",
+            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Description ✓, Photo missing (optional)",
+            "contribution": 21,
+            "maxContribution": 25,
+            "explanation": "5 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
+          },
+          {
+            "name": "Spatial Corroboration",
+            "signal": "No nearby reports",
+            "contribution": 0,
+            "maxContribution": 30,
+            "explanation": "No other reports of the same hazard within 500m and 20 minutes. Single report — awaiting corroboration."
+          },
+          {
+            "name": "Reporter History",
+            "signal": "New reporter",
+            "contribution": 2,
+            "maxContribution": 15,
+            "explanation": "First-time reporter. Base credibility assigned. Reports are never suppressed solely due to no history."
+          },
+          {
+            "name": "Weather Evidence",
+            "signal": "No weather data available",
+            "contribution": 0,
+            "maxContribution": 20,
+            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
+            "freshness": "unavailable"
+          },
+          {
+            "name": "Contradiction Check",
+            "signal": "No flags detected",
+            "contribution": 4,
+            "maxContribution": 10,
+            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
+          }
+        ],
+        "computedAt": "2026-09-11T23:02:16.750Z"
+      },
+      "impactLevel": "CRITICAL",
+      "reportCount": 1,
+      "reports": [
+        {
+          "reporterId": "citizen_test_99",
+          "reporterPseudonym": "Citizen-099",
+          "category": "WATERLOGGING",
+          "severity": 4,
+          "description": "Underpass completely flooded, 4.2 feet water depth. Commuters stranded.",
+          "location": {
+            "latitude": 28.636,
+            "longitude": 77.225,
+            "accuracy": 5
+          },
+          "h3Index": "883da11299fffff",
+          "landmark": "Minto Bridge Underpass, Connaught Place, New Delhi",
+          "waterDepthFeet": 4.2,
+          "consent": true,
+          "status": "RESOLVED",
+          "id": "id_mtxk9x2l_fg4ej45",
+          "verificationStatus": "VERIFIED_GENUINE",
+          "currentActionCategory": "Hazard Resolved",
+          "actionHistory": [
+            {
+              "id": "id_mtxk9x2q_glyc8su",
+              "action": "Hazard Resolved",
+              "actorName": "Duty Responder",
+              "notes": "Water receded completely. Roadway cleared and opened for regular traffic.",
+              "timestamp": "2026-09-11T23:02:16.754Z"
+            },
+            {
+              "id": "id_mtxk9x2p_vqeefzo",
+              "action": "Dewatering & Municipal Crew Dispatched",
+              "actorName": "Duty Responder",
+              "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+              "timestamp": "2026-09-11T23:02:16.753Z"
+            },
+            {
+              "id": "id_mtxk9x2o_yh5r1ks",
+              "action": "Verified Genuine — Pending Tactical Action",
+              "actorName": "Duty Responder",
+              "notes": "Doppler AWS radar reflectivity (52 dBZ) confirms severe inundation.",
+              "timestamp": "2026-09-11T23:02:16.752Z"
+            },
+            {
+              "id": "id_mtxk9x2l_qrx3g6f",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-11T23:02:16.749Z"
+            }
+          ],
+          "createdAt": "2026-09-11T23:02:16.749Z",
+          "updatedAt": "2026-09-11T23:02:16.754Z",
+          "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+          "verificationRationale": "Doppler AWS radar reflectivity (52 dBZ) confirms severe inundation."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "id_mtxk9x2m_nkr2f7p",
+          "reportId": "id_mtxk9x2l_fg4ej45",
+          "type": "WEATHER",
+          "source": "Doppler Weather Radar & Automated Rain Gauge",
+          "observedAt": "2026-09-11T23:02:16.750Z",
+          "freshnessSeconds": 45,
+          "value": {
+            "reflectivityDbz": 50,
+            "rainRateMmH": 44
+          },
+          "provenance": "Automated Weather Corroboration Engine"
+        }
+      ],
+      "reviewActions": [],
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxk9x2q_glyc8su",
+          "action": "Hazard Resolved",
+          "actorName": "Duty Responder",
+          "notes": "Water receded completely. Roadway cleared and opened for regular traffic.",
+          "timestamp": "2026-09-11T23:02:16.754Z"
+        },
+        {
+          "id": "id_mtxk9x2p_vqeefzo",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Duty Responder",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-11T23:02:16.753Z"
+        },
+        {
+          "id": "id_mtxk9x2o_yh5r1ks",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Duty Responder",
+          "notes": "Doppler AWS radar reflectivity (52 dBZ) confirms severe inundation.",
+          "timestamp": "2026-09-11T23:02:16.752Z"
+        },
+        {
+          "id": "id_mtxk9x2m_buwd8td",
+          "action": "Pending Verification",
+          "actorName": "Cluster Engine",
+          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
+          "timestamp": "2026-09-11T23:02:16.749Z"
+        }
+      ],
+      "landmark": "Minto Bridge Underpass, Connaught Place, New Delhi",
+      "location": {
+        "latitude": 28.636,
+        "longitude": 77.225,
+        "accuracy": 5
+      },
+      "createdAt": "2026-09-11T23:02:16.749Z",
+      "updatedAt": "2026-09-11T23:02:16.754Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched"
+    }
+  ],
   "alerts": [],
   "auditEvents": [
     {
@@ -94,7 +509,91 @@
         "resolutionNotes": "Water drained and road reopened."
       },
       "createdAt": "2026-09-11T22:52:54.248Z"
+    },
+    {
+      "id": "id_mtxk9x2l_ly8uzjq",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxk9x2l_fg4ej45",
+      "action": "CREATE",
+      "metadata": {
+        "category": "WATERLOGGING"
+      },
+      "createdAt": "2026-09-11T23:02:16.749Z"
+    },
+    {
+      "id": "id_mtxk9x2o_s1w39ll",
+      "actorId": "Duty Responder",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxk9x2l_fg4ej45",
+      "action": "Verified Genuine — Pending Tactical Action",
+      "metadata": {
+        "notes": "Doppler AWS radar reflectivity (52 dBZ) confirms severe inundation."
+      },
+      "createdAt": "2026-09-11T23:02:16.752Z"
+    },
+    {
+      "id": "id_mtxk9x2p_eyjq9r3",
+      "actorId": "Duty Responder",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxk9x2l_fg4ej45",
+      "action": "Dewatering & Municipal Crew Dispatched",
+      "metadata": {
+        "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions."
+      },
+      "createdAt": "2026-09-11T23:02:16.753Z"
+    },
+    {
+      "id": "id_mtxk9x2q_07b940s",
+      "actorId": "Duty Responder",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxk9x2l_fg4ej45",
+      "action": "Hazard Resolved",
+      "metadata": {
+        "notes": "Water receded completely. Roadway cleared and opened for regular traffic."
+      },
+      "createdAt": "2026-09-11T23:02:16.754Z"
+    },
+    {
+      "id": "id_mtxkcxyk_4uy5pan",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxkcxyk_i9ec2cc",
+      "action": "CREATE",
+      "metadata": {
+        "category": "FLOODING"
+      },
+      "createdAt": "2026-09-11T23:04:37.868Z"
+    },
+    {
+      "id": "id_mtxkcy0b_m3p5jvq",
+      "actorId": "Duty Admin",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxkcxyk_i9ec2cc",
+      "action": "Verified Genuine — Pending Tactical Action",
+      "metadata": {
+        "notes": "Doppler AWS confirms heavy 65mm/hr precipitation in Kurla sector."
+      },
+      "createdAt": "2026-09-11T23:04:37.931Z"
+    },
+    {
+      "id": "id_mtxkcy18_iexjhsn",
+      "actorId": "Civil Defense Command",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxkcxyk_i9ec2cc",
+      "action": "Evacuation Ordered",
+      "metadata": {
+        "notes": "Immediate evacuation ordered for ground floor residents."
+      },
+      "createdAt": "2026-09-11T23:04:37.964Z"
     }
   ],
-  "savedAt": "2026-09-11T22:52:54.249Z"
+  "savedAt": "2026-09-11T23:04:37.964Z"
 }

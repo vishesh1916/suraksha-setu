@@ -121,6 +121,34 @@ function LoginForm() {
             </>
           )}
         </button>
+
+        <div style={{ marginTop: '12px', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => {
+              setUsername('admin');
+              setPassword('Suraksha@Setu2026!');
+            }}
+            style={{
+              background: 'rgba(56, 189, 248, 0.1)',
+              border: '1px dashed rgba(56, 189, 248, 0.4)',
+              color: '#38BDF8',
+              fontSize: '12px',
+              padding: '7px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              fontWeight: 600,
+            }}
+          >
+            <span>⚡</span>
+            <span>Auto-fill Official Duty Credentials (admin / Suraksha@Setu2026!)</span>
+          </button>
+        </div>
       </form>
 
       <div className={styles.cardFooter}>

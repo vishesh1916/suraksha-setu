@@ -19,33 +19,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const reports: Report[] = dataStore.getReports();
-    const report = reports.find(
-      (r: Report) => r.id === reportId || r.id.toLowerCase() === reportId.toLowerCase()
-    );
+    const report = dataStore.getReport(reportId);
 
     if (!report) {
-      // Return a simulated structured tracking response for offline or newly submitted IDs
-      return NextResponse.json({
-        success: true,
-        data: {
-          id: reportId,
-          status: 'RECEIVED',
-          stage: 1,
-          stages: [
-            { name: 'Received', completed: true, timestamp: new Date().toISOString() },
-            { name: 'Under Review', completed: false },
-            { name: 'Verified', completed: false },
-            { name: 'Resolved', completed: false },
-          ],
-          category: 'WATERLOGGING',
-          severity: 3,
-          locationName: 'Reported Location',
-          corroborationCount: 1,
-          weatherSignal: 'Validating against nearest Doppler radar…',
-          reviewNote: 'Queued for human meteorologist evaluation.',
-        },
-      });
+      if (reportId.startsWith('OFFLINE_')) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            id: reportId,
+            status: 'OFFLINE_QUEUED',
+            stage: 1,
+            stages: [
+              { name: 'Stored Offline on Device', completed: true, timestamp: new Date().toISOString() },
+              { name: 'Cellular / WiFi Network Sync', completed: false },
+              { name: 'Meteorologist Radar Verification', completed: false },
+              { name: 'Tactical Deployment', completed: false },
+            ],
+            category: 'PENDING_NETWORK_SYNC',
+            severity: 3,
+            locationName: 'Local Storage Queue',
+            corroborationCount: 1,
+            weatherSignal: 'Pending network upload to Doppler radar validation engine…',
+            reviewNote: 'This report is stored securely on your local device. It will automatically upload to the National Disaster Management registry as soon as cellular or WiFi connection is detected.',
+          },
+        });
+      }
+
+      return NextResponse.json(
+        { success: false, error: `No active record found for Report ID "${reportId}". Please verify your identifier or submit a new report.` },
+        { status: 404 }
+      );
     }
 
     // Determine current stage and description
@@ -119,6 +122,7 @@ export async function GET(request: NextRequest) {
         landmark: report.landmark,
         waterDepthFeet: report.waterDepthFeet,
         location: report.location,
+        mediaUrl: report.mediaUrl,
         createdAt: report.createdAt,
         updatedAt: report.updatedAt,
         corroborationCount: isVerified || isActionTaken || isResolved ? 4 : 1,

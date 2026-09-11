@@ -11,6 +11,7 @@ import { StaffSidebar } from '@/components/StaffSidebar';
 import { useAuthGuard } from '@/lib/useAuthGuard';
 
 type AdminTab =
+  | 'all'
   | 'verification'
   | 'false_alarm'
   | 'verified_pending'
@@ -25,7 +26,7 @@ type AdminTab =
 
 export default function AdminPage() {
   const { authenticated } = useAuthGuard();
-  const [activeTab, setActiveTab] = useState<AdminTab>('verification');
+  const [activeTab, setActiveTab] = useState<AdminTab>('all');
   const [stats, setStats] = useState<Record<string, number>>({});
   const [sources, setSources] = useState<SourceHealth[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -33,6 +34,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Prediction tool state
@@ -47,6 +49,7 @@ export default function AdminPage() {
   };
 
   const fetchData = useCallback(async () => {
+    setIsRefreshing(true);
     try {
       const results = await Promise.allSettled([
         fetch('/api/stats'),
@@ -87,12 +90,13 @@ export default function AdminPage() {
       console.warn('Admin fetchData error:', e);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 10000); // 10s live polling
+    const interval = setInterval(fetchData, 3000); // 3s continuous real-time synchronization
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -308,7 +312,30 @@ export default function AdminPage() {
         }),
       });
       if (res.ok) {
-        showToast(`Action "${action}" recorded and synchronized to citizen tracking!`);
+        if (action === 'Verified Genuine — Pending Tactical Action') {
+          showToast('✓ Verified Genuine! Advanced to Stage 2: Verified Genuine (Pending Tactical Order).');
+          setActiveTab('verified_pending');
+        } else if (action === 'Flagged False Alarm / Dismissed') {
+          showToast('✕ Flagged as False Alarm. Archived.');
+          setActiveTab('false_alarm');
+        } else if (action === 'Hazard Resolved') {
+          showToast('✅ Hazard marked as RESOLVED! Corridor fully restored.');
+          setActiveTab('resolved');
+        } else if (action === 'Evacuation Ordered') {
+          showToast('🚨 Mandatory Evacuation Directive Dispatched! Advanced to Stage 3.');
+          setActiveTab('evacuation');
+        } else if (action === 'Dewatering & Municipal Crew Dispatched') {
+          showToast('🚒 Dewatering & Municipal Pumps Dispatched! Advanced to Stage 3.');
+          setActiveTab('dewatering');
+        } else if (action === 'Public Warning Issued (CAP 1.2)') {
+          showToast('📢 Public Warning Issued across CAP Stream! Advanced to Stage 3.');
+          setActiveTab('cap_warning');
+        } else if (action === 'Search & Rescue Deployed') {
+          showToast('🚤 NDRF / SDRF Search & Rescue Deployed! Advanced to Stage 3.');
+          setActiveTab('sar');
+        } else {
+          showToast(`Action "${action}" recorded and synchronized to citizen tracking!`);
+        }
         fetchData();
       } else {
         showToast('Failed to record report action on server');
@@ -395,7 +422,7 @@ export default function AdminPage() {
     r.firstActionTaken === 'Hazard Resolved'
   );
 
-  if (!authenticated) {
+  if (authenticated === null) {
     return (
       <div className={styles.page} style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
         <div className="spinner spinner-lg" />
@@ -406,79 +433,150 @@ export default function AdminPage() {
     );
   }
 
+  if (authenticated === false) {
+    return (
+      <div className={styles.page} style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, padding: 32 }}>
+        <div style={{ fontSize: '3rem' }}>🔒</div>
+        <h2 style={{ color: '#F7F6F2', margin: 0 }}>Executive Security Clearance Required</h2>
+        <p style={{ color: '#8A99A8', maxWidth: 440, textAlign: 'center', margin: 0, fontSize: '0.92rem' }}>
+          The Disaster Administration & Tactical Operations Desk is restricted to authorized municipal disaster coordinators and IMD reviewers.
+        </p>
+        <Link href="/login?redirect=/staff/admin" className="btn btn-primary btn-lg" style={{ marginTop: 8 }}>
+          🔑 Sign In to Official Admin Desk →
+        </Link>
+      </div>
+    );
+  }
+
+  const getReportStageInfo = (report: Report) => {
+    if (report.status === 'RESOLVED' || report.currentActionCategory === 'Hazard Resolved') {
+      return { stageNum: 4, label: 'Stage 4: Hazard Resolved & Corridor Restored', badgeColor: '#34D399' };
+    }
+    if (report.status === 'DISMISSED' || report.verificationStatus === 'FLAGGED_FALSE_REPORT') {
+      return { stageNum: 1, label: 'Stage 1: Flagged False Alarm', badgeColor: '#EF4444' };
+    }
+    const isActionActive = report.currentActionCategory && [
+      'Evacuation Ordered',
+      'Dewatering & Municipal Crew Dispatched',
+      'Public Warning Issued (CAP 1.2)',
+      'Search & Rescue Deployed',
+      'Meteorological Monitoring',
+    ].includes(report.currentActionCategory);
+
+    if (isActionActive) {
+      return { stageNum: 3, label: `Stage 3: Tactical Action Active (${report.currentActionCategory})`, badgeColor: '#38BDF8' };
+    }
+
+    if (report.verificationStatus === 'VERIFIED_GENUINE' || report.status === 'REVIEWED') {
+      return { stageNum: 2, label: 'Stage 2: Verified Genuine (Pending Tactical Order)', badgeColor: '#10B981' };
+    }
+
+    return { stageNum: 1, label: 'Stage 1: Pending Ground Verification (Right/Wrong)', badgeColor: '#F59E0B' };
+  };
+
   const renderReportCard = (report: Report, isVerificationTab = false) => {
     const hazard = HAZARD_CATEGORIES[report.category] || { icon: '⚠️', label: report.category };
-    const isGenuine = report.verificationStatus === 'VERIFIED_GENUINE';
-    const isFalseAlarm = report.verificationStatus === 'FLAGGED_FALSE_REPORT';
+    const isGenuine = report.verificationStatus === 'VERIFIED_GENUINE' || report.status === 'REVIEWED';
+    const isFalseAlarm = report.verificationStatus === 'FLAGGED_FALSE_REPORT' || report.status === 'DISMISSED';
+    const isResolved = report.status === 'RESOLVED' || report.currentActionCategory === 'Hazard Resolved';
+    const stageInfo = getReportStageInfo(report);
 
     return (
-      <div key={report.id} className={styles.escalationCard} style={{ marginBottom: '16px' }}>
+      <div key={report.id} className={styles.escalationCard} style={{ marginBottom: '18px', border: '1px solid rgba(255,255,255,0.12)' }}>
+        {/* Card Header with Category, Severity & Live Stage */}
         <div className={styles.escalationHeader}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
               <span className={`badge badge-${report.severity >= 4 ? 'critical' : report.severity === 3 ? 'high' : 'moderate'}`}>
                 Level {report.severity} · {SEVERITY_LABELS[report.severity]?.label}
               </span>
 
-              {isGenuine && (
-                <span style={{
-                  background: 'rgba(52, 211, 153, 0.15)',
-                  border: '1px solid #34D399',
-                  color: '#34D399',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '2px 8px',
-                  borderRadius: '999px'
-                }}>
-                  ✓ Verified Genuine (Right)
-                </span>
-              )}
-
-              {isFalseAlarm && (
-                <span style={{
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid #EF4444',
-                  color: '#EF4444',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '2px 8px',
-                  borderRadius: '999px'
-                }}>
-                  ✕ Flagged False Alarm (Wrong)
-                </span>
-              )}
-
-              {!isGenuine && !isFalseAlarm && (
-                <span style={{
-                  background: 'rgba(245, 158, 11, 0.15)',
-                  border: '1px solid #F59E0B',
-                  color: '#F59E0B',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '2px 8px',
-                  borderRadius: '999px'
-                }}>
-                  ⏳ Pending Verification
-                </span>
-              )}
+              <span style={{
+                background: `${stageInfo.badgeColor}20`,
+                border: `1px solid ${stageInfo.badgeColor}`,
+                color: stageInfo.badgeColor,
+                fontSize: '11px',
+                fontWeight: 700,
+                padding: '3px 10px',
+                borderRadius: '999px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: stageInfo.badgeColor }} />
+                {stageInfo.label}
+              </span>
 
               <span style={{ fontSize: '11px', color: '#8A99A8', fontFamily: 'monospace' }}>
                 ID: {report.id}
               </span>
             </div>
 
-            <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#F7F6F2' }}>
+            <h4 style={{ margin: 0, fontSize: '1.2rem', color: '#F7F6F2' }}>
               {hazard.icon} {report.landmark || `${hazard.label} near ${report.location.latitude.toFixed(3)}°N, ${report.location.longitude.toFixed(3)}°E`}
             </h4>
-            <p style={{ margin: '4px 0', fontSize: '0.82rem', color: '#CBD5E1' }}>
-              GPS: <strong>{report.location.latitude.toFixed(4)}°N, {report.location.longitude.toFixed(4)}°E</strong> · Reported by {report.reporterPseudonym}
+            <p style={{ margin: '4px 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
+              GPS: <strong>{report.location.latitude.toFixed(4)}°N, {report.location.longitude.toFixed(4)}°E</strong> · Reported by <strong>{report.reporterPseudonym}</strong>
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.75rem', color: '#8A99A8' }}>Reported:</div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#E2E8F0' }}>
+            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#E2E8F0' }}>
               {new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
+          </div>
+        </div>
+
+        {/* 4-Step Visual Progress Stepper */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: 6,
+          margin: '12px 0',
+          background: 'rgba(11, 31, 51, 0.7)',
+          padding: '8px 12px',
+          borderRadius: 8,
+          border: '1px solid rgba(138, 153, 168, 0.2)'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            fontSize: '11px',
+            fontWeight: stageInfo.stageNum >= 1 ? 700 : 500,
+            color: stageInfo.stageNum >= 1 ? '#38BDF8' : '#64748B',
+            borderBottom: `2px solid ${stageInfo.stageNum >= 1 ? '#38BDF8' : 'rgba(255,255,255,0.1)'}`,
+            paddingBottom: 4
+          }}>
+            1. Report Filed
+          </div>
+          <div style={{
+            textAlign: 'center',
+            fontSize: '11px',
+            fontWeight: stageInfo.stageNum >= 2 ? 700 : 500,
+            color: stageInfo.stageNum >= 2 ? '#10B981' : '#64748B',
+            borderBottom: `2px solid ${stageInfo.stageNum >= 2 ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
+            paddingBottom: 4
+          }}>
+            2. Ground Verified
+          </div>
+          <div style={{
+            textAlign: 'center',
+            fontSize: '11px',
+            fontWeight: stageInfo.stageNum >= 3 ? 700 : 500,
+            color: stageInfo.stageNum >= 3 ? '#F59E0B' : '#64748B',
+            borderBottom: `2px solid ${stageInfo.stageNum >= 3 ? '#F59E0B' : 'rgba(255,255,255,0.1)'}`,
+            paddingBottom: 4
+          }}>
+            3. Tactical Deployed
+          </div>
+          <div style={{
+            textAlign: 'center',
+            fontSize: '11px',
+            fontWeight: stageInfo.stageNum >= 4 ? 700 : 500,
+            color: stageInfo.stageNum >= 4 ? '#34D399' : '#64748B',
+            borderBottom: `2px solid ${stageInfo.stageNum >= 4 ? '#34D399' : 'rgba(255,255,255,0.1)'}`,
+            paddingBottom: 4
+          }}>
+            4. Hazard Resolved
           </div>
         </div>
 
@@ -567,15 +665,16 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Action Controls */}
+        {/* Action Controls Tailored by Stage & Hazard Category */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {isVerificationTab && (
+          {/* Stage 1: Verification (Right vs Wrong Check) */}
+          {(!isGenuine && !isFalseAlarm && !isResolved) && (
             <>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => handleTakeReportAction(report.id, 'Verified Genuine — Pending Tactical Action', 'Corroborated against Doppler radar reflectivity and automatic weather station telemetry.')}
-                style={{ background: '#059669', borderColor: '#10B981', fontSize: '0.8rem', padding: '6px 12px' }}
+                style={{ background: '#059669', borderColor: '#10B981', fontSize: '0.82rem', padding: '7px 14px', fontWeight: 700 }}
               >
                 ✓ Verify Genuine (Right Report)
               </button>
@@ -583,67 +682,240 @@ export default function AdminPage() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => handleTakeReportAction(report.id, 'Flagged False Alarm / Dismissed', 'Sensor cross-check shows no corroborating precipitation or runoff at coordinates.')}
-                style={{ color: '#EF4444', borderColor: '#EF4444', fontSize: '0.8rem', padding: '6px 12px' }}
+                style={{ color: '#EF4444', borderColor: '#EF4444', fontSize: '0.82rem', padding: '7px 14px' }}
               >
                 ✕ Flag as False Alarm (Wrong Report)
               </button>
             </>
           )}
 
-          {!isVerificationTab && (
+          {/* Stage 2 & 3: Tailored Tactical Actions according to Hazard Type */}
+          {(isGenuine && !isFalseAlarm && !isResolved) && (
             <>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => handleTakeReportAction(report.id, 'Evacuation Ordered', 'Mandatory high-ground evacuation ordered due to critical inundation depth.')}
-                style={{ color: '#EF4444', borderColor: '#EF4444', fontSize: '0.8rem', padding: '6px 10px' }}
-              >
-                🚨 Order Evacuation
-              </button>
+              {report.category === 'WATERLOGGING' && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleTakeReportAction(report.id, 'Dewatering & Municipal Crew Dispatched', 'Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.')}
+                    style={{ background: '#0284C7', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 12px', fontWeight: 700 }}
+                  >
+                    🚒 Deploy Dewatering Pumps (500HP)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Published urban waterlogging advisory and transit detour recommendations.')}
+                    style={{ color: '#F59E0B', borderColor: '#F59E0B', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    📢 Issue Waterlogging Advisory
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Evacuation Ordered', 'Submerged vehicles and deep water risk; ordered perimeter evacuation.')}
+                    style={{ color: '#EF4444', borderColor: '#EF4444', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🚨 Order Evacuation
+                  </button>
+                </>
+              )}
 
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => handleTakeReportAction(report.id, 'Dewatering & Municipal Crew Dispatched', 'Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.')}
-                style={{ color: '#38BDF8', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 10px' }}
-              >
-                🚒 Deploy Pumps
-              </button>
+              {report.category === 'FLOODING' && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleTakeReportAction(report.id, 'Evacuation Ordered', 'Critical inundation depth; civil defense high-ground evacuation ordered immediately.')}
+                    style={{ background: '#DC2626', borderColor: '#EF4444', fontSize: '0.8rem', padding: '6px 12px', fontWeight: 700 }}
+                  >
+                    🚨 Mandatory Evacuation Directive
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Search & Rescue Deployed', 'Mobilized NDRF/SDRF motorized inflatable rescue boats and paramedic units.')}
+                    style={{ color: '#A78BFA', borderColor: '#A78BFA', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🚤 Deploy NDRF/SDRF Rescue Boats
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Broadcasted official CAP 1.2 emergency flood warning to cellular networks.')}
+                    style={{ color: '#F59E0B', borderColor: '#F59E0B', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    📢 Broadcast Flood Siren (CAP)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Dewatering & Municipal Crew Dispatched', 'Dispatched mobile high-volume barrier drainage pumps.')}
+                    style={{ color: '#38BDF8', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🚒 Deploy Heavy Pumps
+                  </button>
+                </>
+              )}
 
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Broadcasted official public CAP 1.2 alert across cellular networks and citizen portal.')}
-                style={{ color: '#F59E0B', borderColor: '#F59E0B', fontSize: '0.8rem', padding: '6px 10px' }}
-              >
-                📢 Broadcast CAP Alert
-              </button>
+              {report.category === 'CLOUDBURST' && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleTakeReportAction(report.id, 'Evacuation Ordered', 'Catastrophic flash flood velocity; immediate upstream/downstream evacuation ordered.')}
+                    style={{ background: '#B91C1C', borderColor: '#EF4444', fontSize: '0.8rem', padding: '6px 12px', fontWeight: 700 }}
+                  >
+                    🚨 Immediate Flash Flood Evacuation
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Search & Rescue Deployed', 'Dispatched airborne and ground emergency search and rescue teams.')}
+                    style={{ color: '#A78BFA', borderColor: '#A78BFA', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🚤 Mobilize Rapid SAR Teams
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Issued RED SIREN emergency alert across all civil broadcasts.')}
+                    style={{ color: '#F59E0B', borderColor: '#F59E0B', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    📢 Red Siren Alert Broadcast
+                  </button>
+                </>
+              )}
 
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => handleTakeReportAction(report.id, 'Search & Rescue Deployed', 'Mobilized SDRF motorized inflatable rescue boats and emergency triage station.')}
-                style={{ color: '#A78BFA', borderColor: '#A78BFA', fontSize: '0.8rem', padding: '6px 10px' }}
-              >
-                🚤 Deploy SAR
-              </button>
+              {report.category === 'SEVERE_RAIN' && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Issued severe rainfall advisory; cautioned against underpass transit.')}
+                    style={{ background: '#D97706', borderColor: '#F59E0B', fontSize: '0.8rem', padding: '6px 12px', fontWeight: 700 }}
+                  >
+                    📢 Broadcast Severe Rain Advisory
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Meteorological Monitoring', 'Continuous Doppler AWS radar surveillance active; 5-minute telemetry scan.')}
+                    style={{ color: '#38BDF8', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🛰️ Activate Doppler AWS Radar Watch
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Dewatering & Municipal Crew Dispatched', 'Standby municipal storm-water drainage units mobilized.')}
+                    style={{ color: '#34D399', borderColor: '#34D399', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🚒 Deploy Standby Dewatering
+                  </button>
+                </>
+              )}
 
+              {report.category === 'STRONG_WIND' && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Published high-wind and gale storm warning; structural precaution advisory.')}
+                    style={{ background: '#4F46E5', borderColor: '#818CF8', fontSize: '0.8rem', padding: '6px 12px', fontWeight: 700 }}
+                  >
+                    📢 Gale Wind Civil Warning (CAP)
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Evacuation Ordered', 'Evacuation ordered for temporary tin roofs and fragile structures.')}
+                    style={{ color: '#EF4444', borderColor: '#EF4444', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🚨 Evacuate Fragile Structures
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Meteorological Monitoring', 'Monitoring automated anemometer network and gust velocities.')}
+                    style={{ color: '#38BDF8', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🛰️ Anemometer Wind Surveillance
+                  </button>
+                </>
+              )}
+
+              {report.category === 'HAIL' && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Broadcasted hailstorm impact advisory; vehicle and livestock shelter directive.')}
+                    style={{ background: '#7C3AED', borderColor: '#A78BFA', fontSize: '0.8rem', padding: '6px 12px', fontWeight: 700 }}
+                  >
+                    🚗 Hailstorm Shelter Advisory
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Meteorological Monitoring', 'Tracking severe hail core on Doppler dual-polarization radar.')}
+                    style={{ color: '#38BDF8', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    🛰️ Dual-Polarization Hail Tracking
+                  </button>
+                </>
+              )}
+
+              {report.category === 'OTHER' && (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleTakeReportAction(report.id, 'Meteorological Monitoring', 'Ground reconnaissance team dispatched for situation assessment.')}
+                    style={{ background: '#0284C7', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 12px', fontWeight: 700 }}
+                  >
+                    🔍 Deploy Field Reconnaissance
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => handleTakeReportAction(report.id, 'Public Warning Issued (CAP 1.2)', 'Published precautionary citizen advisory.')}
+                    style={{ color: '#F59E0B', borderColor: '#F59E0B', fontSize: '0.8rem', padding: '6px 10px' }}
+                  >
+                    📢 Public Advisory
+                  </button>
+                </>
+              )}
+
+              {/* Universal Resolution Button */}
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => handleTakeReportAction(report.id, 'Hazard Resolved', 'Floodwaters receded, dewatering completed, electrical safety verified, and corridor restored.')}
+                onClick={() => handleTakeReportAction(report.id, 'Hazard Resolved', 'Danger subsided, municipal dewatering/relief complete, corridor restored to safety.')}
                 style={{ color: '#34D399', borderColor: '#34D399', fontSize: '0.8rem', padding: '6px 10px' }}
               >
-                ✅ Mark Resolved
+                ✅ Mark Resolved & Clear Corridor
               </button>
             </>
+          )}
+
+          {isResolved && (
+            <span style={{ color: '#34D399', fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>✅</span> Corridor fully drained and restored to safe public transit.
+            </span>
+          )}
+
+          {isFalseAlarm && (
+            <span style={{ color: '#EF4444', fontSize: '0.84rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>✕</span> Flagged as inaccurate/false alarm and archived from public feeds.
+            </span>
           )}
 
           <button
             type="button"
             className="btn btn-secondary"
             onClick={() => launchPredictionForReport(report)}
-            style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 12px' }}
+            style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', borderColor: '#38BDF8', fontSize: '0.8rem', padding: '6px 12px', marginLeft: 'auto' }}
           >
             🔮 Predict Future Situation (ML)
           </button>
@@ -696,6 +968,16 @@ export default function AdminPage() {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => fetchData()}
+              disabled={isRefreshing}
+              style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span>{isRefreshing ? '⏳' : '🔄'}</span>
+              <span>{isRefreshing ? 'Syncing…' : 'Sync Live'}</span>
+            </button>
             <Link href="/map" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
               🗺️ Open Live Map
             </Link>
@@ -707,6 +989,15 @@ export default function AdminPage() {
 
         {/* Categorized Workflow Navigation Tabs */}
         <div className={styles.adminTabsNav} style={{ overflowX: 'auto', display: 'flex', gap: '6px', paddingBottom: '8px' }}>
+          <button
+            type="button"
+            className={`${styles.adminTabBtn} ${activeTab === 'all' ? styles.adminTabBtnActive : ''}`}
+            onClick={() => setActiveTab('all')}
+          >
+            <span>🌐 0. Master Feed</span>
+            <span className={styles.tabBadge}>{reports.length}</span>
+          </button>
+
           <button
             type="button"
             className={`${styles.adminTabBtn} ${activeTab === 'verification' ? styles.adminTabBtnActive : ''}`}
@@ -805,6 +1096,41 @@ export default function AdminPage() {
           </button>
         </div>
 
+        {/* Section 0: Master Operational Feed (All Reported Hazards) */}
+        {activeTab === 'all' && (
+          <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+            <div style={{
+              background: 'rgba(56, 189, 248, 0.1)',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderRadius: '10px',
+              padding: '16px',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ margin: 0, color: '#38BDF8', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🌐</span> Master Operational Feed · All Reported Hazards ({reports.length})
+              </h3>
+              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
+                Unified real-time disaster tactical desk. Every reported hazard is displayed with its active workflow stage, ground photos, and dynamic response actions tailored to hazard classification.
+              </p>
+            </div>
+
+            {reports.length === 0 ? (
+              <div className="empty-state" style={{ padding: '48px', background: 'rgba(11, 31, 51, 0.6)', borderRadius: '12px', textAlign: 'center' }}>
+                <span className="empty-state-icon">📡</span>
+                <h3 style={{ color: '#38BDF8' }}>System Standing By · Zero Reported Hazards</h3>
+                <p style={{ color: '#8A99A8', maxWidth: '460px', margin: '8px auto' }}>
+                  No citizen hazard reports filed yet. Reports filed via the public portal or mobile telemetry appear here in real time within 3 seconds.
+                </p>
+                <Link href="/report" className="btn btn-primary" style={{ marginTop: '12px' }}>
+                  + File Ground Truth Report
+                </Link>
+              </div>
+            ) : (
+              reports.map(r => renderReportCard(r))
+            )}
+          </div>
+        )}
+
         {/* Section 1: Verification & Ground Truth Validation (Right vs Wrong Check) */}
         {activeTab === 'verification' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
@@ -824,12 +1150,22 @@ export default function AdminPage() {
             </div>
 
             {pendingVerificationReports.length === 0 ? (
-              <div className="empty-state" style={{ padding: '48px', background: 'rgba(11, 31, 51, 0.6)', borderRadius: '12px' }}>
+              <div className="empty-state" style={{ padding: '48px', background: 'rgba(11, 31, 51, 0.6)', borderRadius: '12px', textAlign: 'center' }}>
                 <span className="empty-state-icon">✅</span>
                 <h3 style={{ color: '#34D399' }}>All Incoming Reports Verified</h3>
                 <p style={{ color: '#8A99A8', maxWidth: '460px', margin: '8px auto' }}>
                   No unverified citizen hazard submissions pending. All claims have been checked against Doppler AWS radar.
                 </p>
+                {verifiedPendingReports.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setActiveTab('verified_pending')}
+                    style={{ marginTop: '12px' }}
+                  >
+                    View Verified Genuine Hazards ({verifiedPendingReports.length}) →
+                  </button>
+                )}
               </div>
             ) : (
               pendingVerificationReports.map(r => renderReportCard(r, true))

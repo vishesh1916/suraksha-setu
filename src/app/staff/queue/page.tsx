@@ -198,7 +198,7 @@ export default function ReviewQueuePage() {
 
   useEffect(() => {
     fetchIncidents();
-    const interval = setInterval(fetchIncidents, 15000);
+    const interval = setInterval(fetchIncidents, 3000);
     return () => clearInterval(interval);
   }, [fetchIncidents]);
 
