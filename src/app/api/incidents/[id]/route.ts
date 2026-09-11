@@ -68,14 +68,11 @@ export async function POST(
     }
 
     if (action === 'RESTORE') {
-      const incident = dataStore.getIncident(id);
-      if (incident) {
-        incident.state = 'CANDIDATE';
-        incident.actionedDirective = 'NONE';
-        incident.reports.forEach(r => { r.status = 'ATTACHED'; });
+      const restored = dataStore.restoreIncident(id);
+      if (restored) {
         return NextResponse.json({
           success: true,
-          data: incident,
+          data: restored,
           message: 'Incident restored to Candidate status.',
         });
       }

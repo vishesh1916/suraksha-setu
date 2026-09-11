@@ -207,6 +207,11 @@ export default function ReportPage() {
               <Link href={`/track?id=${reportId}`} className="btn btn-primary btn-lg" style={{ flex: 1, textAlign: 'center' }}>
                 🔍 Track Status in Real Time →
               </Link>
+              {location && (
+                <Link href={`/map?lat=${location.latitude}&lng=${location.longitude}`} className="btn btn-secondary btn-lg" style={{ textAlign: 'center' }}>
+                  🗺️ View on Live Map
+                </Link>
+              )}
               <Link href="/" className="btn btn-secondary btn-lg">
                 ← Back to Home
               </Link>

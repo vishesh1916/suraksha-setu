@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
 import type { Alert, Report, Incident } from '@/types';
@@ -114,7 +115,13 @@ const LAYER_STYLES: Record<BaseLayer, any> = {
   },
 };
 
-export default function AllIndiaMapPage() {
+function MapContent() {
+  const searchParams = useSearchParams();
+  const paramLat = searchParams.get('lat');
+  const paramLng = searchParams.get('lng');
+  const paramHighlight = searchParams.get('highlight');
+  const hasHandledParams = useRef(false);
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
@@ -140,7 +147,7 @@ export default function AllIndiaMapPage() {
     return directions[idx];
   };
 
-  // Fetch real ground hazards from API to merge with benchmark verified places
+  // Fetch real ground hazards from API with continuous polling
   const fetchLiveHazards = useCallback(async () => {
     try {
       const [reportsRes, alertsRes] = await Promise.all([
@@ -148,7 +155,7 @@ export default function AllIndiaMapPage() {
         fetch('/api/alerts?status=active'),
       ]);
 
-      const newHazards = [...BENCHMARK_HAZARDS];
+      const newHazards: HazardPlace[] = [...BENCHMARK_HAZARDS];
 
       if (reportsRes.ok) {
         const rData = await reportsRes.json();
@@ -156,30 +163,51 @@ export default function AllIndiaMapPage() {
 
         incomingReports.forEach((rep) => {
           if (!rep.location?.latitude || !rep.location?.longitude) return;
-          const alreadyExists = newHazards.some(
-            (h) => Math.abs(h.lat - rep.location.latitude) < 0.005 && Math.abs(h.lng - rep.location.longitude) < 0.005
+          const lat = Number(rep.location.latitude);
+          const lng = Number(rep.location.longitude);
+          if (isNaN(lat) || isNaN(lng)) return;
+
+          // Dismissed false alarms are excluded from live risk map
+          if (rep.verificationStatus === 'FLAGGED_FALSE_REPORT' || rep.status === 'DISMISSED') return;
+
+          const isVerified = rep.verificationStatus === 'VERIFIED_GENUINE';
+          const landmarkText = rep.landmark || `Hazard near ${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E`;
+          const cityText = rep.landmark && rep.landmark.includes(',') 
+            ? rep.landmark.split(',').pop()?.trim() || 'Local Area' 
+            : 'Local Area';
+
+          const hazardItem: HazardPlace = {
+            id: rep.id,
+            category: rep.category || 'FLOODING',
+            severity: rep.severity || 3,
+            landmark: landmarkText,
+            cityName: cityText,
+            stateName: 'India',
+            lat,
+            lng,
+            waterDepthFeet: rep.waterDepthFeet || (rep.severity >= 4 ? 3.5 : 1.5),
+            rainfallRateMmH: rep.severity * 12,
+            windGustsKmh: 40 + rep.severity * 4,
+            photoUrl: rep.mediaUrl || 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
+            description: rep.description || 'Ground hazard reported by citizen.',
+            safetyGuidance: rep.currentActionCategory 
+              ? `${rep.currentActionCategory} — Municipal Emergency Response Active` 
+              : isVerified 
+                ? 'Verified Genuine Incident. Emergency municipal response active.' 
+                : 'Reported by local citizen. Verification in progress.',
+            verifiedAt: isVerified ? 'Verified by Officer' : 'Reported Just now',
+            source: isVerified ? 'Verified Citizen Ground Report' : 'Citizen Ground Sensor & Corroboration Engine',
+            reportCount: 1,
+          };
+
+          const existingIndex = newHazards.findIndex(
+            (h) => h.id === rep.id || (Math.abs(h.lat - lat) < 0.005 && Math.abs(h.lng - lng) < 0.005)
           );
 
-          if (!alreadyExists) {
-            newHazards.unshift({
-              id: rep.id,
-              category: rep.category,
-              severity: rep.severity,
-              landmark: rep.landmark || `Hazard near ${rep.location.latitude.toFixed(3)}°N, ${rep.location.longitude.toFixed(3)}°E`,
-              cityName: 'Local Area',
-              stateName: 'India',
-              lat: rep.location.latitude,
-              lng: rep.location.longitude,
-              waterDepthFeet: rep.waterDepthFeet || (rep.severity >= 4 ? 3.5 : 1.5),
-              rainfallRateMmH: rep.severity * 12,
-              windGustsKmh: 40 + rep.severity * 4,
-              photoUrl: rep.mediaUrl || 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
-              description: rep.description,
-              safetyGuidance: 'Reported by local citizen. Exercise caution and avoid low-lying roadways.',
-              verifiedAt: 'Just now',
-              source: 'Citizen Ground Sensor & Corroboration Engine',
-              reportCount: 1,
-            });
+          if (existingIndex >= 0) {
+            newHazards[existingIndex] = hazardItem;
+          } else {
+            newHazards.unshift(hazardItem);
           }
         });
       }
@@ -192,7 +220,24 @@ export default function AllIndiaMapPage() {
 
   useEffect(() => {
     fetchLiveHazards();
+    const interval = setInterval(fetchLiveHazards, 4000);
+    return () => clearInterval(interval);
   }, [fetchLiveHazards]);
+
+  // If search parameters (lat, lng, or highlight) exist, auto-select matched place
+  useEffect(() => {
+    if (!hazards.length) return;
+    if (paramHighlight || (paramLat && paramLng)) {
+      const pLat = paramLat ? parseFloat(paramLat) : NaN;
+      const pLng = paramLng ? parseFloat(paramLng) : NaN;
+      const matched = hazards.find(
+        (h) => h.id === paramHighlight || (!isNaN(pLat) && !isNaN(pLng) && Math.abs(h.lat - pLat) < 0.01 && Math.abs(h.lng - pLng) < 0.01)
+      );
+      if (matched && (!selectedPlace || selectedPlace.id !== matched.id)) {
+        setSelectedPlace(matched);
+      }
+    }
+  }, [hazards, paramHighlight, paramLat, paramLng, selectedPlace]);
 
   // Initialize MapLibre GL instance
   useEffect(() => {
@@ -205,13 +250,18 @@ export default function AllIndiaMapPage() {
       const maplibreglModule = (await import('maplibre-gl')) as any;
       const maplibregl = maplibreglModule.default || maplibreglModule;
 
+      const initialLat = paramLat ? parseFloat(paramLat) : 22.5937;
+      const initialLng = paramLng ? parseFloat(paramLng) : 78.9629;
+      const hasCoordParams = Boolean(paramLat && paramLng && !isNaN(initialLat) && !isNaN(initialLng));
+
       const map = new maplibregl.Map({
         container: mapContainerRef.current,
         style: LAYER_STYLES.street,
-        center: [78.9629, 22.5937], // Center of India
-        zoom: 4.8,
+        center: [hasCoordParams ? initialLng : 78.9629, hasCoordParams ? initialLat : 22.5937],
+        zoom: hasCoordParams ? 14.8 : 4.8,
         minZoom: 3.5,
         maxZoom: 19,
+        pitch: hasCoordParams ? 35 : 0,
         pitchWithRotate: true,
         dragRotate: true,
       });
@@ -239,7 +289,7 @@ export default function AllIndiaMapPage() {
         mapRef.current = null;
       }
     };
-  }, []);
+  }, [paramLat, paramLng]);
 
   // Update map style when layer toggle changes
   const switchLayer = (layer: BaseLayer) => {
@@ -561,6 +611,58 @@ export default function AllIndiaMapPage() {
           }}>
             <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#34D399' }} />
             <span>Radar &amp; Telemetry Gateway Live · Zero active hazards reported. New citizen reports submitted at <Link href="/report" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'underline' }}>/report</Link> appear here automatically.</span>
+          </div>
+        )}
+
+        {/* Live Active Hazards Indicator Banner */}
+        {hazards.length > 0 && (
+          <div style={{
+            position: 'absolute',
+            top: '16px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            background: 'rgba(15, 23, 42, 0.95)',
+            border: '1px solid #EF4444',
+            borderRadius: '999px',
+            padding: '6px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            color: '#F8FAFC',
+            fontSize: '12px',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.35)',
+          }}>
+            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#EF4444' }} />
+            <span><strong>{hazards.length} Active Ground Hazard{hazards.length > 1 ? 's' : ''}</strong> Live on Radar</span>
+            <button
+              type="button"
+              onClick={() => {
+                const target = hazards[0];
+                if (target) {
+                  setSelectedPlace(target);
+                  mapRef.current?.flyTo({
+                    center: [target.lng, target.lat],
+                    zoom: 15,
+                    pitch: 35,
+                    duration: 1200,
+                  });
+                }
+              }}
+              style={{
+                background: '#DC2626',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '999px',
+                padding: '4px 12px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              🎯 Focus Latest Hazard ({hazards[0].landmark.split(',')[0]})
+            </button>
           </div>
         )}
 
@@ -965,5 +1067,20 @@ export default function AllIndiaMapPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AllIndiaMapPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#020B14', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38BDF8' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner spinner-lg" style={{ margin: '0 auto 12px' }} />
+          <p style={{ fontSize: '0.9rem', color: '#8A99A8' }}>Initializing Live Hazard Radar &amp; Vector GIS Base…</p>
+        </div>
+      </div>
+    }>
+      <MapContent />
+    </Suspense>
   );
 }

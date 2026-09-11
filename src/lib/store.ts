@@ -420,23 +420,28 @@ class DataStore {
     if (!incident.actionHistory) incident.actionHistory = [];
     incident.actionHistory.unshift(actionLog);
 
-    // Cascade status to contributing reports for citizen tracking!
+    // Cascade status to contributing reports for citizen tracking and admin tabs!
     incident.reports.forEach(r => {
-      if (!r.actionHistory) r.actionHistory = [];
-      r.actionHistory.unshift(actionLog);
-      if (!r.firstActionTaken) r.firstActionTaken = actionCategory;
-      r.currentActionCategory = actionCategory;
+      const storeReport = this.reports.find(rep => rep.id === r.id);
+      const targets = [r, storeReport].filter((t): t is Report => Boolean(t));
 
-      if (action.action === 'VERIFY') {
-        r.status = 'REVIEWED';
-        r.verificationStatus = 'VERIFIED_GENUINE';
-        r.verificationRationale = action.reason || 'Verified as genuine hazard by duty meteorologist.';
-      } else if (action.action === 'DISMISS') {
-        r.status = 'DISMISSED';
-        r.verificationStatus = 'FLAGGED_FALSE_REPORT';
-        r.verificationRationale = action.reason || 'Flagged as inaccurate or duplicate by duty reviewer.';
-      }
-      r.updatedAt = new Date().toISOString();
+      targets.forEach(target => {
+        if (!target.actionHistory) target.actionHistory = [];
+        target.actionHistory.unshift(actionLog);
+        target.firstActionTaken = actionCategory;
+        target.currentActionCategory = actionCategory;
+
+        if (action.action === 'VERIFY') {
+          target.status = 'REVIEWED';
+          target.verificationStatus = 'VERIFIED_GENUINE';
+          target.verificationRationale = action.reason || 'Verified as genuine hazard by duty meteorologist.';
+        } else if (action.action === 'DISMISS') {
+          target.status = 'DISMISSED';
+          target.verificationStatus = 'FLAGGED_FALSE_REPORT';
+          target.verificationRationale = action.reason || 'Flagged as inaccurate or duplicate by duty reviewer.';
+        }
+        target.updatedAt = new Date().toISOString();
+      });
     });
 
     this.reviewActions.push(reviewAction);
@@ -481,14 +486,18 @@ class DataStore {
     incident.updatedAt = new Date().toISOString();
 
     incident.reports.forEach(r => {
-      r.status = 'RESOLVED';
-      r.currentActionCategory = actionCategory;
-      if (!r.firstActionTaken || r.firstActionTaken === 'Pending Verification' || r.firstActionTaken === 'Verified Genuine — Pending Tactical Action') {
-        r.firstActionTaken = actionCategory;
-      }
-      if (!r.actionHistory) r.actionHistory = [];
-      r.actionHistory.unshift(actionLog);
-      r.updatedAt = new Date().toISOString();
+      const storeReport = this.reports.find(rep => rep.id === r.id);
+      const targets = [r, storeReport].filter((t): t is Report => Boolean(t));
+      targets.forEach(target => {
+        target.status = 'RESOLVED';
+        target.currentActionCategory = actionCategory;
+        if (!target.firstActionTaken || target.firstActionTaken === 'Pending Verification' || target.firstActionTaken === 'Verified Genuine — Pending Tactical Action') {
+          target.firstActionTaken = actionCategory;
+        }
+        if (!target.actionHistory) target.actionHistory = [];
+        target.actionHistory.unshift(actionLog);
+        target.updatedAt = new Date().toISOString();
+      });
     });
 
     this.logAudit(actorId, 'ADMIN', 'incident', incidentId, 'RESOLVE', { resolutionNotes });
@@ -526,14 +535,18 @@ class DataStore {
     incident.updatedAt = new Date().toISOString();
 
     incident.reports.forEach(r => {
-      r.currentActionCategory = actionCategory;
-      if (!r.firstActionTaken || r.firstActionTaken === 'Pending Verification' || r.firstActionTaken === 'Verified Genuine — Pending Tactical Action') {
-        r.firstActionTaken = actionCategory;
-      }
-      if (!r.actionHistory) r.actionHistory = [];
-      r.actionHistory.unshift(actionLog);
-      r.status = 'REVIEWED';
-      r.updatedAt = new Date().toISOString();
+      const storeReport = this.reports.find(rep => rep.id === r.id);
+      const targets = [r, storeReport].filter((t): t is Report => Boolean(t));
+      targets.forEach(target => {
+        target.currentActionCategory = actionCategory;
+        if (!target.firstActionTaken || target.firstActionTaken === 'Pending Verification' || target.firstActionTaken === 'Verified Genuine — Pending Tactical Action') {
+          target.firstActionTaken = actionCategory;
+        }
+        if (!target.actionHistory) target.actionHistory = [];
+        target.actionHistory.unshift(actionLog);
+        target.status = 'REVIEWED';
+        target.updatedAt = new Date().toISOString();
+      });
     });
 
     this.logAudit(actorId, 'ADMIN', 'incident', incidentId, 'DISPATCH_MUNICIPAL_CREW', {
@@ -567,19 +580,43 @@ class DataStore {
     incident.updatedAt = new Date().toISOString();
 
     incident.reports.forEach(r => {
-      r.currentActionCategory = actionCategory;
-      if (!r.firstActionTaken || r.firstActionTaken === 'Pending Verification' || r.firstActionTaken === 'Verified Genuine — Pending Tactical Action') {
-        r.firstActionTaken = actionCategory;
-      }
-      if (!r.actionHistory) r.actionHistory = [];
-      r.actionHistory.unshift(actionLog);
-      r.status = 'REVIEWED';
-      r.updatedAt = new Date().toISOString();
+      const storeReport = this.reports.find(rep => rep.id === r.id);
+      const targets = [r, storeReport].filter((t): t is Report => Boolean(t));
+      targets.forEach(target => {
+        target.currentActionCategory = actionCategory;
+        if (!target.firstActionTaken || target.firstActionTaken === 'Pending Verification' || target.firstActionTaken === 'Verified Genuine — Pending Tactical Action') {
+          target.firstActionTaken = actionCategory;
+        }
+        if (!target.actionHistory) target.actionHistory = [];
+        target.actionHistory.unshift(actionLog);
+        target.status = 'REVIEWED';
+        target.updatedAt = new Date().toISOString();
+      });
     });
 
     this.logAudit(actorId, 'ADMIN', 'incident', incidentId, 'BROADCAST_CAP_ALERT', {
       alertId,
       timestamp: new Date().toISOString(),
+    });
+    this.persist();
+    return incident;
+  }
+
+  restoreIncident(incidentId: string): Incident | undefined {
+    const incident = this.incidents.find(i => i.id === incidentId);
+    if (!incident) return undefined;
+    incident.state = 'CANDIDATE';
+    incident.actionedDirective = 'NONE';
+    incident.updatedAt = new Date().toISOString();
+    incident.reports.forEach(r => {
+      const storeReport = this.reports.find(rep => rep.id === r.id);
+      const targets = [r, storeReport].filter((t): t is Report => Boolean(t));
+      targets.forEach(target => {
+        target.status = 'ATTACHED';
+        target.verificationStatus = 'PENDING_VERIFICATION';
+        target.currentActionCategory = 'Pending Verification';
+        target.updatedAt = new Date().toISOString();
+      });
     });
     this.persist();
     return incident;
