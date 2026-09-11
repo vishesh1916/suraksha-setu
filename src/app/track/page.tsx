@@ -48,11 +48,35 @@ function TrackContent() {
     if (typeof window !== 'undefined') return getSavedLanguage();
     return 'en';
   });
+  const [myReports, setMyReports] = useState<Array<{
+    id: string;
+    category: string;
+    severity: number;
+    landmark: string;
+    description: string;
+    createdAt: string;
+  }>>([]);
   const [reportIdInput, setReportIdInput] = useState(initialId);
   const [activeTrackId, setActiveTrackId] = useState(initialId);
   const [tracking, setTracking] = useState<TrackingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(Boolean(initialId));
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]');
+        setMyReports(saved);
+        if (!initialId) {
+          const lastId = localStorage.getItem('suraksha_last_report_id') || saved[0]?.id;
+          if (lastId) {
+            setReportIdInput(lastId);
+            setActiveTrackId(lastId);
+          }
+        }
+      } catch {}
+    }
+  }, [initialId]);
 
   useEffect(() => {
     const onLangChange = (e: Event) => {
@@ -264,6 +288,47 @@ function TrackContent() {
           {t.trackBtn}
         </button>
       </form>
+
+      {/* Your Reported Hazards Quick Selector */}
+      {myReports.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '20px'
+        }}>
+          <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>Your Submitted Hazards:</span>
+          {myReports.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => {
+                setReportIdInput(r.id);
+                setActiveTrackId(r.id);
+                performTracking(r.id);
+              }}
+              style={{
+                background: activeTrackId === r.id ? 'rgba(56, 189, 248, 0.25)' : 'rgba(11, 31, 51, 0.7)',
+                border: activeTrackId === r.id ? '1px solid #38BDF8' : '1px solid rgba(138, 153, 168, 0.3)',
+                color: activeTrackId === r.id ? '#38BDF8' : '#CBD5E1',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                fontSize: '0.78rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: activeTrackId === r.id ? 700 : 500
+              }}
+            >
+              <span>{activeTrackId === r.id ? '📍' : '📄'}</span>
+              <span>{r.category}: {r.landmark ? r.landmark.slice(0, 22) : r.id.slice(0, 10)}…</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '3rem 0' }}>

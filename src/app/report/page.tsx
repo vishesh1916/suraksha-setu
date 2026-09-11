@@ -32,12 +32,57 @@ export default function ReportPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [photoCompressed, setPhotoCompressed] = useState(false);
+  const [recentReports, setRecentReports] = useState<Array<{
+    id: string;
+    category: string;
+    severity: number;
+    landmark: string;
+    description: string;
+    createdAt: string;
+  }>>([]);
   const startTime = useRef(Date.now());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const saveToUserHistory = (id: string, reportPayload: any) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const existing = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]');
+      const newEntry = {
+        id,
+        category: reportPayload.category,
+        severity: reportPayload.severity,
+        landmark: reportPayload.landmark || `${reportPayload.location?.latitude?.toFixed(4) || ''}°N, ${reportPayload.location?.longitude?.toFixed(4) || ''}°E`,
+        description: reportPayload.description,
+        createdAt: new Date().toISOString(),
+      };
+      const updated = [newEntry, ...existing.filter((r: any) => r.id !== id)].slice(0, 20);
+      localStorage.setItem('suraksha_my_reports', JSON.stringify(updated));
+      localStorage.setItem('suraksha_last_report_id', id);
+      setRecentReports(updated);
+    } catch {}
+  };
+
   useEffect(() => {
     setLang(getSavedLanguage());
-    flushOfflineQueue();
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]');
+        setRecentReports(saved);
+      } catch {}
+    }
+    flushOfflineQueue((localId, serverId) => {
+      if (typeof window !== 'undefined') {
+        try {
+          const existing = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]');
+          const updated = existing.map((r: any) => r.id === localId ? { ...r, id: serverId } : r);
+          localStorage.setItem('suraksha_my_reports', JSON.stringify(updated));
+          if (localStorage.getItem('suraksha_last_report_id') === localId) {
+            localStorage.setItem('suraksha_last_report_id', serverId);
+          }
+          setRecentReports(updated);
+        } catch {}
+      }
+    });
     const onLangChange = (e: Event) => {
       const customEvent = e as CustomEvent<Language>;
       if (customEvent.detail) setLang(customEvent.detail);
@@ -122,6 +167,7 @@ export default function ReportPage() {
       setReportId(offlineId);
       setSubmitted(true);
       setSubmitting(false);
+      saveToUserHistory(offlineId, payload);
       return;
     }
 
@@ -134,18 +180,21 @@ export default function ReportPage() {
 
       const data = await res.json();
 
-      if (data.success) {
+      if (data.success && data.data?.id) {
         setReportId(data.data.id);
         setSubmitted(true);
+        saveToUserHistory(data.data.id, payload);
       } else {
         const offlineId = saveOfflineReport(payload);
         setReportId(offlineId);
         setSubmitted(true);
+        saveToUserHistory(offlineId, payload);
       }
     } catch {
       const offlineId = saveOfflineReport(payload);
       setReportId(offlineId);
       setSubmitted(true);
+      saveToUserHistory(offlineId, payload);
     } finally {
       setSubmitting(false);
     }
@@ -251,6 +300,65 @@ export default function ReportPage() {
       </div>
 
       <div className={styles.container}>
+        {/* Active Reported Hazard Banner (Instant Status & Recovery) */}
+        {recentReports.length > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(14, 116, 144, 0.25) 0%, rgba(15, 23, 42, 0.7) 100%)',
+            border: '1px solid #38BDF8',
+            borderRadius: '12px',
+            padding: '16px 20px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.8rem' }}>🛡️</span>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <strong style={{ color: '#F7F6F2', fontSize: '0.98rem' }}>
+                    Active Hazard Reported by You
+                  </strong>
+                  <span style={{
+                    background: 'rgba(56, 189, 248, 0.2)',
+                    color: '#38BDF8',
+                    border: '1px solid #38BDF8',
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    fontSize: '11px',
+                    fontFamily: 'monospace',
+                    fontWeight: 700
+                  }}>
+                    ID: {recentReports[0].id.slice(0, 16)}
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
+                  {recentReports[0].landmark} · {HAZARD_CATEGORIES[recentReports[0].category as HazardCategory]?.icon || '⚠️'} {recentReports[0].category} · Severity {recentReports[0].severity}/5
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <Link
+                href={`/track?id=${encodeURIComponent(recentReports[0].id)}`}
+                className="btn btn-primary"
+                style={{ fontSize: '0.85rem', padding: '8px 16px', textDecoration: 'none', fontWeight: 700 }}
+              >
+                🔍 Track Real-Time Status →
+              </Link>
+              <Link
+                href="/staff/admin"
+                className="btn btn-secondary"
+                style={{ fontSize: '0.85rem', padding: '8px 14px', textDecoration: 'none' }}
+              >
+                ⚙️ Admin Console
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Step 1: Category */}
         {step === 'category' && (
           <div className={styles.stepContent}>

@@ -1,6 +1,59 @@
 {
   "reports": [
     {
+      "reporterId": "anon_1789169041812",
+      "reporterPseudonym": "Citizen-003",
+      "category": "WATERLOGGING",
+      "severity": 4,
+      "description": "Critical waterlogging 4.5 ft deep under railway tracks. Traffic completely halted.",
+      "location": {
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "accuracy": 25
+      },
+      "h3Index": "882a907ecd1bfffff",
+      "landmark": "Delhi NCR (Station Region)",
+      "consent": true,
+      "status": "RESOLVED",
+      "id": "id_mtxl1w2e_2g73y45",
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxl3z9w_f3wocqo",
+          "action": "Hazard Resolved",
+          "actorName": "Emergency Administrator",
+          "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety.",
+          "timestamp": "2026-09-11T23:25:39.284Z"
+        },
+        {
+          "id": "id_mtxl2wc6_nudryj8",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Emergency Administrator",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-11T23:24:48.822Z"
+        },
+        {
+          "id": "id_mtxl2r7e_zoevpk9",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Emergency Administrator",
+          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+          "timestamp": "2026-09-11T23:24:42.170Z"
+        },
+        {
+          "id": "id_mtxl1w2e_8uxr5co",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-11T23:24:01.814Z"
+        }
+      ],
+      "createdAt": "2026-09-11T23:24:01.814Z",
+      "updatedAt": "2026-09-11T23:25:39.284Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+      "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+    },
+    {
       "reporterId": "anon_1789167877868",
       "reporterPseudonym": "Citizen-002",
       "category": "FLOODING",
@@ -103,6 +156,168 @@
     }
   ],
   "incidents": [
+    {
+      "id": "inc_real_mtxl1w2h_oesk",
+      "h3Parent": "882a907ecd1bfffff",
+      "category": "WATERLOGGING",
+      "state": "RESOLVED",
+      "confidenceScore": {
+        "total": 27,
+        "factors": [
+          {
+            "name": "Report Completeness",
+            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Description ✓, Photo missing (optional)",
+            "contribution": 21,
+            "maxContribution": 25,
+            "explanation": "5 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
+          },
+          {
+            "name": "Spatial Corroboration",
+            "signal": "No nearby reports",
+            "contribution": 0,
+            "maxContribution": 30,
+            "explanation": "No other reports of the same hazard within 500m and 20 minutes. Single report — awaiting corroboration."
+          },
+          {
+            "name": "Reporter History",
+            "signal": "New reporter",
+            "contribution": 2,
+            "maxContribution": 15,
+            "explanation": "First-time reporter. Base credibility assigned. Reports are never suppressed solely due to no history."
+          },
+          {
+            "name": "Weather Evidence",
+            "signal": "No weather data available",
+            "contribution": 0,
+            "maxContribution": 20,
+            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
+            "freshness": "unavailable"
+          },
+          {
+            "name": "Contradiction Check",
+            "signal": "No flags detected",
+            "contribution": 4,
+            "maxContribution": 10,
+            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
+          }
+        ],
+        "computedAt": "2026-09-11T23:24:01.817Z"
+      },
+      "impactLevel": "CRITICAL",
+      "reportCount": 1,
+      "reports": [
+        {
+          "reporterId": "anon_1789169041812",
+          "reporterPseudonym": "Citizen-003",
+          "category": "WATERLOGGING",
+          "severity": 4,
+          "description": "Critical waterlogging 4.5 ft deep under railway tracks. Traffic completely halted.",
+          "location": {
+            "latitude": 28.6139,
+            "longitude": 77.209,
+            "accuracy": 25
+          },
+          "h3Index": "882a907ecd1bfffff",
+          "landmark": "Delhi NCR (Station Region)",
+          "consent": true,
+          "status": "RESOLVED",
+          "id": "id_mtxl1w2e_2g73y45",
+          "verificationStatus": "VERIFIED_GENUINE",
+          "currentActionCategory": "Hazard Resolved",
+          "actionHistory": [
+            {
+              "id": "id_mtxl3z9w_f3wocqo",
+              "action": "Hazard Resolved",
+              "actorName": "Emergency Administrator",
+              "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety.",
+              "timestamp": "2026-09-11T23:25:39.284Z"
+            },
+            {
+              "id": "id_mtxl2wc6_nudryj8",
+              "action": "Dewatering & Municipal Crew Dispatched",
+              "actorName": "Emergency Administrator",
+              "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+              "timestamp": "2026-09-11T23:24:48.822Z"
+            },
+            {
+              "id": "id_mtxl2r7e_zoevpk9",
+              "action": "Verified Genuine — Pending Tactical Action",
+              "actorName": "Emergency Administrator",
+              "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+              "timestamp": "2026-09-11T23:24:42.170Z"
+            },
+            {
+              "id": "id_mtxl1w2e_8uxr5co",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-11T23:24:01.814Z"
+            }
+          ],
+          "createdAt": "2026-09-11T23:24:01.814Z",
+          "updatedAt": "2026-09-11T23:25:39.284Z",
+          "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+          "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "id_mtxl1w2h_z4spmtg",
+          "reportId": "id_mtxl1w2e_2g73y45",
+          "type": "WEATHER",
+          "source": "Doppler Weather Radar & Automated Rain Gauge",
+          "observedAt": "2026-09-11T23:24:01.817Z",
+          "freshnessSeconds": 45,
+          "value": {
+            "reflectivityDbz": 50,
+            "rainRateMmH": 44
+          },
+          "provenance": "Automated Weather Corroboration Engine"
+        }
+      ],
+      "reviewActions": [],
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxl3z9w_f3wocqo",
+          "action": "Hazard Resolved",
+          "actorName": "Emergency Administrator",
+          "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety.",
+          "timestamp": "2026-09-11T23:25:39.284Z"
+        },
+        {
+          "id": "id_mtxl2wc6_nudryj8",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Emergency Administrator",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-11T23:24:48.822Z"
+        },
+        {
+          "id": "id_mtxl2r7e_zoevpk9",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Emergency Administrator",
+          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+          "timestamp": "2026-09-11T23:24:42.170Z"
+        },
+        {
+          "id": "id_mtxl1w2i_daxav7e",
+          "action": "Pending Verification",
+          "actorName": "Cluster Engine",
+          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
+          "timestamp": "2026-09-11T23:24:01.814Z"
+        }
+      ],
+      "landmark": "Delhi NCR (Station Region)",
+      "location": {
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "accuracy": 25
+      },
+      "createdAt": "2026-09-11T23:24:01.814Z",
+      "updatedAt": "2026-09-11T23:25:39.284Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched"
+    },
     {
       "id": "inc_real_mtxkcxyk_7fk8",
       "h3Parent": "882a4af05105fffff",
@@ -593,7 +808,55 @@
         "notes": "Immediate evacuation ordered for ground floor residents."
       },
       "createdAt": "2026-09-11T23:04:37.964Z"
+    },
+    {
+      "id": "id_mtxl1w2e_dyd66l0",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxl1w2e_2g73y45",
+      "action": "CREATE",
+      "metadata": {
+        "category": "WATERLOGGING"
+      },
+      "createdAt": "2026-09-11T23:24:01.814Z"
+    },
+    {
+      "id": "id_mtxl2r7f_hd6hj1c",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxl1w2e_2g73y45",
+      "action": "Verified Genuine — Pending Tactical Action",
+      "metadata": {
+        "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+      },
+      "createdAt": "2026-09-11T23:24:42.171Z"
+    },
+    {
+      "id": "id_mtxl2wc6_n53hur5",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxl1w2e_2g73y45",
+      "action": "Dewatering & Municipal Crew Dispatched",
+      "metadata": {
+        "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions."
+      },
+      "createdAt": "2026-09-11T23:24:48.822Z"
+    },
+    {
+      "id": "id_mtxl3z9w_f0mo415",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxl1w2e_2g73y45",
+      "action": "Hazard Resolved",
+      "metadata": {
+        "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety."
+      },
+      "createdAt": "2026-09-11T23:25:39.284Z"
     }
   ],
-  "savedAt": "2026-09-11T23:04:37.964Z"
+  "savedAt": "2026-09-11T23:25:39.284Z"
 }
