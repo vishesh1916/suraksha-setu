@@ -1,0 +1,833 @@
+/* ============================================================
+   Suraksha Setu — Live Interactive Google Maps-Grade Risk Engine
+   Dark Midnight Navy (#0B1F33) & Precision Editorial Styling
+   ============================================================ */
+
+.page {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #0B1F33;
+  color: #F7F6F2;
+  overflow: hidden;
+  font-family: var(--font-family-sans, system-ui, -apple-system, sans-serif);
+}
+
+/* — Top Map Control Bar — */
+.topControlBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  background: #071524;
+  border-bottom: 1px solid rgba(138, 153, 168, 0.2);
+  z-index: 30;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.searchForm {
+  display: flex;
+  align-items: center;
+  background: rgba(11, 31, 51, 0.85);
+  border: 1px solid rgba(138, 153, 168, 0.35);
+  border-radius: 8px;
+  padding: 4px 12px;
+  min-width: 380px;
+  max-width: 520px;
+  flex: 1;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.searchForm:focus-within {
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+.searchIcon {
+  font-size: 14px;
+  margin-right: 8px;
+  color: #8A99A8;
+}
+
+.searchInput {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #F7F6F2;
+  font-size: 13px;
+  padding: 6px 0;
+}
+
+.searchInput::placeholder {
+  color: #8A99A8;
+}
+
+.searchingSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(56, 189, 248, 0.3);
+  border-top-color: #38BDF8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.searchBtn {
+  background: #19314C;
+  border: 1px solid rgba(138, 153, 168, 0.4);
+  color: #F7F6F2;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.searchBtn:hover {
+  background: #254B73;
+  color: #FFFFFF;
+}
+
+/* — Layer Switcher — */
+.layerSwitcher {
+  display: flex;
+  align-items: center;
+  background: rgba(11, 31, 51, 0.85);
+  border: 1px solid rgba(138, 153, 168, 0.3);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.layerBtn {
+  background: transparent;
+  border: none;
+  color: #8A99A8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.layerBtn:hover {
+  color: #F7F6F2;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.layerBtnActive {
+  background: #1E3A5F !important;
+  color: #38BDF8 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.freeApiBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34D399;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* — Hazard Filter Strip — */
+.hazardFilterStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.filterChip {
+  background: rgba(247, 246, 242, 0.05);
+  border: 1px solid rgba(138, 153, 168, 0.25);
+  color: #8A99A8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.filterChip:hover {
+  background: rgba(247, 246, 242, 0.1);
+  color: #F7F6F2;
+}
+
+.filterChipActive {
+  background: rgba(217, 119, 6, 0.2) !important;
+  border-color: #F59E0B !important;
+  color: #FBBF24 !important;
+}
+
+/* — Regional Quick Jump Bar — */
+.quickJumpBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 20px;
+  background: #0B1F33;
+  border-bottom: 1px solid rgba(138, 153, 168, 0.15);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.quickJumpTitle {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #8A99A8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.quickJumpBtn {
+  background: rgba(247, 246, 242, 0.04);
+  border: 1px solid rgba(138, 153, 168, 0.2);
+  color: #E2E8F0;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.quickJumpBtn:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38BDF8;
+  color: #38BDF8;
+}
+
+/* — Map Layout & Canvas — */
+.mapLayout {
+  flex: 1;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.mapCanvasWrapper {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: #071524;
+}
+
+/* Override MapLibre controls to dark aesthetics */
+.mapCanvasWrapper :global(.maplibregl-ctrl-group) {
+  background: rgba(11, 31, 51, 0.9) !important;
+  border: 1px solid rgba(138, 153, 168, 0.3) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  overflow: hidden;
+}
+
+.mapCanvasWrapper :global(.maplibregl-ctrl-group button) {
+  width: 36px !important;
+  height: 36px !important;
+  border-bottom: 1px solid rgba(138, 153, 168, 0.2) !important;
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+.mapCanvasWrapper :global(.maplibregl-ctrl-group button:last-child) {
+  border-bottom: none !important;
+}
+
+/* — MapLibre Custom Markers — */
+.hazardPinMarker {
+  cursor: pointer;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hazardPinWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hazardPulseHalo {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 50%;
+  background: var(--pin-color, #EF4444);
+  opacity: 0.35;
+  animation: markerPulse 2s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+@keyframes markerPulse {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.hazardPinCore {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #081624;
+  border: 2px solid var(--pin-color, #EF4444);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hazardPinMarker:hover .hazardPinCore {
+  transform: scale(1.15) translateY(-3px);
+}
+
+.hazardPinIcon {
+  font-size: 16px;
+}
+
+.hazardPinBadge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--pin-color, #EF4444);
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 999px;
+  border: 1px solid #081624;
+}
+
+.hazardPinCallout {
+  position: absolute;
+  top: 42px;
+  background: rgba(8, 22, 36, 0.95);
+  border: 1px solid rgba(138, 153, 168, 0.3);
+  backdrop-filter: blur(8px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  opacity: 0.95;
+}
+
+.hazardPinCallout strong {
+  font-size: 10.5px;
+  color: #F7F6F2;
+}
+
+.hazardPinCallout span {
+  font-size: 9.5px;
+  color: #38BDF8;
+  font-weight: 600;
+}
+
+/* — Floating Legend — */
+.floatingLegend {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  background: rgba(7, 21, 36, 0.9);
+  border: 1px solid rgba(138, 153, 168, 0.3);
+  border-radius: 8px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(12px);
+  z-index: 20;
+  font-size: 11px;
+  color: #8A99A8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDotCritical {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #EF4444;
+  box-shadow: 0 0 6px #EF4444;
+}
+
+.legendDotModerate {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #F59E0B;
+}
+
+/* — Place Inspection Card / Drawer — */
+.placeInspectionCard {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 440px;
+  max-height: calc(100% - 40px);
+  background: rgba(8, 22, 36, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 12px;
+  overflow-y: auto;
+  z-index: 25;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7);
+  animation: cardSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.placeCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(138, 153, 168, 0.15);
+}
+
+.placeCardTitleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.placeCardCategoryBadge {
+  font-size: 13px;
+  font-weight: 700;
+  color: #38BDF8;
+}
+
+.placeCardSeverityPill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.placeCardSeverityPill[data-severity="3"] {
+  background: rgba(217, 119, 6, 0.2);
+  color: #F59E0B;
+  border-color: rgba(217, 119, 6, 0.35);
+}
+
+.placeCardSeverityPill[data-severity="1"],
+.placeCardSeverityPill[data-severity="2"] {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38BDF8;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.closeCardBtn {
+  background: transparent;
+  border: none;
+  color: #8A99A8;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.closeCardBtn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Real High-Resolution Hazard Photo */
+.photoContainer {
+  position: relative;
+  width: 100%;
+  height: 210px;
+  background: #000000;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.hazardPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.photoContainer:hover .hazardPhoto {
+  transform: scale(1.04);
+}
+
+.photoOverlayBadge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+/* Landmark Details */
+.placeDetails {
+  padding: 14px 16px;
+}
+
+.placeLandmarkTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #F7F6F2;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.placeGeoSub {
+  font-size: 11.5px;
+  color: #8A99A8;
+  margin: 0 0 10px;
+}
+
+.placeDescription {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #E2E8F0;
+  margin: 0;
+}
+
+/* Telemetry Grid */
+.telemetryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 0 16px 14px;
+}
+
+.telemetryMetric {
+  background: rgba(11, 31, 51, 0.7);
+  border: 1px solid rgba(138, 153, 168, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.telemetryLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #8A99A8;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.telemetryVal {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.telemetrySub {
+  font-size: 9px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* Safety Guidance */
+.safetyGuidanceBox {
+  margin: 0 16px 14px;
+  padding: 10px 12px;
+  background: rgba(217, 119, 6, 0.1);
+  border-left: 3px solid #F59E0B;
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #F7F6F2;
+}
+
+.safetyGuidanceBox strong {
+  display: block;
+  color: #FBBF24;
+  margin-bottom: 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.safetyGuidanceBox p {
+  margin: 0;
+}
+
+/* Action Buttons */
+.cardActions {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(138, 153, 168, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.directionsBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #38BDF8;
+  color: #071524;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.directionsBtn:hover {
+  background: #7DD3FC;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.35);
+}
+
+.addReportBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #EF4444;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.addReportBtn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #F87171;
+}
+
+/* Full Photo Modal */
+.fullPhotoModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.fullPhotoContent {
+  position: relative;
+  max-width: 900px;
+  width: 100%;
+  background: #0B1F33;
+  border: 1px solid rgba(138, 153, 168, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.modalCloseBtn:hover {
+  background: #EF4444;
+}
+
+.modalFullImg {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+  background: #000;
+}
+
+.modalPhotoCaption {
+  padding: 12px 16px;
+  background: #071524;
+  font-size: 12px;
+  color: #8A99A8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .topControlBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .searchForm {
+    min-width: 100%;
+  }
+  .placeInspectionCard {
+    width: calc(100% - 32px);
+    right: 16px;
+    bottom: 16px;
+    top: auto;
+    max-height: 60vh;
+  }
+}
+
+/* Real 360° Street View Panoramic Inspector */
+.streetViewModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 11, 20, 0.92);
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.streetViewContent {
+  position: relative;
+  max-width: 1080px;
+  width: 100%;
+  background: #071524;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 28px 72px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+
+.streetViewHeader {
+  padding: 14px 20px;
+  background: #0B1F33;
+  border-bottom: 1px solid rgba(138, 153, 168, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.streetViewPanoViewport {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: #000;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+}
+
+.streetViewPanoViewport:active {
+  cursor: grabbing;
+}
+
+.streetViewPanoImg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 125%;
+  min-width: 220%;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+.streetViewCompassHud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(7, 21, 36, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 8px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #38BDF8;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(6px);
+  z-index: 5;
+}
+
+.streetViewTelemetryOverlay {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  background: rgba(7, 21, 36, 0.88);
+  border: 1px solid rgba(138, 153, 168, 0.3);
+  border-radius: 8px;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  z-index: 5;
+}
+
+.streetViewFooter {
+  padding: 14px 20px;
+  background: #0B1F33;
+  border-top: 1px solid rgba(138, 153, 168, 0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}

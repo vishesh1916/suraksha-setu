@@ -1,0 +1,144 @@
+/* ============================================================
+   Suraksha Setu — Unified Production Navigation Bar Styles
+   ============================================================ */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 2.25rem;
+  background: rgba(11, 31, 51, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  width: 100%;
+}
+
+.brandGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading, sans-serif);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #F7F6F2;
+  text-decoration: none;
+}
+
+.brandIcon {
+  font-size: 1.25rem;
+}
+
+.subBrand {
+  font-size: 0.775rem;
+  color: #8A99A8;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  padding-left: 12px;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 900px) {
+  .subBrand {
+    display: none;
+  }
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+@media (max-width: 1080px) {
+  .navLinks {
+    display: none;
+  }
+}
+
+.navLink {
+  color: rgba(247, 246, 242, 0.82);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: color 0.15s ease;
+  position: relative;
+}
+
+.navLink:hover {
+  color: #FFFFFF;
+}
+
+.navLinkActive {
+  color: #F59E0B;
+  font-weight: 600;
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Language Switcher Pill */
+.langBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #F7F6F2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.langBtn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.signInLink {
+  color: rgba(247, 246, 242, 0.75);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.signInLink:hover {
+  color: #FFFFFF;
+}
+
+.openPlatformBtn {
+  color: #F7F6F2;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 7px 16px;
+  border: 1px solid rgba(247, 246, 242, 0.35);
+  border-radius: 6px;
+  text-decoration: none;
+  background: rgba(247, 246, 242, 0.06);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.openPlatformBtn:hover {
+  background: rgba(247, 246, 242, 0.15);
+  border-color: rgba(247, 246, 242, 0.75);
+}

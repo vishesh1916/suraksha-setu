@@ -4,63 +4,82 @@
    ============================================================ */
 
 :root {
-  /* —— Color Palette —— */
-  --color-bg-primary: #0a0e1a;
-  --color-bg-secondary: #111827;
-  --color-bg-card: #1a2035;
-  --color-bg-elevated: #1f2b47;
-  --color-bg-glass: rgba(26, 32, 53, 0.85);
-  --color-bg-overlay: rgba(0, 0, 0, 0.6);
+  /* —— Suraksha Setu Editorial Palette —— */
+  --color-navy-midnight: #0B1F33;
+  --color-storm-blue: #152A42;
+  --color-storm-surface: #19314C;
+  --color-storm-elevated: #1E3B5C;
+  --color-cloud-gray: #8A99A8;
+  --color-cloud-muted: #627282;
+  --color-off-white: #F7F6F2;
+  --color-off-white-card: #FFFFFF;
+  --color-off-white-border: #E5E2D9;
+  --color-off-white-text: #1C2833;
+  --color-off-white-muted: #64748B;
 
-  --color-surface-hover: rgba(99, 132, 255, 0.08);
-  --color-surface-active: rgba(99, 132, 255, 0.14);
+  /* Safety Amber — Strictly for Warnings Only */
+  --color-safety-amber: #D97706;
+  --color-safety-amber-light: #F59E0B;
+  --color-safety-amber-bg: rgba(217, 119, 6, 0.12);
+  --color-safety-amber-border: rgba(217, 119, 6, 0.35);
 
-  --color-text-primary: #f0f2f8;
-  --color-text-secondary: #94a3c0;
-  --color-text-muted: #5e6b85;
-  --color-text-inverse: #0a0e1a;
+  /* —— Platform Core Tokens —— */
+  --color-bg-primary: #0B1F33;
+  --color-bg-secondary: #0F263D;
+  --color-bg-card: #142E49;
+  --color-bg-elevated: #1A3959;
+  --color-bg-glass: rgba(11, 31, 51, 0.85);
+  --color-bg-overlay: rgba(7, 19, 31, 0.7);
 
-  /* Accent — Intel Blue */
-  --color-accent: #6384ff;
-  --color-accent-hover: #7c9aff;
-  --color-accent-subtle: rgba(99, 132, 255, 0.15);
-  --color-accent-glow: rgba(99, 132, 255, 0.35);
+  --color-surface-hover: rgba(247, 246, 242, 0.06);
+  --color-surface-active: rgba(247, 246, 242, 0.1);
+
+  --color-text-primary: #F7F6F2;
+  --color-text-secondary: #8A99A8;
+  --color-text-muted: #5A6977;
+  --color-text-inverse: #0B1F33;
+
+  /* Accent — Weather Slate / Storm */
+  --color-accent: #38BDF8;
+  --color-accent-hover: #7DD3FC;
+  --color-accent-subtle: rgba(56, 189, 248, 0.12);
+  --color-accent-glow: rgba(56, 189, 248, 0.25);
 
   /* Severity — Alert Colors */
-  --color-severity-critical: #ff3b5c;
-  --color-severity-critical-bg: rgba(255, 59, 92, 0.15);
-  --color-severity-high: #ff7a3d;
-  --color-severity-high-bg: rgba(255, 122, 61, 0.15);
-  --color-severity-moderate: #ffb83d;
-  --color-severity-moderate-bg: rgba(255, 184, 61, 0.15);
-  --color-severity-low: #3dd9ff;
-  --color-severity-low-bg: rgba(61, 217, 255, 0.15);
-  --color-severity-info: #6384ff;
-  --color-severity-info-bg: rgba(99, 132, 255, 0.15);
+  --color-severity-critical: #EF4444;
+  --color-severity-critical-bg: rgba(239, 68, 68, 0.12);
+  --color-severity-high: #D97706;
+  --color-severity-high-bg: rgba(217, 119, 6, 0.12);
+  --color-severity-moderate: #F59E0B;
+  --color-severity-moderate-bg: rgba(245, 158, 11, 0.12);
+  --color-severity-low: #38BDF8;
+  --color-severity-low-bg: rgba(56, 189, 248, 0.12);
+  --color-severity-info: #94A3B8;
+  --color-severity-info-bg: rgba(148, 163, 184, 0.12);
 
   /* Status Colors */
-  --color-success: #34d399;
-  --color-success-bg: rgba(52, 211, 153, 0.15);
-  --color-warning: #fbbf24;
-  --color-warning-bg: rgba(251, 191, 36, 0.15);
-  --color-error: #f87171;
-  --color-error-bg: rgba(248, 113, 113, 0.15);
-  --color-info: #60a5fa;
-  --color-info-bg: rgba(96, 165, 250, 0.15);
+  --color-success: #10B981;
+  --color-success-bg: rgba(16, 185, 129, 0.12);
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.12);
+  --color-error: #EF4444;
+  --color-error-bg: rgba(239, 68, 68, 0.12);
+  --color-info: #38BDF8;
+  --color-info-bg: rgba(56, 189, 248, 0.12);
 
   /* Confidence Score Gradient */
-  --color-confidence-high: #34d399;
-  --color-confidence-medium: #fbbf24;
-  --color-confidence-low: #f87171;
+  --color-confidence-high: #10B981;
+  --color-confidence-medium: #F59E0B;
+  --color-confidence-low: #EF4444;
 
   /* Borders */
-  --color-border: rgba(148, 163, 192, 0.15);
-  --color-border-hover: rgba(148, 163, 192, 0.3);
+  --color-border: rgba(138, 153, 168, 0.18);
+  --color-border-hover: rgba(138, 153, 168, 0.35);
   --color-border-focus: var(--color-accent);
 
   /* —— Typography —— */
-  --font-family-sans: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-family-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: 'Space Grotesk', 'JetBrains Mono', monospace;
 
   --font-size-xs: 0.75rem;     /* 12px */
   --font-size-sm: 0.8125rem;   /* 13px */

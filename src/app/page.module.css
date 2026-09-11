@@ -1,0 +1,1022 @@
+/* ============================================================
+   Suraksha Setu (सुरक्षा सेतु) — High-Fidelity Editorial Landing Page
+   Aesthetic: Calm, credible public-service technology
+   Midnight Navy (#0B1F33), Storm Blue, Cloud Gray, Warm Off-White (#F7F6F2)
+   One restrained Safety-Amber (#D97706) accent
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  background: var(--color-navy-midnight);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   1. Editorial Top Navigation
+   ============================================================ */
+.navbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
+  background: linear-gradient(180deg, rgba(11, 31, 51, 0.85) 0%, transparent 100%);
+}
+
+.brandGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+}
+
+.brandIcon {
+  font-size: 22px;
+}
+
+.wordmark {
+  font-family: var(--font-family-sans);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #F7F6F2;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.subBrand {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--color-cloud-gray);
+  padding-left: 14px;
+  border-left: 1px solid rgba(138, 153, 168, 0.3);
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.navLink {
+  color: rgba(247, 246, 242, 0.82);
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.navLink:hover {
+  color: #FFFFFF;
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.signInLink {
+  color: rgba(247, 246, 242, 0.75);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.signInLink:hover {
+  color: #FFFFFF;
+}
+
+.openPlatformBtn {
+  color: #F7F6F2;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 8px 18px;
+  border: 1px solid rgba(247, 246, 242, 0.35);
+  border-radius: 6px;
+  text-decoration: none;
+  background: rgba(247, 246, 242, 0.05);
+  transition: all 0.2s ease;
+}
+
+.openPlatformBtn:hover {
+  background: rgba(247, 246, 242, 0.14);
+  border-color: rgba(247, 246, 242, 0.75);
+}
+
+/* ============================================================
+   2. Full-Screen 16:9 Desktop Hero
+   ============================================================ */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background-color: var(--color-navy-midnight);
+  background-image: url('/hero-satellite.jpg');
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+/* Atmospheric vignette & telemetry lines */
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(180deg, rgba(11, 31, 51, 0.7) 0%, rgba(11, 31, 51, 0.45) 40%, rgba(11, 31, 51, 0.95) 90%, #0B1F33 100%),
+    linear-gradient(90deg, rgba(11, 31, 51, 0.96) 0%, rgba(11, 31, 51, 0.78) 42%, rgba(11, 31, 51, 0.3) 75%, transparent 100%);
+  pointer-events: none;
+}
+
+.heroTelemetryLines {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(138, 153, 168, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(138, 153, 168, 0.04) 1px, transparent 1px);
+  background-size: 120px 120px;
+  pointer-events: none;
+}
+
+/* Dynamic Interactive Weather Canvas */
+.heroWeatherCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+}
+
+/* Scroll weather descent indicator */
+.scrollWeatherIndicator {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(247, 246, 242, 0.65);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  z-index: 15;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.scrollPulseIcon {
+  width: 20px;
+  height: 32px;
+  border: 1.5px solid rgba(247, 246, 242, 0.35);
+  border-radius: 12px;
+  position: relative;
+}
+
+.scrollPulseDot {
+  width: 4px;
+  height: 6px;
+  background: var(--color-amber-safety);
+  border-radius: 2px;
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: scrollBounce 2s infinite ease-in-out;
+}
+
+@keyframes scrollBounce {
+  0% { transform: translate(-50%, 0); opacity: 0; }
+  40% { transform: translate(-50%, 8px); opacity: 1; }
+  80% { transform: translate(-50%, 14px); opacity: 0; }
+  100% { transform: translate(-50%, 0); opacity: 0; }
+}
+
+/* Persistent descent telemetry badge on scroll */
+.scrollTelemetryBanner {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(11, 31, 51, 0.92);
+  border: 1px solid rgba(217, 119, 6, 0.45);
+  backdrop-filter: blur(16px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #F7F6F2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 99;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.scrollTelemetryDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-amber-safety);
+  box-shadow: 0 0 8px var(--color-amber-safety);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+
+.heroContent {
+  position: relative;
+  z-index: 10;
+  max-width: 680px;
+  padding: 120px 0 80px 48px;
+}
+
+/* Live Status Strip */
+.statusStrip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  background: rgba(11, 31, 51, 0.85);
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  border-radius: 999px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-safety-amber);
+  box-shadow: 0 0 8px rgba(217, 119, 6, 0.8);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+.statusText {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #F7F6F2;
+}
+
+.statusSeparator {
+  color: rgba(138, 153, 168, 0.6);
+  font-size: 11px;
+}
+
+/* Editorial Headline */
+.headline {
+  font-family: var(--font-family-sans);
+  font-size: clamp(2.85rem, 5vw, 4.6rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  color: #F7F6F2;
+  margin: 0 0 24px;
+}
+
+.supportingText {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--color-cloud-gray);
+  max-width: 520px;
+  margin: 0 0 36px;
+  font-weight: 400;
+}
+
+/* CTAs */
+.ctaGroup {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F7F6F2;
+  color: #0B1F33;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 13px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.primaryCta:hover {
+  background: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.primaryCta .ctaArrow {
+  transition: transform 0.2s ease;
+}
+
+.primaryCta:hover .ctaArrow {
+  transform: translateX(4px);
+}
+
+.secondaryCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #F7F6F2;
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(247, 246, 242, 0.4);
+  transition: all 0.2s ease;
+}
+
+.secondaryCta:hover {
+  border-bottom-color: #F7F6F2;
+  color: #FFFFFF;
+}
+
+.secondaryCta .ctaArrow {
+  transition: transform 0.2s ease;
+}
+
+.secondaryCta:hover .ctaArrow {
+  transform: translateX(4px);
+}
+
+/* ============================================================
+   3. Operational Map Overlay (Lower-Right Hero Edge)
+   ============================================================ */
+.operationalOverlay {
+  position: absolute;
+  right: 48px;
+  bottom: 48px;
+  width: 380px;
+  background: rgba(11, 31, 51, 0.88);
+  border: 1px solid rgba(138, 153, 168, 0.28);
+  border-radius: 10px;
+  padding: 18px 20px;
+  z-index: 20;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+}
+
+.overlayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(138, 153, 168, 0.18);
+}
+
+.overlayTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-safety-amber);
+}
+
+.overlayTagDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-safety-amber);
+}
+
+.overlayCoords {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  color: var(--color-cloud-muted);
+  letter-spacing: 0.04em;
+}
+
+.overlayMapCanvas {
+  width: 100%;
+  height: 140px;
+  background: rgba(8, 22, 36, 0.9);
+  border-radius: 6px;
+  border: 1px solid rgba(138, 153, 168, 0.15);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlayFooter {
+  margin-top: 12px;
+}
+
+.overlayLocationTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #F7F6F2;
+  margin-bottom: 4px;
+}
+
+.overlayTelemetry {
+  font-size: 12px;
+  color: var(--color-cloud-gray);
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.overlayMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(138, 153, 168, 0.15);
+}
+
+.overlayConfidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.overlayLink {
+  color: #38BDF8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.overlayLink:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   4. Live National Metrics Panel
+   ============================================================ */
+.metricsStrip {
+  background: #081624;
+  border-top: 1px solid rgba(138, 153, 168, 0.15);
+  border-bottom: 1px solid rgba(138, 153, 168, 0.15);
+  padding: 24px 48px;
+}
+
+.metricsContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.metricCard {
+  background: rgba(11, 31, 51, 0.7);
+  border: 1px solid rgba(138, 153, 168, 0.18);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.metricIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.metricValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: #F7F6F2;
+  display: block;
+  font-family: var(--font-family-mono);
+}
+
+.metricLabel {
+  font-size: 12px;
+  color: var(--color-cloud-gray);
+  display: block;
+}
+
+/* ============================================================
+   5. Active National Alerts & Live Citizen Reports Feed
+   ============================================================ */
+.liveFeedSection {
+  background: #0B1F33;
+  padding: 64px 48px;
+}
+
+.feedContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+}
+
+.feedColumn h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #F7F6F2;
+  margin: 0 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.feedHeaderBadge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38BDF8;
+}
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.alertFeedCard {
+  background: rgba(14, 38, 61, 0.75);
+  border: 1px solid rgba(138, 153, 168, 0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  display: block;
+}
+
+.alertFeedCard:hover {
+  background: rgba(20, 48, 77, 0.9);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+}
+
+.alertFeedHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.alertFeedHeadline {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #F7F6F2;
+  margin: 0 0 6px;
+}
+
+.alertFeedGuidance {
+  font-size: 12.5px;
+  color: var(--color-cloud-gray);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.alertFeedFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--color-cloud-muted);
+  border-top: 1px solid rgba(138, 153, 168, 0.12);
+  padding-top: 8px;
+}
+
+/* Citizen Reports Stream Cards */
+.reportStreamCard {
+  background: rgba(14, 38, 61, 0.5);
+  border: 1px solid rgba(138, 153, 168, 0.15);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+
+.reportStreamHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.reportCategoryTag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #38BDF8;
+}
+
+.reportStreamDesc {
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.45;
+  margin: 0 0 8px;
+}
+
+.reportStreamMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--color-cloud-muted);
+}
+
+/* ============================================================
+   6. Below the Hero — Warm Off-White Institutional Section
+   ============================================================ */
+.institutionalSection {
+  background: var(--color-off-white);
+  color: var(--color-off-white-text);
+  padding: 72px 48px 96px;
+}
+
+.institutionalContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Partner Row */
+.partnerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 56px;
+  border-bottom: 1px solid var(--color-off-white-border);
+  flex-wrap: wrap;
+}
+
+.partnerMark {
+  font-family: var(--font-family-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #7B8A99;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.partnerDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #A0ACB8;
+}
+
+/* Trust Statement */
+.trustStatementArea {
+  padding: 72px 0 64px;
+  text-align: left;
+  max-width: 920px;
+}
+
+.trustLabel {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8C9BAE;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.trustStatement {
+  font-family: var(--font-family-sans);
+  font-size: clamp(2rem, 3.4vw, 2.9rem);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  color: #0E1E2E;
+  margin: 0 0 20px;
+}
+
+.trustDescription {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: #536474;
+  max-width: 760px;
+  margin: 0;
+}
+
+/* Three Architecture Pillars */
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+  padding: 56px 0;
+  border-top: 1px solid var(--color-off-white-border);
+  border-bottom: 1px solid var(--color-off-white-border);
+}
+
+.pillarCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.pillarNumber {
+  font-family: var(--font-family-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: #8C9BAE;
+  margin-bottom: 16px;
+  letter-spacing: 0.05em;
+}
+
+.pillarTitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0E1E2E;
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+
+.pillarBody {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #536474;
+  margin: 0;
+}
+
+/* Live Corridor Status Strip */
+.corridorStatusCard {
+  margin-top: 56px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-off-white-border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.corridorInfo h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0E1E2E;
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.corridorInfo p {
+  font-size: 13.5px;
+  color: #536474;
+  margin: 0;
+}
+
+.corridorActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.corridorBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #0B1F33;
+  color: #F7F6F2;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.corridorBtnPrimary:hover {
+  background: #152A42;
+}
+
+.corridorBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: transparent;
+  color: #0B1F33;
+  border: 1px solid #D5D1C6;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.corridorBtnSecondary:hover {
+  border-color: #0B1F33;
+  background: rgba(11, 31, 51, 0.03);
+}
+
+/* ============================================================
+   7. Calm Institutional Footer
+   ============================================================ */
+.footer {
+  background: #071524;
+  color: var(--color-cloud-gray);
+  padding: 48px 48px 36px;
+  border-top: 1px solid rgba(138, 153, 168, 0.15);
+}
+
+.footerContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 32px;
+  padding-bottom: 36px;
+  border-bottom: 1px solid rgba(138, 153, 168, 0.15);
+}
+
+.footerBrand {
+  max-width: 360px;
+}
+
+.footerWordmark {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #F7F6F2;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.footerDesc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-cloud-muted);
+}
+
+.emergencyHotlines {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.hotlineItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.hotlineLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-cloud-muted);
+  margin-bottom: 2px;
+}
+
+.hotlineNumber {
+  font-family: var(--font-family-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: #F7F6F2;
+  text-decoration: none;
+}
+
+.hotlineNumber:hover {
+  color: var(--color-safety-amber);
+}
+
+.footerBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  font-size: 12px;
+  color: var(--color-cloud-muted);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 20px;
+}
+
+.footerLink {
+  color: var(--color-cloud-gray);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footerLink:hover {
+  color: #F7F6F2;
+}
+
+/* ============================================================
+   Responsive Breakpoints
+   ============================================================ */
+@media (max-width: 1024px) {
+  .heroContent {
+    padding: 100px 32px 60px;
+  }
+  .operationalOverlay {
+    position: static;
+    margin: 0 32px 48px;
+    width: auto;
+    max-width: 480px;
+  }
+  .metricsContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .feedContainer {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .pillarsGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 20px;
+  }
+  .navLinks {
+    display: none;
+  }
+  .heroContent {
+    padding: 90px 20px 40px;
+  }
+  .operationalOverlay {
+    margin: 0 20px 36px;
+  }
+  .metricsStrip {
+    padding: 20px;
+  }
+  .metricsContainer {
+    grid-template-columns: 1fr;
+  }
+  .liveFeedSection {
+    padding: 40px 20px;
+  }
+  .institutionalSection {
+    padding: 48px 20px;
+  }
+  .partnerRow {
+    gap: 16px;
+  }
+  .footer {
+    padding: 36px 20px 24px;
+  }
+}
