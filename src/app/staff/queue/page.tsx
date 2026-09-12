@@ -208,6 +208,8 @@ export default function ReviewQueuePage() {
   }, [filter]);
 
   const filteredIncidents = incidents.filter((incident) => {
+    // Keep recently actioned incident visible so it never disappears from under the reviewer
+    if (lastActionResult?.incidentId === incident.id) return true;
     if (filter && incident.state !== filter) return false;
     if (hazardFilter && incident.category !== hazardFilter) return false;
     if (minConfidence > 0 && incident.confidenceScore.total < minConfidence) return false;
@@ -280,6 +282,10 @@ export default function ReviewQueuePage() {
       msg = '✕ Flagged as False Alarm and archived with audit trail.';
     } else if (action === 'ESCALATE') {
       msg = '🚨 Escalated to Disaster Operations Command Desk for mandatory action.';
+    }
+
+    if (action === 'VERIFY' && filter === 'CANDIDATE') {
+      setFilter(''); // Switch to All Incidents so verified card stays in list view!
     }
 
     setActionMessage(msg);
@@ -743,8 +749,15 @@ export default function ReviewQueuePage() {
               {lastActionResult.type === 'VERIFY' && (
                 <>
                   <Link
-                    href={`/staff/alerts?compose=true&headline=${encodeURIComponent('🚨 EMERGENCY WEATHER WARNING: ' + lastActionResult.landmark)}&category=${lastActionResult.category}&severity=${lastActionResult.severity}&area=${encodeURIComponent(lastActionResult.landmark)}&guidance=${encodeURIComponent('Critical hazard corroborated by duty meteorologist. Immediate caution advised in the sector.')}`}
+                    href="/staff/admin?tab=verified_pending"
                     className="btn btn-primary"
+                    style={{ fontSize: '0.82rem', padding: '6px 14px', background: '#0284C7', borderColor: '#38BDF8', fontWeight: 700 }}
+                  >
+                    ⚙️ Open in Admin Console (Stage 2) →
+                  </Link>
+                  <Link
+                    href={`/staff/alerts?compose=true&headline=${encodeURIComponent('🚨 EMERGENCY WEATHER WARNING: ' + lastActionResult.landmark)}&category=${lastActionResult.category}&severity=${lastActionResult.severity}&area=${encodeURIComponent(lastActionResult.landmark)}&guidance=${encodeURIComponent('Critical hazard corroborated by duty meteorologist. Immediate caution advised in the sector.')}`}
+                    className="btn btn-secondary"
                     style={{ fontSize: '0.82rem', padding: '6px 14px' }}
                   >
                     📢 Broadcast Official Public Alert Now
@@ -988,6 +1001,16 @@ export default function ReviewQueuePage() {
                         >
                           ✓ Verify Genuine Hazard
                         </button>
+                      )}
+
+                      {selectedIncident.state === 'VERIFIED' && (
+                        <Link
+                          href="/staff/admin?tab=verified_pending"
+                          className="btn btn-primary"
+                          style={{ background: '#0284C7', borderColor: '#38BDF8', fontSize: '0.82rem', padding: '7px 14px', fontWeight: 700 }}
+                        >
+                          ⚙️ Open in Admin Console (Stage 2) →
+                        </Link>
                       )}
 
                       {/* 2. Escalate to Command */}

@@ -122,8 +122,9 @@ export async function POST(
       message: `Incident ${action.toLowerCase()}ed successfully`,
     });
   } catch (error) {
+    console.error('ERROR IN POST /api/incidents/[id]:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to process review action' },
+      { success: false, error: 'Failed to process review action: ' + String(error) },
       { status: 500 }
     );
   }

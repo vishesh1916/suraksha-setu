@@ -121,6 +121,14 @@ export default function AdminPage() {
   const [recentlyActionedReports, setRecentlyActionedReports] = useState<Record<string, { action: ActionCategory; targetTab: AdminTab; message: string }>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Support direct URL deep-linking e.g. /staff/admin?tab=verified_pending
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlTab = new URLSearchParams(window.location.search).get('tab') as AdminTab | null;
+      if (urlTab) setActiveTab(urlTab);
+    }
+  }, []);
+
   // In-situ Auth Verification
   useEffect(() => {
     async function checkSession() {
@@ -2236,7 +2244,7 @@ export default function AdminPage() {
               </p>
             </div>
 
-            {pendingVerificationReports.length === 0 ? (
+            {pendingVerificationReports.length === 0 && verifiedPendingReports.length === 0 ? (
               <div className="empty-state" style={{ padding: '36px 24px', background: 'rgba(11, 31, 51, 0.6)', borderRadius: '12px', textAlign: 'center' }}>
                 <span className="empty-state-icon">✅</span>
                 <h3 style={{ color: '#34D399', margin: '8px 0' }}>All Incoming Reports Verified</h3>
@@ -2349,7 +2357,51 @@ export default function AdminPage() {
                 </div>
               </div>
             ) : (
-              pendingVerificationReports.map(r => renderReportCard(r, true))
+              <>
+                {pendingVerificationReports.length > 0 && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ fontSize: '0.84rem', color: '#F59E0B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+                      ⚡ Pending Ground Verification ({pendingVerificationReports.length})
+                    </div>
+                    {pendingVerificationReports.map(r => renderReportCard(r, true))}
+                  </div>
+                )}
+
+                {verifiedPendingReports.length > 0 && (
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      borderRadius: '8px',
+                      marginBottom: '14px',
+                      flexWrap: 'wrap',
+                      gap: '10px'
+                    }}>
+                      <div>
+                        <strong style={{ color: '#34D399', fontSize: '0.94rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>✅</span> Stage 2: Verified Genuine Hazards Ready for Tactical Action ({verifiedPendingReports.length})
+                        </strong>
+                        <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
+                          Corroborated against Doppler radar. Deploy municipal pumps or evacuation orders directly below.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setActiveTab('verified_pending')}
+                        style={{ fontSize: '0.78rem', padding: '4px 10px', borderColor: '#34D399', color: '#34D399', fontWeight: 700 }}
+                      >
+                        Open Dedicated Stage 2 Tab ({verifiedPendingReports.length}) →
+                      </button>
+                    </div>
+                    {verifiedPendingReports.map(r => renderReportCard(r))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

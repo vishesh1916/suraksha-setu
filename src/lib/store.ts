@@ -642,6 +642,12 @@ class DataStore {
       action.action === 'DISMISS' ? 'Flagged False Alarm / Dismissed' :
       action.action === 'ESCALATE' ? 'Evacuation Ordered' : 'Meteorological Monitoring';
 
+    if (action.action === 'VERIFY') {
+      incident.verificationStatus = 'VERIFIED_GENUINE';
+    } else if (action.action === 'DISMISS') {
+      incident.verificationStatus = 'FLAGGED_FALSE_REPORT';
+    }
+
     if (!incident.firstActionTaken) {
       incident.firstActionTaken = actionCategory;
     }
