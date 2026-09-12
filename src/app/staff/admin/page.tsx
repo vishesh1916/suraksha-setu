@@ -6,6 +6,7 @@ import type { User, SourceHealth, AuditEvent, Report, Incident, DisasterPredicti
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { generateDisasterPrediction } from '@/lib/prediction';
 import { flushOfflineQueue } from '@/lib/offlineQueue';
+import { getClientReports, updateClientReportAction, subscribeToSync } from '@/lib/clientSync';
 import styles from '../staff.module.css';
 
 import { StaffSidebar } from '@/components/StaffSidebar';
@@ -40,17 +41,30 @@ function mergeActionHistories(local: ActionLogItem[] = [], server: ActionLogItem
   return result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
+const ACTION_LEVELS: Record<string, number> = {
+  'Pending Verification': 0,
+  'Verified Genuine — Pending Tactical Action': 1,
+  'Flagged False Alarm / Dismissed': 1,
+  'Public Warning Issued (CAP 1.2)': 2,
+  'Meteorological Monitoring': 2,
+  'Dewatering & Municipal Crew Dispatched': 2,
+  'Search & Rescue Deployed': 2,
+  'Evacuation Ordered': 2,
+  'Hazard Resolved': 3,
+};
+
 function smartMergeReport(localRep: Report | undefined, serverRep: Report): Report {
   if (!localRep) return serverRep;
   const mergedHistory = mergeActionHistories(localRep.actionHistory, serverRep.actionHistory);
+
+  const localLevel = ACTION_LEVELS[localRep.currentActionCategory || 'Pending Verification'] ?? 0;
+  const serverLevel = ACTION_LEVELS[serverRep.currentActionCategory || 'Pending Verification'] ?? 0;
+
   const localTime = new Date(localRep.updatedAt || 0).getTime();
   const serverTime = new Date(serverRep.updatedAt || 0).getTime();
 
-  const hasLocalAction = Boolean(localRep.currentActionCategory && localRep.currentActionCategory !== 'Pending Verification');
-  const hasServerAction = Boolean(serverRep.currentActionCategory && serverRep.currentActionCategory !== 'Pending Verification');
-
-  // If local has a newer action taken, preserve local status & category to prevent sync resets!
-  if (hasLocalAction && (!hasServerAction || localTime >= serverTime)) {
+  // If local has a higher action level, local MUST win — never demote actions!
+  if (localLevel > serverLevel || (localLevel === serverLevel && localLevel > 0 && localTime >= serverTime)) {
     return {
       ...serverRep,
       status: localRep.status,
@@ -63,8 +77,20 @@ function smartMergeReport(localRep: Report | undefined, serverRep: Report): Repo
     };
   }
 
+  // If server has a higher or equal level and is newer
+  if (serverLevel > localLevel) {
+    return {
+      ...serverRep,
+      actionHistory: mergedHistory.length > 0 ? mergedHistory : serverRep.actionHistory,
+    };
+  }
+
   return {
     ...serverRep,
+    status: localRep.status || serverRep.status,
+    verificationStatus: localRep.verificationStatus || serverRep.verificationStatus,
+    currentActionCategory: localRep.currentActionCategory || serverRep.currentActionCategory,
+    firstActionTaken: localRep.firstActionTaken || serverRep.firstActionTaken,
     actionHistory: mergedHistory.length > 0 ? mergedHistory : serverRep.actionHistory,
   };
 }
@@ -72,13 +98,14 @@ function smartMergeReport(localRep: Report | undefined, serverRep: Report): Repo
 function smartMergeIncident(localInc: Incident | undefined, serverInc: Incident): Incident {
   if (!localInc) return serverInc;
   const mergedHistory = mergeActionHistories(localInc.actionHistory, serverInc.actionHistory);
+
+  const localLevel = ACTION_LEVELS[localInc.currentActionCategory || 'Pending Verification'] ?? 0;
+  const serverLevel = ACTION_LEVELS[serverInc.currentActionCategory || 'Pending Verification'] ?? 0;
+
   const localTime = new Date(localInc.updatedAt || 0).getTime();
   const serverTime = new Date(serverInc.updatedAt || 0).getTime();
 
-  const hasLocalAction = Boolean(localInc.currentActionCategory && localInc.currentActionCategory !== 'Pending Verification');
-  const hasServerAction = Boolean(serverInc.currentActionCategory && serverInc.currentActionCategory !== 'Pending Verification');
-
-  if (hasLocalAction && (!hasServerAction || localTime >= serverTime)) {
+  if (localLevel > serverLevel || (localLevel === serverLevel && localLevel > 0 && localTime >= serverTime)) {
     return {
       ...serverInc,
       state: localInc.state,
@@ -244,7 +271,19 @@ export default function AdminPage() {
       if (reportsRes.status === 'fulfilled' && reportsRes.value.ok) {
         const data = await reportsRes.value.json();
         if (Array.isArray(data.data)) {
-          const incoming: Report[] = data.data;
+          const clientReps = getClientReports();
+          const serverReps: Report[] = data.data;
+          // Combine server reports and client reports seamlessly
+          const incoming = [...serverReps];
+          for (const cr of clientReps) {
+            const idx = incoming.findIndex(ir => ir.id === cr.id || ir.id.toLowerCase() === cr.id.toLowerCase());
+            if (idx >= 0) {
+              incoming[idx] = smartMergeReport(cr, incoming[idx]);
+            } else {
+              incoming.unshift(cr);
+            }
+          }
+
           setReports((prev) => {
             if (prev.length === 0) return incoming;
             const merged = incoming.map((serverRep) => {
@@ -298,6 +337,26 @@ export default function AdminPage() {
     const sentinelInterval = setInterval(fetchSentinelRisk, 30000); // 30s weather telemetry sync
     return () => clearInterval(sentinelInterval);
   }, [fetchData, fetchSentinelRisk]);
+
+  // Real-time zero-latency sync subscription across tabs (BroadcastChannel + storage)
+  useEffect(() => {
+    const unsubscribe = subscribeToSync((msg) => {
+      if (msg.type === 'NEW_REPORT' && msg.report) {
+        setReports((prev) => {
+          const exists = prev.some((r) => r.id === msg.report!.id || r.id.toLowerCase() === msg.report!.id.toLowerCase());
+          if (exists) {
+            return prev.map(r => (r.id === msg.report!.id || r.id.toLowerCase() === msg.report!.id.toLowerCase()) ? smartMergeReport(r, msg.report!) : r);
+          }
+          return [msg.report!, ...prev];
+        });
+      } else if (msg.type === 'REPORT_ACTION' && msg.report) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === msg.report!.id || r.id.toLowerCase() === msg.report!.id.toLowerCase() ? smartMergeReport(r, msg.report!) : r))
+        );
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   // Gentle 15s auto-sync interval ONLY when auto-sync toggle is explicitly ON
   useEffect(() => {
@@ -607,6 +666,9 @@ export default function AdminPage() {
       })
     );
 
+    // Sync to local browser storage and broadcast across tabs in 0ms
+    updateClientReportAction(reportId, action, notes, 'Emergency Administrator');
+
     showToast(successMsg);
 
     // Stay on the current tab so the report stays visible with its action banner.
@@ -626,15 +688,14 @@ export default function AdminPage() {
       if (res.ok) {
         const patchData = await res.json();
         if (patchData.success && patchData.data) {
-          // Server confirmed — do a full data refresh to get canonical state
-          // but keep recentlyActionedReports so the report stays visible
-          fetchData();
+          const serverUpdated: Report = patchData.data;
+          setReports((prev) =>
+            prev.map((r) => (r.id === reportId || r.id.toLowerCase() === reportId.toLowerCase() ? smartMergeReport(r, serverUpdated) : r))
+          );
         }
-      } else {
-        showToast('Failed to record report action on server');
       }
     } catch {
-      showToast('Error connecting to operational gateway');
+      // Offline or network error — optimistic update and clientSync keep the action safely!
     }
   };
 

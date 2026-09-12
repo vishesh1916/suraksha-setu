@@ -363,7 +363,37 @@ class DataStore {
 
   getReport(id: string): Report | undefined {
     this.checkAndReload();
-    return this.reports.find(r => r.id === id || r.id.toLowerCase() === id.toLowerCase());
+    if (!id) return undefined;
+    const clean = id.trim().toLowerCase();
+
+    // 1. Direct or case-insensitive match
+    let found = this.reports.find(r => r.id === id || r.id.toLowerCase() === clean);
+    if (found) return found;
+
+    // 2. Prefix / partial match (e.g. if user entered truncated 16-char ID or pasted without prefix)
+    found = this.reports.find(r => {
+      const rid = r.id.toLowerCase();
+      return rid.startsWith(clean) || clean.startsWith(rid) || (clean.length >= 6 && rid.includes(clean));
+    });
+    if (found) return found;
+
+    // 3. Match against incident ID (if user entered incident ID)
+    const inc = this.incidents.find(i => 
+      i.id === id || 
+      i.id.toLowerCase() === clean || 
+      i.id.toLowerCase().startsWith(clean) ||
+      clean.startsWith(i.id.toLowerCase())
+    );
+    if (inc && inc.reports && inc.reports.length > 0) {
+      return inc.reports[0];
+    }
+
+    // 4. Match against pseudonym or reporterId
+    found = this.reports.find(r => 
+      (r.reporterPseudonym && r.reporterPseudonym.toLowerCase() === clean) ||
+      (r.reporterId && r.reporterId.toLowerCase() === clean)
+    );
+    return found;
   }
 
   getReports(filters?: { status?: ReportStatus; category?: HazardCategory; h3Index?: string }): Report[] {
@@ -383,7 +413,7 @@ class DataStore {
 
   updateReportStatus(id: string, status: ReportStatus): Report | undefined {
     this.checkAndReload();
-    const report = this.reports.find(r => r.id === id);
+    const report = this.getReport(id);
     if (report) {
       report.status = status;
       report.updatedAt = new Date().toISOString();
@@ -399,7 +429,7 @@ class DataStore {
     actorName: string = 'Duty Responder'
   ): Report | undefined {
     this.checkAndReload();
-    const report = this.reports.find(r => r.id === reportId);
+    const report = this.getReport(reportId);
     if (!report) return undefined;
 
     const actionLog: ActionLogItem = {

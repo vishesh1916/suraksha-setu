@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import type { Alert, Report, Incident } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { generateDisasterPrediction } from '@/lib/prediction';
+import { getClientReports, subscribeToSync } from '@/lib/clientSync';
 import styles from './map.module.css';
 
 export interface HazardPlace {
@@ -162,7 +163,17 @@ function MapContent() {
 
       if (reportsRes.ok) {
         const rData = await reportsRes.json();
-        const incomingReports: Report[] = rData.data || [];
+        const serverReps: Report[] = rData.data || [];
+        const clientReps = getClientReports();
+        const incomingReports: Report[] = [...serverReps];
+        for (const cr of clientReps) {
+          const idx = incomingReports.findIndex(sr => sr.id === cr.id || sr.id.toLowerCase() === cr.id.toLowerCase());
+          if (idx >= 0) {
+            incomingReports[idx] = { ...incomingReports[idx], ...cr };
+          } else {
+            incomingReports.unshift(cr);
+          }
+        }
 
         incomingReports.forEach((rep) => {
           if (!rep.location?.latitude || !rep.location?.longitude) return;
@@ -233,8 +244,14 @@ function MapContent() {
 
   useEffect(() => {
     fetchLiveHazards();
+    const unsubscribe = subscribeToSync(() => {
+      fetchLiveHazards();
+    });
     const interval = setInterval(fetchLiveHazards, 3000);
-    return () => clearInterval(interval);
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, [fetchLiveHazards]);
 
   // If search parameters (lat, lng, or highlight) exist, auto-select matched place

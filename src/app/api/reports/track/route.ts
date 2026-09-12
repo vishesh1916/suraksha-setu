@@ -7,6 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dataStore } from '@/lib/store';
 import type { Report } from '@/types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -15,11 +18,36 @@ export async function GET(request: NextRequest) {
     if (!reportId) {
       return NextResponse.json(
         { success: false, error: 'Report ID is required for tracking.' },
-        { status: 400 }
+        { status: 400, headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
       );
     }
 
-    const report = dataStore.getReport(reportId);
+    let report = dataStore.getReport(reportId);
+
+    // If not found directly, also search dataStore.getReports() for any partial match
+    if (!report) {
+      const clean = reportId.toLowerCase();
+      report = dataStore.getReports().find(r => 
+        r.id.toLowerCase().includes(clean) || 
+        clean.includes(r.id.toLowerCase()) ||
+        (r.landmark && r.landmark.toLowerCase().includes(clean)) ||
+        (r.reporterPseudonym && r.reporterPseudonym.toLowerCase().includes(clean))
+      );
+    }
+
+    // Also check incidents by incident ID
+    if (!report) {
+      const clean = reportId.toLowerCase();
+      const inc = dataStore.getIncidents().find(i =>
+        i.id.toLowerCase() === clean ||
+        i.id.toLowerCase().includes(clean) ||
+        clean.includes(i.id.toLowerCase()) ||
+        (i.landmark && i.landmark.toLowerCase().includes(clean))
+      );
+      if (inc && inc.reports && inc.reports.length > 0) {
+        report = inc.reports[0];
+      }
+    }
 
     if (!report) {
       if (reportId.startsWith('OFFLINE_')) {
@@ -104,32 +132,39 @@ export async function GET(request: NextRequest) {
       },
     ];
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: report.id,
-        status: report.status,
-        verificationStatus: report.verificationStatus || 'PENDING_VERIFICATION',
-        verificationRationale: report.verificationRationale,
-        firstActionTaken: report.firstActionTaken,
-        currentActionCategory: report.currentActionCategory || (isVerified ? 'Verified Genuine — Pending Tactical Action' : 'Pending Verification'),
-        actionHistory: report.actionHistory || [],
-        stage,
-        stages,
-        category: report.category,
-        severity: report.severity,
-        description: report.description,
-        landmark: report.landmark,
-        waterDepthFeet: report.waterDepthFeet,
-        location: report.location,
-        mediaUrl: report.mediaUrl,
-        createdAt: report.createdAt,
-        updatedAt: report.updatedAt,
-        corroborationCount: isVerified || isActionTaken || isResolved ? 4 : 1,
-        weatherSignal: 'Doppler AWS Telemetry Verified: 52 dBZ reflectivity match',
-        reviewNote: stageStatusDesc,
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          id: report.id,
+          status: report.status,
+          verificationStatus: report.verificationStatus || 'PENDING_VERIFICATION',
+          verificationRationale: report.verificationRationale,
+          firstActionTaken: report.firstActionTaken,
+          currentActionCategory: report.currentActionCategory || (isVerified ? 'Verified Genuine — Pending Tactical Action' : 'Pending Verification'),
+          actionHistory: report.actionHistory || [],
+          stage,
+          stages,
+          category: report.category,
+          severity: report.severity,
+          description: report.description,
+          landmark: report.landmark,
+          waterDepthFeet: report.waterDepthFeet,
+          location: report.location,
+          mediaUrl: report.mediaUrl,
+          createdAt: report.createdAt,
+          updatedAt: report.updatedAt,
+          corroborationCount: isVerified || isActionTaken || isResolved ? 4 : 1,
+          weatherSignal: 'Doppler AWS Telemetry Verified: 52 dBZ reflectivity match',
+          reviewNote: stageStatusDesc,
+        },
       },
-    });
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch {
     return NextResponse.json(
       { success: false, error: 'Internal error checking report tracking status.' },

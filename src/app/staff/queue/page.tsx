@@ -9,6 +9,7 @@ import styles from '../staff.module.css';
 
 import { StaffSidebar } from '@/components/StaffSidebar';
 import { generateDisasterPrediction } from '@/lib/prediction';
+import { getClientReports, updateClientReportAction, subscribeToSync } from '@/lib/clientSync';
 
 function ConfidenceBar({ score }: { score: number }) {
   const color = getConfidenceColor(score);
@@ -165,6 +166,41 @@ export default function ReviewQueuePage() {
       if (res.ok) {
         const data = await res.json();
         const incList: Incident[] = data.data || [];
+
+        // Also incorporate any newly submitted citizen reports from client storage
+        const clientReps = getClientReports();
+        for (const cr of clientReps) {
+          const alreadyCovered = incList.some(i => i.reports.some(r => r.id === cr.id || r.id.toLowerCase() === cr.id.toLowerCase()));
+          if (!alreadyCovered) {
+            const isDismissed = cr.verificationStatus === 'FLAGGED_FALSE_REPORT' || cr.status === 'DISMISSED';
+            const isResolved = cr.status === 'RESOLVED' || cr.currentActionCategory === 'Hazard Resolved';
+            const isVerified = cr.verificationStatus === 'VERIFIED_GENUINE' || cr.status === 'REVIEWED';
+            const synthInc: Incident = {
+              id: 'inc_cli_' + cr.id,
+              h3Parent: cr.h3Index,
+              category: cr.category,
+              state: isDismissed ? 'DISMISSED' : isResolved ? 'RESOLVED' : isVerified ? 'VERIFIED' : 'CANDIDATE',
+              confidenceScore: {
+                total: cr.severity >= 4 ? 65 : 45,
+                factors: [],
+                computedAt: cr.createdAt,
+              },
+              impactLevel: cr.severity >= 4 ? 'CRITICAL' : 'HIGH',
+              reportCount: 1,
+              reports: [cr],
+              evidence: [],
+              reviewActions: [],
+              verificationStatus: cr.verificationStatus || 'PENDING_VERIFICATION',
+              currentActionCategory: cr.currentActionCategory || 'Pending Verification',
+              landmark: cr.landmark,
+              location: cr.location,
+              createdAt: cr.createdAt,
+              updatedAt: cr.updatedAt,
+            };
+            incList.unshift(synthInc);
+          }
+        }
+
         setIncidents((prev) => {
           if (prev.length === 0) return incList;
           // Smart merge: preserve any local incident action that has a longer action history
@@ -225,8 +261,14 @@ export default function ReviewQueuePage() {
 
   useEffect(() => {
     fetchIncidents();
-    const interval = setInterval(fetchIncidents, 20000); // Calm 20s background sync
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeToSync(() => {
+      fetchIncidents();
+    });
+    const interval = setInterval(fetchIncidents, 10000);
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, [fetchIncidents]);
 
   // Auto-select first incident in current filtered view so right workspace is never an empty blank placeholder
@@ -272,6 +314,13 @@ export default function ReviewQueuePage() {
 
     setSelectedIncident(updatedInc);
     setIncidents((prev) => prev.map((inc) => (inc.id === currentId ? updatedInc : inc)));
+
+    // Synchronize to client store across tabs
+    if (selectedIncident.reports && selectedIncident.reports.length > 0) {
+      for (const r of selectedIncident.reports) {
+        updateClientReportAction(r.id, nextActionCategory as any, reason, 'Dr. Priya Sharma (IMD Lead Reviewer)');
+      }
+    }
 
     let msg = `Incident marked as ${action}`;
     if (action === 'RESOLVE') {

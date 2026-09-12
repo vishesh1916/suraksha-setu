@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { compressImage } from '@/lib/imageCompression';
 import { saveOfflineReport, flushOfflineQueue } from '@/lib/offlineQueue';
+import { saveClientReport } from '@/lib/clientSync';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
-import type { HazardCategory, SeverityLevel, GeoPoint } from '@/types';
+import type { HazardCategory, SeverityLevel, GeoPoint, Report } from '@/types';
 import styles from './report.module.css';
 
 type Step = 'category' | 'severity' | 'location' | 'details' | 'review';
@@ -194,6 +195,35 @@ export default function ReportPage() {
         setReportId(data.data.id);
         setSubmitted(true);
         saveToUserHistory(data.data.id, payload);
+
+        const fullReport: Report = {
+          id: data.data.id,
+          reporterId: 'citizen_local',
+          reporterPseudonym: data.data.pseudonym || 'Citizen Reporter',
+          category,
+          severity,
+          description: description.trim(),
+          location: finalLocation,
+          h3Index: '882a7bcfa911fffff',
+          landmark: finalLandmark,
+          waterDepthFeet: severity >= 4 ? 4.5 : severity === 3 ? 2.5 : 1.0,
+          consent: true,
+          status: 'RECEIVED',
+          verificationStatus: 'PENDING_VERIFICATION',
+          currentActionCategory: 'Pending Verification',
+          actionHistory: [
+            {
+              id: 'act_' + Date.now(),
+              action: 'Pending Verification',
+              actorName: 'Telemetry Gateway',
+              notes: 'Report submitted by citizen and queued for meteorologist verification vs Doppler radar.',
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        saveClientReport(fullReport);
       } else {
         setError(data.error || 'Server error submitting report. Please try again.');
       }
@@ -226,7 +256,24 @@ export default function ReportPage() {
             <div className={styles.receiptDetails}>
               <div className={styles.receiptRow}>
                 <span>Report ID</span>
-                <span className={styles.receiptValue}>{reportId?.slice(0, 16)}</span>
+                <span className={styles.receiptValue} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <code style={{ fontSize: '0.92rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', padding: '3px 8px', borderRadius: 4, fontFamily: 'monospace', fontWeight: 700 }}>
+                    {reportId}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (reportId) {
+                        navigator.clipboard.writeText(reportId);
+                        alert('Report ID copied to clipboard: ' + reportId);
+                      }
+                    }}
+                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', color: '#E2E8F0', padding: '2px 8px', borderRadius: 4, cursor: 'pointer', fontSize: '0.78rem' }}
+                    title="Copy Report ID"
+                  >
+                    📋 Copy ID
+                  </button>
+                </span>
               </div>
               <div className={styles.receiptRow}>
                 <span>Status</span>
@@ -340,7 +387,7 @@ export default function ReportPage() {
                     fontFamily: 'monospace',
                     fontWeight: 700
                   }}>
-                    ID: {recentReports[0].id.slice(0, 16)}
+                    ID: {recentReports[0].id}
                   </span>
                 </div>
                 <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
