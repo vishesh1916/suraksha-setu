@@ -43,6 +43,9 @@ export default function AdminPage() {
   const [sentinelFilter, setSentinelFilter] = useState<'all' | 'critical' | 'coastal' | 'river' | 'northern'>('all');
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [autoSync, setAutoSync] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string>('');
+  const [recentlyActionedReports, setRecentlyActionedReports] = useState<Record<string, { action: ActionCategory; targetTab: AdminTab; message: string }>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // In-situ Auth Verification
@@ -169,6 +172,7 @@ export default function AdminPage() {
           setIncidents(data.data);
         }
       }
+      setLastSyncTime(new Date().toLocaleTimeString());
     } catch (e) {
       console.warn('Admin fetchData error:', e);
     } finally {
@@ -192,13 +196,34 @@ export default function AdminPage() {
   useEffect(() => {
     fetchData();
     fetchSentinelRisk();
-    const opsInterval = setInterval(fetchData, 3000); // 3s fast operational sync
     const sentinelInterval = setInterval(fetchSentinelRisk, 30000); // 30s weather telemetry sync
-    return () => {
-      clearInterval(opsInterval);
-      clearInterval(sentinelInterval);
-    };
+    return () => clearInterval(sentinelInterval);
   }, [fetchData, fetchSentinelRisk]);
+
+  // Gentle 15s auto-sync interval ONLY when auto-sync toggle is explicitly ON
+  useEffect(() => {
+    if (!autoSync) return;
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
+  }, [autoSync, fetchData]);
+
+  const handlePurgeData = async () => {
+    if (!confirm('Are you sure you want to purge all test and demo records from the database? This resets the platform to a completely clean zero-data state.')) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/reset', { method: 'POST' });
+      if (res.ok) {
+        showToast('🧹 Clean slate: All demo and test records successfully purged.');
+        setReports([]);
+        setIncidents([]);
+        setRecentlyActionedReports({});
+        fetchData();
+      }
+    } catch {
+      showToast('Failed to purge records.');
+    }
+  };
 
   // Run prediction calculation whenever hotspot or sliders change
   const computePrediction = useCallback((depth?: number, rain?: number) => {
@@ -350,6 +375,41 @@ export default function AdminPage() {
       timestamp,
     };
 
+    let targetTab: AdminTab = 'all';
+    let successMsg = '';
+    if (action === 'Verified Genuine — Pending Tactical Action') {
+      targetTab = 'verified_pending';
+      successMsg = 'Verified Genuine! Advanced to Stage 2: Tactical deployment options now unlocked.';
+    } else if (action === 'Flagged False Alarm / Dismissed') {
+      targetTab = 'false_alarm';
+      successMsg = 'Flagged as False Alarm. Archived from active operational streams.';
+    } else if (action === 'Hazard Resolved') {
+      targetTab = 'resolved';
+      successMsg = 'Hazard marked as RESOLVED! Corridor fully restored.';
+    } else if (action === 'Evacuation Ordered') {
+      targetTab = 'evacuation';
+      successMsg = 'Mandatory Evacuation Directive Dispatched! Advanced to Stage 3.';
+    } else if (action === 'Dewatering & Municipal Crew Dispatched') {
+      targetTab = 'dewatering';
+      successMsg = 'Dewatering Pumps (500HP) Dispatched! Advanced to Stage 3.';
+    } else if (action === 'Public Warning Issued (CAP 1.2)') {
+      targetTab = 'cap_warning';
+      successMsg = 'Emergency Public Warning Broadcasted! Advanced to Stage 3.';
+    } else if (action === 'Search & Rescue Deployed') {
+      targetTab = 'sar';
+      successMsg = 'NDRF / SDRF Search & Rescue Deployed! Advanced to Stage 3.';
+    } else if (action === 'Meteorological Monitoring') {
+      targetTab = 'monitoring';
+      successMsg = 'Placed on active sensor telemetry monitoring. Advanced to Stage 3.';
+    } else {
+      successMsg = `Action "${action}" recorded and synchronized to citizen tracking!`;
+    }
+
+    setRecentlyActionedReports(prev => ({
+      ...prev,
+      [reportId]: { action, targetTab, message: successMsg }
+    }));
+
     setReports((prev) =>
       prev.map((r) => {
         if (r.id !== reportId) return r;
@@ -400,6 +460,8 @@ export default function AdminPage() {
       })
     );
 
+    showToast(successMsg);
+
     try {
       const res = await fetch('/api/reports', {
         method: 'PATCH',
@@ -412,31 +474,15 @@ export default function AdminPage() {
         }),
       });
       if (res.ok) {
-        if (action === 'Verified Genuine — Pending Tactical Action') {
-          showToast('✓ Verified Genuine! Advanced to Stage 2: Tactical deployment options now unlocked.');
-        } else if (action === 'Flagged False Alarm / Dismissed') {
-          showToast('✕ Flagged as False Alarm. Archived from active operational streams.');
-        } else if (action === 'Hazard Resolved') {
-          showToast('✅ Hazard marked as RESOLVED! Corridor fully restored.');
-        } else if (action === 'Evacuation Ordered') {
-          showToast('🚨 Mandatory Evacuation Directive Dispatched! Advanced to Stage 3.');
-        } else if (action === 'Dewatering & Municipal Crew Dispatched') {
-          showToast('🚒 Dewatering Pumps (500HP) Dispatched! Advanced to Stage 3.');
-        } else if (action === 'Public Warning Issued (CAP 1.2)') {
-          showToast('📢 Emergency Public Warning Broadcasted! Advanced to Stage 3.');
-        } else if (action === 'Search & Rescue Deployed') {
-          showToast('🚤 NDRF / SDRF Search & Rescue Deployed! Advanced to Stage 3.');
-        } else {
-          showToast(`Action "${action}" recorded and synchronized to citizen tracking!`);
+        const patchData = await res.json();
+        if (patchData.success && patchData.data) {
+          setReports(prev => prev.map(r => r.id === reportId ? patchData.data : r));
         }
-        fetchData();
       } else {
         showToast('Failed to record report action on server');
-        fetchData();
       }
     } catch {
-      showToast('Error recording report action');
-      fetchData();
+      showToast('Error connecting to operational gateway');
     }
   };
 
@@ -472,47 +518,56 @@ export default function AdminPage() {
 
   // Workflow Categorization by First Action Taken & Verification Status
   const pendingVerificationReports = reports.filter(r => 
-    (!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
+    ((!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
     r.status !== 'DISMISSED' &&
-    r.status !== 'RESOLVED'
+    r.status !== 'RESOLVED') ||
+    (activeTab === 'verification' && Boolean(recentlyActionedReports[r.id]))
   );
   const falseAlarmReports = reports.filter(r => 
     r.verificationStatus === 'FLAGGED_FALSE_REPORT' || 
     r.status === 'DISMISSED' || 
     r.firstActionTaken === 'Flagged False Alarm / Dismissed' ||
-    r.currentActionCategory === 'Flagged False Alarm / Dismissed'
+    r.currentActionCategory === 'Flagged False Alarm / Dismissed' ||
+    (activeTab === 'false_alarm' && Boolean(recentlyActionedReports[r.id]))
   );
   const verifiedPendingReports = reports.filter(r => 
-    r.verificationStatus === 'VERIFIED_GENUINE' &&
+    (r.verificationStatus === 'VERIFIED_GENUINE' &&
     r.status !== 'DISMISSED' &&
     r.status !== 'RESOLVED' &&
-    (!r.currentActionCategory || r.currentActionCategory === 'Verified Genuine — Pending Tactical Action' || r.currentActionCategory === 'Pending Verification')
+    (!r.currentActionCategory || r.currentActionCategory === 'Verified Genuine — Pending Tactical Action' || r.currentActionCategory === 'Pending Verification')) ||
+    (activeTab === 'verified_pending' && Boolean(recentlyActionedReports[r.id]))
   );
 
   const evacuationReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Evacuation Ordered' || (r.firstActionTaken === 'Evacuation Ordered' && r.currentActionCategory !== 'Hazard Resolved'))
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Evacuation Ordered' || (r.firstActionTaken === 'Evacuation Ordered' && r.currentActionCategory !== 'Hazard Resolved'))) ||
+    (activeTab === 'evacuation' && Boolean(recentlyActionedReports[r.id]))
   );
   const dewateringReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Dewatering & Municipal Crew Dispatched' || (r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched' && r.currentActionCategory !== 'Hazard Resolved'))
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Dewatering & Municipal Crew Dispatched' || (r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched' && r.currentActionCategory !== 'Hazard Resolved'))) ||
+    (activeTab === 'dewatering' && Boolean(recentlyActionedReports[r.id]))
   );
   const capWarningReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Public Warning Issued (CAP 1.2)' || (r.firstActionTaken === 'Public Warning Issued (CAP 1.2)' && r.currentActionCategory !== 'Hazard Resolved'))
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Public Warning Issued (CAP 1.2)' || (r.firstActionTaken === 'Public Warning Issued (CAP 1.2)' && r.currentActionCategory !== 'Hazard Resolved'))) ||
+    (activeTab === 'cap_warning' && Boolean(recentlyActionedReports[r.id]))
   );
   const sarReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Search & Rescue Deployed' || (r.firstActionTaken === 'Search & Rescue Deployed' && r.currentActionCategory !== 'Hazard Resolved'))
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Search & Rescue Deployed' || (r.firstActionTaken === 'Search & Rescue Deployed' && r.currentActionCategory !== 'Hazard Resolved'))) ||
+    (activeTab === 'sar' && Boolean(recentlyActionedReports[r.id]))
   );
   const monitoringReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Meteorological Monitoring' || (r.firstActionTaken === 'Meteorological Monitoring' && r.currentActionCategory !== 'Hazard Resolved'))
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Meteorological Monitoring' || (r.firstActionTaken === 'Meteorological Monitoring' && r.currentActionCategory !== 'Hazard Resolved'))) ||
+    (activeTab === 'monitoring' && Boolean(recentlyActionedReports[r.id]))
   );
   const resolvedReports = reports.filter(r => 
     r.status === 'RESOLVED' || 
     r.currentActionCategory === 'Hazard Resolved' || 
-    r.firstActionTaken === 'Hazard Resolved'
+    r.firstActionTaken === 'Hazard Resolved' ||
+    (activeTab === 'resolved' && Boolean(recentlyActionedReports[r.id]))
   );
 
   if (authenticated === null) {
@@ -853,6 +908,44 @@ export default function AdminPage() {
           )}
         </div>
 
+        {/* Real-Time Action Confirmation Banner */}
+        {recentlyActionedReports[report.id] && (
+          <div style={{
+            margin: '0 0 14px',
+            padding: '10px 14px',
+            background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)',
+            border: '1px solid #10B981',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.2rem' }}>✅</span>
+              <div>
+                <strong style={{ color: '#34D399', fontSize: '0.86rem' }}>
+                  Action Synchronized: {recentlyActionedReports[report.id].action}
+                </strong>
+                <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#CBD5E1' }}>
+                  {recentlyActionedReports[report.id].message}
+                </p>
+              </div>
+            </div>
+            {recentlyActionedReports[report.id].targetTab !== activeTab && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setActiveTab(recentlyActionedReports[report.id].targetTab)}
+                style={{ fontSize: '0.78rem', padding: '4px 10px', fontWeight: 700 }}
+              >
+                View in Dedicated Tab →
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Action Controls Tailored by Stage & Hazard Category */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Stage 1: Verification (Right vs Wrong Check) */}
@@ -1155,7 +1248,7 @@ export default function AdminPage() {
               Workflows segregated by Initial Tactical Action & Ground Truth Verification with Machine-Learning Predictive Disaster Solutions
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
               type="button"
               className="btn btn-secondary"
@@ -1166,6 +1259,60 @@ export default function AdminPage() {
               <span>{isRefreshing ? '⏳' : '🔄'}</span>
               <span>{isRefreshing ? 'Syncing…' : 'Sync Live'}</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const nextState = !autoSync;
+                setAutoSync(nextState);
+                showToast(nextState ? 'Auto-Sync enabled (15s gentle interval).' : 'Auto-Sync deactivated.');
+              }}
+              style={{
+                fontSize: '0.78rem',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${autoSync ? '#10B981' : 'rgba(148, 163, 184, 0.4)'}`,
+                background: autoSync ? 'rgba(16, 185, 129, 0.15)' : 'rgba(15, 23, 42, 0.6)',
+                color: autoSync ? '#34D399' : '#94A3B8',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Toggle automatic background sync every 15s"
+            >
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: autoSync ? '#10B981' : '#64748B' }} />
+              <span>Auto-Sync: {autoSync ? 'ON (15s)' : 'OFF'}</span>
+            </button>
+
+            {lastSyncTime && (
+              <span style={{ fontSize: '0.74rem', color: '#64748B', fontFamily: 'monospace' }}>
+                Synced: {lastSyncTime}
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={handlePurgeData}
+              style={{
+                fontSize: '0.78rem',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#FCA5A5',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+              title="Clear all test data and return to clean zero-data state"
+            >
+              <span>🧹</span>
+              <span>Purge Demo Data</span>
+            </button>
+
             <Link href="/map" className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
               🗺️ Open Live Map
             </Link>
@@ -1356,6 +1503,7 @@ export default function AdminPage() {
           const tacticalCount = evacuationReports.length + dewateringReports.length + capWarningReports.length + sarReports.length + monitoringReports.length;
           const displayedReports = reports.filter(r => {
             if (feedFilter === 'all') return true;
+            if (Boolean(recentlyActionedReports[r.id])) return true;
             if (feedFilter === 'pending') return pendingVerificationReports.some(p => p.id === r.id);
             if (feedFilter === 'verified') return verifiedPendingReports.some(p => p.id === r.id);
             if (feedFilter === 'tactical') return (
@@ -1384,7 +1532,7 @@ export default function AdminPage() {
                     <span>🌐</span> Master Operational Command Feed ({reports.length} Total Hazards)
                   </h3>
                   <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>
-                    Live Synchronized Every 3s · Instant Stage Transitions
+                    On-Demand &amp; Configurable Auto-Sync · Instant Stage Transitions
                   </span>
                 </div>
                 <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>

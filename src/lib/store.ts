@@ -147,7 +147,7 @@ class DataStore {
         }
       }
     } catch {
-      // In case of transient lock or read error, keep current memory state
+      // In case of transient lock or read error, preserve memory state
     }
   }
 
@@ -185,10 +185,8 @@ class DataStore {
         auditEvents: this.auditEvents,
         savedAt: new Date().toISOString(),
       };
-      // Atomic write: write to temp file then renameSync to avoid file corruption or read races
-      const tempPath = `${dbPath}.tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-      fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), 'utf-8');
-      fs.renameSync(tempPath, dbPath);
+      // Direct write ensures zero Windows EBUSY / EPERM file-lock collisions
+      fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
       try {
         const stats = fs.statSync(dbPath);
         this.lastLoadedMtime = stats.mtimeMs;
@@ -196,7 +194,6 @@ class DataStore {
         this.lastLoadedMtime = Date.now();
       }
     } catch (e) {
-      // In serverless environments with read-only storage, degrade gracefully to in-memory
       console.warn('Database persistence write warning:', e);
     }
   }
@@ -319,6 +316,8 @@ class DataStore {
     this.checkAndReload();
     this.incidents = [];
     this.reports = [];
+    this.alerts = [];
+    this.auditEvents = [];
     this.persist();
   }
 
@@ -400,6 +399,17 @@ class DataStore {
     // Cascade to parent incident if clustered
     const parentInc = this.incidents.find(inc => inc.reports.some(r => r.id === reportId));
     if (parentInc) {
+      const nested = parentInc.reports.find(r => r.id === reportId);
+      if (nested) {
+        nested.status = report.status;
+        nested.verificationStatus = report.verificationStatus;
+        nested.currentActionCategory = report.currentActionCategory;
+        nested.firstActionTaken = report.firstActionTaken;
+        nested.actionHistory = report.actionHistory;
+        nested.verificationRationale = report.verificationRationale;
+        nested.updatedAt = report.updatedAt;
+      }
+
       if (!parentInc.firstActionTaken || parentInc.firstActionTaken === 'Pending Verification' || parentInc.firstActionTaken === 'Verified Genuine — Pending Tactical Action') {
         if (action !== 'Pending Verification') {
           parentInc.firstActionTaken = action;

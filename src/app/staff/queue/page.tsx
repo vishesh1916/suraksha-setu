@@ -197,7 +197,7 @@ export default function ReviewQueuePage() {
 
   useEffect(() => {
     fetchIncidents();
-    const interval = setInterval(fetchIncidents, 3000); // 3s real-time sync
+    const interval = setInterval(fetchIncidents, 20000); // Calm 20s background sync
     return () => clearInterval(interval);
   }, [fetchIncidents]);
 
@@ -420,7 +420,17 @@ export default function ReviewQueuePage() {
               Real citizen ground hazards awaiting meteorologist triage, Doppler verification, and tactical problem closure.
             </p>
           </div>
-          <div className={styles.filters} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div className={styles.filters} style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => fetchIncidents()}
+              disabled={loading}
+              style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span>🔄</span>
+              <span>Sync Queue</span>
+            </button>
             <input
               type="text"
               className="input"
