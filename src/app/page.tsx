@@ -5,6 +5,14 @@ import Link from 'next/link';
 import type { Alert, Report } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { Navbar } from '@/components/Navbar';
+import { WeatherHeroAtmosphere } from '@/components/WeatherHeroAtmosphere';
+import { AlertWorkflowSequence } from '@/components/AlertWorkflowSequence';
+import {
+  type WeatherAtmosphereType,
+  ATMOSPHERE_CONFIGS,
+  classifyWeatherAtmosphere,
+  formatWeatherConditionLabel,
+} from '@/lib/weatherAtmosphere';
 import styles from './page.module.css';
 
 export default function LandingPage() {
@@ -16,7 +24,20 @@ export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [selectedHazardIndex, setSelectedHazardIndex] = useState(0);
 
-  const heroCanvasRef = useRef<HTMLCanvasElement>(null);
+  // Dynamic Lucknow Weather Atmosphere State
+  const [activeAtmosphere, setActiveAtmosphere] = useState<WeatherAtmosphereType>('cloudy');
+  const [liveLucknowData, setLiveLucknowData] = useState<{
+    temperature?: number;
+    weatherCondition?: string;
+    precipitation?: number;
+    windSpeed?: number;
+    relativeHumidity?: number;
+    cloudCover?: number;
+    weatherCode?: number;
+    updatedAt?: string;
+  } | null>(null);
+  const [isManualOverride, setIsManualOverride] = useState(false);
+
   const miniRadarCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Active ground hazards currently reported and unaddressed
@@ -37,6 +58,39 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [activeHazards.length]);
 
+  // Fetch real-time Lucknow weather conditions on mount
+  useEffect(() => {
+    async function fetchLucknowWeather() {
+      try {
+        const res = await fetch('/api/weather/live?lat=26.8467&lng=80.9462', { cache: 'no-store' });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setLiveLucknowData(json.data);
+            if (!isManualOverride) {
+              const detected = classifyWeatherAtmosphere({
+                temperature: json.data.temperature,
+                precipitation: json.data.precipitation,
+                rain: json.data.rain,
+                weatherCode: json.data.weatherCode,
+                cloudCover: json.data.cloudCover,
+                windSpeed: json.data.windSpeed,
+                relativeHumidity: json.data.relativeHumidity,
+              });
+              setActiveAtmosphere(detected);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Lucknow weather atmospheric sync note:', err);
+      }
+    }
+
+    fetchLucknowWeather();
+    const interval = setInterval(fetchLucknowWeather, 120000); // 2-minute refresh
+    return () => clearInterval(interval);
+  }, [isManualOverride]);
+
   // Real-time live status strip derived dynamically from live website ground data
   const liveTickerItems = activeHazards.length > 0
     ? activeHazards.map((h) => {
@@ -49,7 +103,7 @@ export default function LandingPage() {
         return `⚠️ ACTIVE GROUND HAZARD: ${h.landmark || 'Designated Zone'} · ${cat} (Level ${h.severity}) · Directive: ${directive}`;
       })
     : [
-        '🟢 National Doppler Network · All 45 Radar Stations Operational · Baseline Nominal',
+        '🟢 National Doppler Network · 45 Radar Stations Operational · Baseline Nominal',
         '🛡️ Suraksha Setu Ground Truth System · Pan-India Telemetry Active Across 28 States & 8 UTs',
         '📍 Public Citizen Reporting Gateway Open · Multi-Station Doppler Cross-Verification Active',
         '🌧️ Automatic Weather Station Grid · Continuous Precipitation & Drainage Inundation Monitoring',
@@ -72,148 +126,7 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Background atmospheric weather canvas loop
-  useEffect(() => {
-    const canvas = heroCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animFrameId: number;
-    let width = (canvas.width = canvas.offsetWidth);
-    let height = (canvas.height = canvas.offsetHeight);
-
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = canvas.offsetWidth;
-      height = canvas.height = canvas.offsetHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    // Weather particles: rain & moisture droplets
-    const particles = Array.from({ length: 95 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      length: Math.random() * 8 + 4,
-      speed: Math.random() * 2.5 + 1.8,
-      opacity: Math.random() * 0.35 + 0.15,
-      drift: (Math.random() - 0.5) * 0.6,
-    }));
-
-    let radarAngle = 0;
-    let lightningTimer = 0;
-    let lightningIntensity = 0;
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      const currentScroll = window.scrollY || 0;
-      const scrollProgress = Math.min(1, Math.max(0, currentScroll / 750));
-
-      // Sheet lightning effect on scroll
-      lightningTimer++;
-      if (scrollProgress > 0.15 && lightningTimer > 240 && Math.random() < 0.02) {
-        lightningIntensity = 0.22;
-        lightningTimer = 0;
-      }
-      if (lightningIntensity > 0) {
-        ctx.fillStyle = `rgba(186, 230, 253, ${lightningIntensity * 0.22})`;
-        ctx.fillRect(0, 0, width, height);
-        lightningIntensity *= 0.88;
-      }
-
-      // High-Altitude Doppler Radar Center
-      const radarCenterX = width * 0.68;
-      const radarCenterY = height * 0.48;
-      const baseRadius = Math.min(width, height) * 0.22;
-      const zoomFactor = 1 + scrollProgress * 1.6;
-
-      // Radar Range Rings
-      [0.4, 0.75, 1.15, 1.6].forEach((scale, idx) => {
-        const r = baseRadius * scale * zoomFactor;
-        if (r < Math.max(width, height)) {
-          ctx.beginPath();
-          ctx.arc(radarCenterX, radarCenterY, r, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(56, 189, 248, ${0.08 + idx * 0.03 + scrollProgress * 0.06})`;
-          ctx.lineWidth = 1;
-          ctx.setLineDash([4, 6]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-      });
-
-      // Rotating Radar Sweep Beam
-      radarAngle += 0.016;
-      const sweepRadius = baseRadius * 1.7 * zoomFactor;
-      const trailAngle = 0.55;
-
-      const sweepGradient = ctx.createRadialGradient(
-        radarCenterX,
-        radarCenterY,
-        0,
-        radarCenterX,
-        radarCenterY,
-        sweepRadius
-      );
-      sweepGradient.addColorStop(0, 'rgba(56, 189, 248, 0.2)');
-      sweepGradient.addColorStop(0.7, 'rgba(14, 165, 233, 0.08)');
-      sweepGradient.addColorStop(1, 'transparent');
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(radarCenterX, radarCenterY);
-      ctx.arc(radarCenterX, radarCenterY, sweepRadius, radarAngle - trailAngle, radarAngle, false);
-      ctx.closePath();
-      ctx.fillStyle = sweepGradient;
-      ctx.fill();
-
-      // Sharp beam front edge
-      const beamEndX = radarCenterX + Math.cos(radarAngle) * sweepRadius;
-      const beamEndY = radarCenterY + Math.sin(radarAngle) * sweepRadius;
-      ctx.beginPath();
-      ctx.moveTo(radarCenterX, radarCenterY);
-      ctx.lineTo(beamEndX, beamEndY);
-      ctx.strokeStyle = `rgba(217, 119, 6, ${0.4 + scrollProgress * 0.35})`;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.restore();
-
-      // Rainfall & Moisture Particles
-      const speedMultiplier = 1 + scrollProgress * 3.8;
-      const streakLengthMultiplier = 1 + scrollProgress * 2.6;
-
-      particles.forEach((p) => {
-        p.y += p.speed * speedMultiplier;
-        p.x += p.drift;
-
-        if (p.y > height) {
-          p.y = -20;
-          p.x = Math.random() * width;
-        }
-        if (p.x > width) p.x = 0;
-        if (p.x < 0) p.x = width;
-
-        const pLen = p.length * streakLengthMultiplier;
-        const pAlpha = Math.min(0.85, p.opacity + scrollProgress * 0.35);
-
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.drift * 2, p.y + pLen);
-        ctx.strokeStyle = `rgba(186, 230, 253, ${pAlpha})`;
-        ctx.lineWidth = 1 + scrollProgress * 0.5;
-        ctx.stroke();
-      });
-
-      animFrameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(animFrameId);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
+  const scrollProgress = Math.min(1, Math.max(0, scrollY / 750));
 
   // Dedicated Tactical Mini Radar Canvas (Standby Weather Radar OR Live Hazard Target Lock)
   useEffect(() => {
@@ -254,7 +167,7 @@ export default function LandingPage() {
 
       if (!currentHazard) {
         // ====================================================
-        // SCENARIO 1: COOL REAL-TIME DOPPLER RADAR ANIMATION (No Hazards)
+        // SCENARIO 1: REAL-TIME DOPPLER RADAR SWEEP (Standby Mode)
         // ====================================================
         sweepAngle += 0.024;
 
@@ -284,7 +197,7 @@ export default function LandingPage() {
         ctx.textAlign = 'right';
         ctx.fillText('W', 14, cy + 3);
 
-        // Ambient Organic Moisture Echo Waves (Generative Cloud Reflectivity)
+        // Ambient Organic Moisture Echo Waves (Reflectivity)
         for (let i = 0; i < 3; i++) {
           const echoRadius = 35 + i * 22;
           const echoAngle = Math.sin(sweepAngle * 0.4 + i) * 0.8 + (i * Math.PI) / 2;
@@ -350,7 +263,7 @@ export default function LandingPage() {
 
       } else {
         // ====================================================
-        // SCENARIO 2: LIVE HAZARD TARGET LOCK & GROUND TELEMETRY
+        // SCENARIO 2: LIVE HAZARD TARGET LOCK & H3 HEX RETICLE
         // ====================================================
         pulsePhase = (pulsePhase + 0.04) % (Math.PI * 2);
 
@@ -479,22 +392,40 @@ export default function LandingPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 3000); // 3-second live polling
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  const currentAtmosphereConfig = ATMOSPHERE_CONFIGS[activeAtmosphere] || ATMOSPHERE_CONFIGS.clear;
+
+  // Editorial weather label string
+  const weatherLabel = liveLucknowData
+    ? formatWeatherConditionLabel(liveLucknowData)
+    : 'Lucknow · Doppler Radar Synchronized · Awadh Basin';
 
   return (
     <div className={styles.page}>
       {/* 1. Universal Production Header */}
       <Navbar />
 
-      {/* 2. Full-Screen Desktop Hero */}
-      <section className={styles.hero}>
+      {/* 2. Full-Screen Cinematic Weather-Aware Hero */}
+      <section
+        className={styles.hero}
+        style={{
+          background: currentAtmosphereConfig.skyGradient,
+        }}
+      >
         <div className={styles.heroOverlay} />
         <div className={styles.heroTelemetryLines} />
-        <canvas ref={heroCanvasRef} className={styles.heroWeatherCanvas} />
 
-        {/* Left Column Copy */}
+        {/* Dynamic Weather Simulation Canvas */}
+        <WeatherHeroAtmosphere
+          atmosphere={activeAtmosphere}
+          scrollProgress={scrollProgress}
+          className={styles.heroWeatherCanvas}
+        />
+
+        {/* Left Column Content with Staggered Entrance Reveal */}
         <div className={styles.heroContent}>
           {/* Dynamic Real-Time Live Status Strip */}
           <div className={styles.statusStrip}>
@@ -510,14 +441,22 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Authoritative, Grounded Headline (No AI clichés) */}
+          {/* Editorial Weather Atmosphere Label Pill */}
+          <div className={styles.weatherConditionPill}>
+            <span className={styles.weatherPillDot} style={{ background: currentAtmosphereConfig.accentColor }} />
+            <span className={styles.weatherPillText}>{weatherLabel}</span>
+            <span className={styles.weatherAtmosphereTag}>{currentAtmosphereConfig.badge}</span>
+          </div>
+
+          {/* Authoritative, Grounded Headline */}
           <h1 className={styles.headline}>
             National Hyperlocal Disaster Intelligence &amp; Early Warning Network
           </h1>
 
           {/* Supporting Public-Safety Mission Description */}
           <p className={styles.supportingText}>
-            Suraksha Setu connects real-time citizen eyewitness observations with dual-polarization Doppler radar telemetry, empowering emergency authorities to verify urban flooding, cloudbursts, and severe weather before they escalate.
+            Suraksha Setu bridges street-level citizen observations with dual-polarization Doppler radar telemetry.
+            Empowering disaster response authorities to verify urban waterlogging, cloudbursts, and flash floods before they escalate.
           </p>
 
           {/* Primary & Secondary Action Directives */}
@@ -526,10 +465,51 @@ export default function LandingPage() {
               <span>Explore Live Risk Map</span>
               <span className={styles.ctaArrow}>→</span>
             </Link>
-            <Link href="/report" className={styles.secondaryCta} id="hero-secondary-cta">
+            <Link href="/report" className={styles.secondaryCta} id="hero-report-cta">
               <span>Submit Ground Report</span>
               <span className={styles.ctaArrow}>→</span>
             </Link>
+          </div>
+
+          {/* Subtle Atmosphere Preview Switcher for Presentation & Demonstration */}
+          <div className={styles.atmosphereSwitcherBar}>
+            <span className={styles.switcherLabel}>Atmosphere Mood:</span>
+            <button
+              type="button"
+              className={`${styles.switcherBtn} ${!isManualOverride ? styles.switcherBtnActive : ''}`}
+              onClick={() => {
+                setIsManualOverride(false);
+                if (liveLucknowData) {
+                  setActiveAtmosphere(
+                    classifyWeatherAtmosphere({
+                      temperature: liveLucknowData.temperature,
+                      precipitation: liveLucknowData.precipitation,
+                      rain: liveLucknowData.precipitation,
+                      weatherCode: liveLucknowData.weatherCode,
+                      cloudCover: liveLucknowData.cloudCover,
+                      windSpeed: liveLucknowData.windSpeed,
+                      relativeHumidity: liveLucknowData.relativeHumidity,
+                    })
+                  );
+                }
+              }}
+              title="Return to real-time auto-detected Lucknow weather"
+            >
+              ⚡ Live Lucknow
+            </button>
+            {(['clear', 'cloudy', 'rain', 'thunderstorm', 'fog', 'heatwave'] as WeatherAtmosphereType[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className={`${styles.switcherBtn} ${isManualOverride && activeAtmosphere === mode ? styles.switcherBtnActive : ''}`}
+                onClick={() => {
+                  setIsManualOverride(true);
+                  setActiveAtmosphere(mode);
+                }}
+              >
+                {ATMOSPHERE_CONFIGS[mode].badge}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -550,43 +530,54 @@ export default function LandingPage() {
           }
         >
           <div className={styles.overlayHeader}>
-            <span
-              className={styles.overlayTag}
-              style={{
-                color: currentHazard
-                  ? currentHazard.severity >= 4
-                    ? '#EF4444'
-                    : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
-                    ? '#34D399'
-                    : '#F59E0B'
-                  : '#34D399',
-              }}
-            >
+            <div className={styles.overlayHeaderLeft}>
               <span
-                className={styles.overlayTagDot}
+                className={styles.overlayTag}
                 style={{
-                  background: currentHazard
+                  color: currentHazard
                     ? currentHazard.severity >= 4
                       ? '#EF4444'
                       : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
                       ? '#34D399'
                       : '#F59E0B'
                     : '#34D399',
-                  boxShadow: currentHazard
-                    ? currentHazard.severity >= 4
-                      ? '0 0 8px #EF4444'
-                      : '0 0 8px #F59E0B'
-                    : '0 0 8px #34D399',
                 }}
-              />
-              {currentHazard
-                ? currentHazard.currentActionCategory && currentHazard.currentActionCategory !== 'Pending Verification'
-                  ? currentHazard.currentActionCategory
-                  : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
-                  ? 'Verified Local Hazard'
-                  : 'Active Ground Observation'
-                : 'Doppler Radar Net · Standby Monitoring'}
-            </span>
+              >
+                <span
+                  className={styles.overlayTagDot}
+                  style={{
+                    background: currentHazard
+                      ? currentHazard.severity >= 4
+                        ? '#EF4444'
+                        : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
+                        ? '#34D399'
+                        : '#F59E0B'
+                      : '#34D399',
+                    boxShadow: currentHazard
+                      ? currentHazard.severity >= 4
+                        ? '0 0 8px #EF4444'
+                        : '0 0 8px #F59E0B'
+                        : '0 0 8px #34D399',
+                  }}
+                />
+                {currentHazard
+                  ? currentHazard.currentActionCategory && currentHazard.currentActionCategory !== 'Pending Verification'
+                    ? currentHazard.currentActionCategory
+                    : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
+                    ? 'Verified Local Hazard'
+                    : 'Active Ground Observation'
+                  : 'Doppler Radar Net · Standby Monitoring'}
+              </span>
+
+              {/* H3 Risk Hexagon Pulse Indicator */}
+              <div
+                className={`${styles.h3RiskBadge} ${currentHazard ? styles.h3RiskBadgeActive : ''}`}
+                title="H3 Spatial Resolution Grid Hex Cell"
+              >
+                <span>⬡</span>
+                <span>{currentHazard ? 'H3-HEX ALERT ACTIVE' : 'H3-HEX NOMINAL'}</span>
+              </div>
+            </div>
 
             {currentHazard && activeHazards.length > 1 ? (
               <div className={styles.hazardNavGroup}>
@@ -614,7 +605,7 @@ export default function LandingPage() {
               <span className={styles.overlayCoords}>
                 {currentHazard
                   ? `${currentHazard.location.latitude.toFixed(3)}°N, ${currentHazard.location.longitude.toFixed(3)}°E`
-                  : '28°36′N, 77°13′E · 45 STNS'}
+                  : '26°51′N, 80°56′E · 45 STNS'}
               </span>
             )}
           </div>
@@ -627,7 +618,7 @@ export default function LandingPage() {
             <div className={styles.overlayLocationTitle}>
               {currentHazard
                 ? currentHazard.landmark || `Hazard near ${currentHazard.location.latitude.toFixed(3)}°N, ${currentHazard.location.longitude.toFixed(3)}°E`
-                : 'Pan-India Severe Weather Surveillance Active'}
+                : 'Awadh & Pan-India Severe Weather Surveillance Active'}
             </div>
             <div className={styles.overlayTelemetry}>
               {currentHazard
@@ -671,20 +662,12 @@ export default function LandingPage() {
           <div className={styles.scrollPulseIcon}>
             <div className={styles.scrollPulseDot} />
           </div>
-          <span>Scroll to descend through weather layers</span>
+          <span>Scroll to explore verified alert workflow</span>
         </div>
       </section>
 
-      {/* Floating Descent Weather Telemetry */}
-      {scrollY > 280 && (
-        <div className={styles.scrollTelemetryBanner}>
-          <span className={styles.scrollTelemetryDot} />
-          <span>Ground Descent Active · Live Reflectivity 45 dBZ · Street-Level Corroboration</span>
-        </div>
-      )}
-
       {/* ============================================================
-          4. Live National Metrics Bar (Ground Truth Only, No Mock Fallbacks)
+          4. Live National Metrics Bar (Ground Truth Only)
           ============================================================ */}
       <section className={styles.metricsStrip}>
         <div className={styles.metricsContainer}>
@@ -722,7 +705,12 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================================
-          5. Active National Alerts & Live Citizen Reports Feed
+          5. Editorial 4-Step Story Sequence: "How Verified Alerts Work"
+          ============================================================ */}
+      <AlertWorkflowSequence />
+
+      {/* ============================================================
+          6. Active National Alerts & Live Citizen Reports Feed
           ============================================================ */}
       <section className={styles.liveFeedSection}>
         <div className={styles.feedContainer}>
@@ -837,7 +825,7 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================================
-          6. Below the Hero — Warm Off-White Institutional Section
+          7. Institutional Mandate & Architecture Pillars
           ============================================================ */}
       <section className={styles.institutionalSection} id="about">
         <div className={styles.institutionalContainer}>
@@ -895,7 +883,7 @@ export default function LandingPage() {
             <div className={styles.pillarCard}>
               <span className={styles.pillarNumber}>02</span>
               <h3 className={styles.pillarTitle}>
-                Doppler & Sensor Correlation
+                Doppler &amp; Sensor Correlation
               </h3>
               <p className={styles.pillarBody}>
                 Incoming ground signals are automatically cross-checked against dual-polarization Doppler radar reflectivity, AWS rain gauges, and spatial cluster algorithms.
@@ -920,7 +908,7 @@ export default function LandingPage() {
                 <span>📡</span> Active Pan-India Coverage: 28 States &amp; 8 UTs
               </h4>
               <p>
-                Monitoring 45 automatic weather stations, Doppler radar sweeps at Colaba, Delhi, Kolkata, and Chennai, with live citizen telemetry streams.
+                Monitoring 45 automatic weather stations, Doppler radar sweeps at Colaba, Delhi, Lucknow, Kolkata, and Chennai, with live citizen telemetry streams.
               </p>
             </div>
             <div className={styles.corridorActions}>
@@ -936,7 +924,7 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================================
-          7. Calm Institutional Footer
+          8. Calm Institutional Footer
           ============================================================ */}
       <footer className={styles.footer}>
         <div className={styles.footerContainer}>

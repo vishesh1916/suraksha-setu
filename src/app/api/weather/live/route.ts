@@ -26,6 +26,7 @@ export interface IndiaCityWeather {
 }
 
 const INDIAN_HUBS = [
+  { id: 'lucknow', name: 'Lucknow', state: 'Uttar Pradesh', zone: 'North', lat: 26.8467, lng: 80.9462 },
   { id: 'delhi', name: 'Delhi NCR', state: 'Delhi', zone: 'North', lat: 28.6139, lng: 77.2090 },
   { id: 'mumbai', name: 'Mumbai', state: 'Maharashtra', zone: 'West', lat: 19.0760, lng: 72.8777 },
   { id: 'chennai', name: 'Chennai', state: 'Tamil Nadu', zone: 'South', lat: 13.0827, lng: 80.2707 },

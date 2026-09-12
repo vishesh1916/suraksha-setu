@@ -11,7 +11,7 @@
   color: var(--color-text-primary);
   font-family: var(--font-family-sans);
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ============================================================
@@ -120,7 +120,7 @@
 }
 
 /* ============================================================
-   2. Full-Screen 16:9 Desktop Hero
+   2. Full-Screen 16:9 Cinematic Hero
    ============================================================ */
 .hero {
   position: relative;
@@ -129,11 +129,8 @@
   display: flex;
   align-items: center;
   background-color: var(--color-navy-midnight);
-  background-image: url('/hero-satellite.jpg');
-  background-size: cover;
-  background-position: center right;
-  background-repeat: no-repeat;
   overflow: hidden;
+  transition: background 0.8s ease;
 }
 
 /* Atmospheric vignette & telemetry lines */
@@ -141,9 +138,10 @@
   position: absolute;
   inset: 0;
   background: 
-    linear-gradient(180deg, rgba(11, 31, 51, 0.7) 0%, rgba(11, 31, 51, 0.45) 40%, rgba(11, 31, 51, 0.95) 90%, #0B1F33 100%),
-    linear-gradient(90deg, rgba(11, 31, 51, 0.96) 0%, rgba(11, 31, 51, 0.78) 42%, rgba(11, 31, 51, 0.3) 75%, transparent 100%);
+    linear-gradient(180deg, rgba(7, 21, 36, 0.6) 0%, rgba(7, 21, 36, 0.35) 40%, rgba(7, 21, 36, 0.95) 90%, #071524 100%),
+    linear-gradient(90deg, rgba(7, 21, 36, 0.96) 0%, rgba(7, 21, 36, 0.78) 42%, rgba(7, 21, 36, 0.2) 75%, transparent 100%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .heroTelemetryLines {
@@ -154,6 +152,7 @@
     linear-gradient(to bottom, rgba(138, 153, 168, 0.04) 1px, transparent 1px);
   background-size: 120px 120px;
   pointer-events: none;
+  z-index: 1;
 }
 
 /* Dynamic Interactive Weather Canvas */
@@ -213,51 +212,23 @@
   100% { transform: translate(-50%, 0); opacity: 0; }
 }
 
-/* Persistent descent telemetry badge on scroll */
-.scrollTelemetryBanner {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background: rgba(11, 31, 51, 0.92);
-  border: 1px solid rgba(217, 119, 6, 0.45);
-  backdrop-filter: blur(16px);
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #F7F6F2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  z-index: 99;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-  animation: fadeIn 0.3s ease-out;
-}
-
-.scrollTelemetryDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-amber-safety);
-  box-shadow: 0 0 8px var(--color-amber-safety);
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.3); opacity: 0.7; }
-}
-
 .heroContent {
   position: relative;
   z-index: 10;
-  max-width: 680px;
-  padding: 120px 0 80px 48px;
+  max-width: 720px;
+  padding: 130px 0 80px 48px;
+  animation: heroEntrance 0.75s ease-out forwards;
+}
+
+@keyframes heroEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Live Status Strip */
@@ -265,12 +236,13 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 16px;
-  background: rgba(11, 31, 51, 0.85);
-  border: 1px solid rgba(217, 119, 6, 0.4);
+  padding: 6px 14px;
+  background: rgba(11, 31, 51, 0.88);
+  border: 1px solid rgba(217, 119, 6, 0.35);
   border-radius: 999px;
-  margin-bottom: 28px;
+  margin-bottom: 14px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
 }
 
 .statusDot {
@@ -288,65 +260,104 @@
 }
 
 .statusText {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
   color: #F7F6F2;
 }
 
-.statusSeparator {
-  color: rgba(138, 153, 168, 0.6);
-  font-size: 11px;
+/* Editorial Weather Atmosphere Label Pill */
+.weatherConditionPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 999px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+}
+
+.weatherPillDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.7);
+}
+
+.weatherPillText {
+  font-size: 12px;
+  font-weight: 600;
+  color: #E2E8F0;
+  letter-spacing: 0.01em;
+}
+
+.weatherAtmosphereTag {
+  font-family: monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: #38BDF8;
 }
 
 /* Editorial Headline */
 .headline {
-  font-family: var(--font-family-sans);
-  font-size: clamp(2.85rem, 5vw, 4.6rem);
-  font-weight: 700;
-  line-height: 1.08;
+  font-family: var(--font-heading, sans-serif);
+  font-size: clamp(2.35rem, 5vw, 4.4rem);
+  font-weight: 800;
+  line-height: 1.1;
   letter-spacing: -0.035em;
   color: #F7F6F2;
-  margin: 0 0 24px;
+  margin: 0 0 20px;
 }
 
 .supportingText {
-  font-size: 1.15rem;
-  line-height: 1.6;
-  color: var(--color-cloud-gray);
-  max-width: 520px;
-  margin: 0 0 36px;
+  font-size: 1.1rem;
+  line-height: 1.62;
+  color: #94A3B8;
+  max-width: 560px;
+  margin: 0 0 32px;
   font-weight: 400;
 }
 
-/* CTAs */
+/* CTAs with Tactile Press Feedback */
 .ctaGroup {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 18px;
   flex-wrap: wrap;
+  margin-bottom: 28px;
 }
 
 .primaryCta {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #F7F6F2;
-  color: #0B1F33;
+  background: #0284C7;
+  color: #FFFFFF;
   font-size: 14.5px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.01em;
   padding: 13px 24px;
+  border: 1px solid #38BDF8;
   border-radius: 6px;
   text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: all 0.18s ease;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+  cursor: pointer;
 }
 
 .primaryCta:hover {
-  background: #FFFFFF;
+  background: #0369A1;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 22px rgba(2, 132, 199, 0.45);
+}
+
+.primaryCta:active {
+  transform: translateY(1px) scale(0.99);
 }
 
 .primaryCta .ctaArrow {
@@ -362,18 +373,26 @@
   align-items: center;
   gap: 8px;
   color: #F7F6F2;
+  background: rgba(255, 255, 255, 0.08);
   font-size: 14.5px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.01em;
   text-decoration: none;
-  padding: 13px 0;
-  border-bottom: 1px solid rgba(247, 246, 242, 0.4);
-  transition: all 0.2s ease;
+  padding: 13px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  transition: all 0.18s ease;
+  cursor: pointer;
 }
 
 .secondaryCta:hover {
-  border-bottom-color: #F7F6F2;
-  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.secondaryCta:active {
+  transform: translateY(1px) scale(0.99);
 }
 
 .secondaryCta .ctaArrow {
@@ -382,6 +401,50 @@
 
 .secondaryCta:hover .ctaArrow {
   transform: translateX(4px);
+}
+
+/* Subtle Atmosphere Switcher Bar */
+.atmosphereSwitcherBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.switcherLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8A99A8;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.switcherBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #CBD5E1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.switcherBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #F8FAFC;
+}
+
+.switcherBtnActive {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38BDF8;
+  color: #38BDF8;
+  font-weight: 700;
 }
 
 /* ============================================================
@@ -410,6 +473,12 @@
   border-bottom: 1px solid rgba(138, 153, 168, 0.18);
 }
 
+.overlayHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
 .overlayTag {
   display: inline-flex;
   align-items: center;
@@ -426,6 +495,38 @@
   height: 6px;
   border-radius: 50%;
   background: var(--color-safety-amber);
+}
+
+/* H3 Local-Risk Hexagon Badge with Pulse */
+.h3RiskBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: monospace;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #94A3B8;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.06em;
+}
+
+.h3RiskBadgeActive {
+  color: #FCA5A5;
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.45);
+  animation: h3BadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes h3BadgePulse {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
 }
 
 .overlayCoords {
@@ -717,7 +818,7 @@
 }
 
 /* ============================================================
-   6. Below the Hero — Warm Off-White Institutional Section
+   6. Institutional Mandate & Architecture Pillars
    ============================================================ */
 .institutionalSection {
   background: var(--color-off-white);
@@ -778,9 +879,9 @@
 }
 
 .trustStatement {
-  font-family: var(--font-family-sans);
+  font-family: var(--font-heading, sans-serif);
   font-size: clamp(2rem, 3.4vw, 2.9rem);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.18;
   letter-spacing: -0.025em;
   color: #0E1E2E;
@@ -1013,17 +1114,17 @@
 }
 
 /* ============================================================
-   Responsive Breakpoints
+   Responsive Breakpoints & Mobile Optimization (320px–430px)
    ============================================================ */
 @media (max-width: 1024px) {
   .heroContent {
-    padding: 100px 32px 60px;
+    padding: 110px 32px 60px;
   }
   .operationalOverlay {
     position: static;
     margin: 0 32px 48px;
     width: auto;
-    max-width: 480px;
+    max-width: 500px;
   }
   .metricsContainer {
     grid-template-columns: repeat(2, 1fr);
@@ -1040,33 +1141,103 @@
 
 @media (max-width: 768px) {
   .navbar {
-    padding: 0 20px;
-  }
-  .navLinks {
-    display: none;
+    padding: 0 16px;
   }
   .heroContent {
-    padding: 90px 20px 40px;
+    padding: 95px 18px 36px;
+  }
+  .headline {
+    font-size: clamp(2.1rem, 7vw, 3.2rem);
   }
   .operationalOverlay {
-    margin: 0 20px 36px;
+    margin: 0 18px 36px;
   }
   .metricsStrip {
-    padding: 20px;
+    padding: 20px 16px;
   }
   .metricsContainer {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
   .liveFeedSection {
-    padding: 40px 20px;
+    padding: 40px 16px;
   }
   .institutionalSection {
-    padding: 48px 20px;
+    padding: 48px 16px;
   }
   .partnerRow {
     gap: 16px;
   }
   .footer {
-    padding: 36px 20px 24px;
+    padding: 36px 16px 24px;
+  }
+}
+
+/* Mobile-First Deep Refinement for 320px to 430px devices */
+@media (max-width: 440px) {
+  .heroContent {
+    padding: 85px 14px 28px;
+  }
+  .statusStrip {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 11.5px;
+  }
+  .weatherConditionPill {
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .ctaGroup {
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  .primaryCta,
+  .secondaryCta {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: 48px;
+  }
+  .atmosphereSwitcherBar {
+    gap: 6px;
+  }
+  .switcherBtn {
+    font-size: 10.5px;
+    padding: 4px 8px;
+  }
+  .operationalOverlay {
+    margin: 0 14px 32px;
+    padding: 14px 14px;
+    border-radius: 8px;
+  }
+  .corridorStatusCard {
+    padding: 20px 16px;
+  }
+  .corridorActions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .corridorBtnPrimary,
+  .corridorBtnSecondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Reduced Motion Compliance */
+@media (prefers-reduced-motion: reduce) {
+  .heroContent,
+  .scrollPulseDot,
+  .statusDot,
+  .h3RiskBadgeActive {
+    animation: none !important;
+  }
+  .primaryCta,
+  .secondaryCta,
+  .switcherBtn {
+    transition: none !important;
   }
 }

@@ -9,16 +9,33 @@ import styles from './navbar.module.css';
 export function Navbar() {
   const pathname = usePathname();
   const [lang, setLang] = useState<Language>('en');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setLang(getSavedLanguage());
   }, []);
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Prevent background scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
   const toggleLanguage = () => {
     const nextLang: Language = lang === 'en' ? 'hi' : 'en';
     setLang(nextLang);
     setSavedLanguage(nextLang);
-    // Dispatch custom event so listening components update without full reload
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('languagechange', { detail: nextLang }));
     }
@@ -27,84 +44,210 @@ export function Navbar() {
   const t = translations[lang];
 
   return (
-    <header className={styles.navbar}>
-      <div className={styles.brandGroup}>
-        <Link href="/" className={styles.wordmark} id="brand-wordmark">
-          <span className={styles.brandIcon}>🛡️</span>
-          <span>{t.appName}</span>
-        </Link>
-        <span className={styles.subBrand}>
-          {lang === 'en' ? 'सुरक्षा सेतु · ' : ''}
-          {t.subTitle}
-        </span>
-      </div>
+    <>
+      <header className={styles.navbar}>
+        <div className={styles.brandGroup}>
+          <Link href="/" className={styles.wordmark} id="brand-wordmark">
+            <span className={styles.brandIcon}>🛡️</span>
+            <span>{t.appName}</span>
+          </Link>
+          <span className={styles.subBrand}>
+            {lang === 'en' ? 'सुरक्षा सेतु · ' : ''}
+            {t.subTitle}
+          </span>
+        </div>
 
-      <nav className={styles.navLinks}>
-        <Link
-          href="/map"
-          className={`${styles.navLink} ${pathname === '/map' ? styles.navLinkActive : ''}`}
-        >
-          {t.nav.map}
-        </Link>
-        <Link
-          href="/report"
-          className={`${styles.navLink} ${pathname === '/report' ? styles.navLinkActive : ''}`}
-        >
-          {t.nav.report}
-        </Link>
-        <Link
-          href="/alerts"
-          className={`${styles.navLink} ${pathname === '/alerts' ? styles.navLinkActive : ''}`}
-        >
-          {t.nav.alerts}
-        </Link>
-        <Link
-          href="/weather"
-          className={`${styles.navLink} ${pathname === '/weather' ? styles.navLinkActive : ''}`}
-        >
-          {t.nav.weather}
-        </Link>
-        <Link
-          href="/track"
-          className={`${styles.navLink} ${pathname === '/track' ? styles.navLinkActive : ''}`}
-        >
-          {t.nav.track}
-        </Link>
-        <Link
-          href="/safety"
-          className={`${styles.navLink} ${pathname === '/safety' ? styles.navLinkActive : ''}`}
-        >
-          {t.nav.safety}
-        </Link>
-        <Link
-          href="/login"
-          className={`${styles.navLink} ${pathname.startsWith('/staff') ? styles.navLinkActive : ''}`}
-        >
-          {t.nav.authorities}
-        </Link>
-      </nav>
+        {/* Desktop Navigation Links */}
+        <nav className={styles.navLinks}>
+          <Link
+            href="/map"
+            className={`${styles.navLink} ${pathname === '/map' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.map}
+          </Link>
+          <Link
+            href="/report"
+            className={`${styles.navLink} ${pathname === '/report' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.report}
+          </Link>
+          <Link
+            href="/alerts"
+            className={`${styles.navLink} ${pathname === '/alerts' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.alerts}
+          </Link>
+          <Link
+            href="/weather"
+            className={`${styles.navLink} ${pathname === '/weather' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.weather}
+          </Link>
+          <Link
+            href="/track"
+            className={`${styles.navLink} ${pathname === '/track' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.track}
+          </Link>
+          <Link
+            href="/safety"
+            className={`${styles.navLink} ${pathname === '/safety' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.safety}
+          </Link>
+          <Link
+            href="/login"
+            className={`${styles.navLink} ${pathname.startsWith('/staff') ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.authorities}
+          </Link>
+        </nav>
 
-      <div className={styles.navActions}>
-        {/* Language Switcher */}
-        <button
-          type="button"
-          onClick={toggleLanguage}
-          className={styles.langBtn}
-          title="Switch language (English / हिन्दी)"
-          id="language-toggle-btn"
-        >
-          <span>🌐</span>
-          <span>{lang === 'en' ? 'हिन्दी' : 'English'}</span>
-        </button>
+        {/* Desktop Actions */}
+        <div className={styles.navActions}>
+          {/* Language Switcher */}
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className={styles.langBtn}
+            title="Switch language (English / हिन्दी)"
+            id="language-toggle-btn"
+          >
+            <span>🌐</span>
+            <span>{lang === 'en' ? 'हिन्दी' : 'English'}</span>
+          </button>
 
-        <Link href="/login" className={styles.signInLink}>
-          {t.nav.signIn}
-        </Link>
+          <Link href="/login" className={styles.signInLink}>
+            {t.nav.signIn}
+          </Link>
 
-        <Link href="/map" className={styles.openPlatformBtn} id="open-platform-btn">
-          <span>{t.nav.openPlatform}</span>
-        </Link>
-      </div>
-    </header>
+          <Link href="/map" className={styles.openPlatformBtn} id="open-platform-btn">
+            <span>{t.nav.openPlatform}</span>
+          </Link>
+
+          {/* Accessible Mobile Hamburger Toggle */}
+          <button
+            type="button"
+            className={styles.mobileMenuToggle}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
+      </header>
+
+      {/* Accessible Mobile Navigation Overlay */}
+      {mobileMenuOpen && (
+        <div className={styles.mobileDrawerBackdrop} onClick={() => setMobileMenuOpen(false)}>
+          <div
+            className={styles.mobileDrawer}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile Navigation Menu"
+          >
+            <div className={styles.mobileDrawerHeader}>
+              <div className={styles.mobileDrawerBrand}>
+                <span style={{ fontSize: 20 }}>🛡️</span>
+                <strong>{t.appName}</strong>
+              </div>
+              <button
+                type="button"
+                className={styles.mobileCloseBtn}
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Prominent Quick Actions (One-Handed Mobile Reach) */}
+            <div className={styles.mobileQuickActions}>
+              <Link href="/map" className={styles.mobileActionPrimary} onClick={() => setMobileMenuOpen(false)}>
+                <span>🗺️ View Local Risk</span>
+                <span>→</span>
+              </Link>
+              <Link href="/report" className={styles.mobileActionSecondary} onClick={() => setMobileMenuOpen(false)}>
+                <span>🚨 Report a Hazard</span>
+                <span>+</span>
+              </Link>
+            </div>
+
+            {/* Navigation Link List with Large Touch Targets */}
+            <nav className={styles.mobileNavList}>
+              <Link
+                href="/map"
+                className={`${styles.mobileNavLink} ${pathname === '/map' ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>🗺️</span>
+                <span>{t.nav.map}</span>
+              </Link>
+              <Link
+                href="/report"
+                className={`${styles.mobileNavLink} ${pathname === '/report' ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>🚨</span>
+                <span>{t.nav.report}</span>
+              </Link>
+              <Link
+                href="/alerts"
+                className={`${styles.mobileNavLink} ${pathname === '/alerts' ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>📢</span>
+                <span>{t.nav.alerts}</span>
+              </Link>
+              <Link
+                href="/weather"
+                className={`${styles.mobileNavLink} ${pathname === '/weather' ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>🌧️</span>
+                <span>{t.nav.weather}</span>
+              </Link>
+              <Link
+                href="/track"
+                className={`${styles.mobileNavLink} ${pathname === '/track' ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>🔍</span>
+                <span>{t.nav.track}</span>
+              </Link>
+              <Link
+                href="/safety"
+                className={`${styles.mobileNavLink} ${pathname === '/safety' ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>🛡️</span>
+                <span>{t.nav.safety}</span>
+              </Link>
+              <Link
+                href="/login"
+                className={`${styles.mobileNavLink} ${pathname.startsWith('/staff') ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>🏛️</span>
+                <span>{t.nav.authorities}</span>
+              </Link>
+            </nav>
+
+            {/* Mobile Footer with Language Switch & Helpline */}
+            <div className={styles.mobileDrawerFooter}>
+              <button type="button" onClick={toggleLanguage} className={styles.mobileLangBtn}>
+                <span>🌐 {lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}</span>
+              </button>
+              <div className={styles.mobileHelpline}>
+                <span>National Emergency: </span>
+                <a href="tel:112"><strong>112</strong></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
