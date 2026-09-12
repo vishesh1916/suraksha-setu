@@ -46,7 +46,7 @@ const LAYER_STYLES: Record<BaseLayer, any> = {
     sources: {
       'carto-voyager': {
         type: 'raster',
-        tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'],
+        tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
         tileSize: 256,
         attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors (100% Free Open Data)',
       },
@@ -99,7 +99,7 @@ const LAYER_STYLES: Record<BaseLayer, any> = {
     sources: {
       'carto-dark': {
         type: 'raster',
-        tiles: ['https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png'],
+        tiles: ['https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png'],
         tileSize: 256,
         attribution: '&copy; CARTO &copy; OpenStreetMap contributors (100% Free Tactical Base)',
       },
@@ -151,92 +151,108 @@ function MapContent() {
   };
 
   // Fetch real ground hazards from API with continuous polling
+  // Fetch real ground hazards from API with continuous polling
   const fetchLiveHazards = useCallback(async () => {
     try {
       const timestamp = Date.now();
-      const [reportsRes, alertsRes] = await Promise.all([
+      const results = await Promise.allSettled([
         fetch(`/api/reports?limit=100&_t=${timestamp}`, { cache: 'no-store' }),
         fetch(`/api/alerts?status=active&_t=${timestamp}`, { cache: 'no-store' }),
       ]);
 
-      const newHazards: HazardPlace[] = [...BENCHMARK_HAZARDS];
+      const reportsRes = results[0].status === 'fulfilled' && results[0].value.ok ? results[0].value : null;
 
-      if (reportsRes.ok) {
-        const rData = await reportsRes.json();
-        const serverReps: Report[] = rData.data || [];
-        const clientReps = getClientReports();
-        const incomingReports: Report[] = [...serverReps];
-        for (const cr of clientReps) {
-          const idx = incomingReports.findIndex(sr => sr.id === cr.id || sr.id.toLowerCase() === cr.id.toLowerCase());
-          if (idx >= 0) {
-            incomingReports[idx] = { ...incomingReports[idx], ...cr };
-          } else {
-            incomingReports.unshift(cr);
-          }
-        }
-
-        incomingReports.forEach((rep) => {
-          if (!rep.location?.latitude || !rep.location?.longitude) return;
-          const lat = Number(rep.location.latitude);
-          const lng = Number(rep.location.longitude);
-          if (isNaN(lat) || isNaN(lng)) return;
-
-          const isResolved = rep.status === 'RESOLVED' || rep.currentActionCategory === 'Hazard Resolved';
-          const isDismissed = rep.verificationStatus === 'FLAGGED_FALSE_REPORT' || rep.status === 'DISMISSED';
-
-          // Dismissed false alarms are completely excluded from live risk map
-          if (isDismissed) return;
-
-          // Crucial user requirement: Once solved by admin or meteorologist, hazard stops displaying on the live risk map!
-          if (isResolved && !showResolvedArchive) return;
-
-          const isVerified = rep.verificationStatus === 'VERIFIED_GENUINE';
-          const landmarkText = rep.landmark || `Hazard near ${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E`;
-          const cityText = rep.landmark && rep.landmark.includes(',') 
-            ? rep.landmark.split(',').pop()?.trim() || 'Local Area' 
-            : 'Local Area';
-
-          const hazardItem: HazardPlace = {
-            id: rep.id,
-            category: rep.category || 'FLOODING',
-            severity: rep.severity || 3,
-            landmark: landmarkText,
-            cityName: cityText,
-            stateName: 'India',
-            lat,
-            lng,
-            waterDepthFeet: rep.waterDepthFeet || (rep.severity >= 4 ? 3.5 : 1.5),
-            rainfallRateMmH: rep.severity * 12,
-            windGustsKmh: 40 + rep.severity * 4,
-            photoUrl: rep.mediaUrl || 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
-            description: rep.description || 'Ground hazard reported by citizen.',
-            safetyGuidance: isResolved
-              ? 'Hazard Resolved & Danger Subsided. Municipal all-clear confirmed.'
-              : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
-                ? `⚡ ${rep.currentActionCategory} — Municipal Emergency Response Mobilized` 
-                : isVerified 
-                  ? '✓ Ground Verified Genuine. Municipal emergency crew active.' 
-                  : '⏳ Citizen Eyewitness Report. Reviewer radar verification in progress.',
-            verifiedAt: isResolved ? 'Resolved / All Clear' : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification' ? rep.currentActionCategory : isVerified ? 'Verified by Officer' : 'Reported Just now',
-            source: rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
-              ? `Operational Command Directive: ${rep.currentActionCategory}`
-              : isVerified 
-              ? 'Verified Citizen Ground Report' 
-              : 'Citizen Ground Sensor & Corroboration Engine',
-            reportCount: 1,
-          };
-
-          const existingIndex = newHazards.findIndex((h) => h.id === rep.id);
-
-          if (existingIndex >= 0) {
-            newHazards[existingIndex] = hazardItem;
-          } else {
-            newHazards.unshift(hazardItem);
-          }
-        });
+      let serverReps: Report[] = [];
+      if (reportsRes) {
+        try {
+          const rData = await reportsRes.json();
+          if (Array.isArray(rData.data)) serverReps = rData.data;
+        } catch {}
       }
 
+      const clientReps = getClientReports();
+      const incomingReports: Report[] = [...serverReps];
+      for (const cr of clientReps) {
+        const idx = incomingReports.findIndex(sr => sr.id === cr.id || sr.id.toLowerCase() === cr.id.toLowerCase());
+        if (idx >= 0) {
+          incomingReports[idx] = { ...incomingReports[idx], ...cr };
+        } else {
+          incomingReports.unshift(cr);
+        }
+      }
+
+      const newHazards: HazardPlace[] = [...BENCHMARK_HAZARDS];
+
+      incomingReports.forEach((rep) => {
+        const rawLat = rep.location?.latitude ?? (rep.location as any)?.lat;
+        const rawLng = rep.location?.longitude ?? (rep.location as any)?.lng;
+        if (rawLat === undefined || rawLng === undefined || rawLat === null || rawLng === null) return;
+        const lat = Number(rawLat);
+        const lng = Number(rawLng);
+        if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+
+        const isResolved = rep.status === 'RESOLVED' || rep.currentActionCategory === 'Hazard Resolved';
+        const isDismissed = rep.verificationStatus === 'FLAGGED_FALSE_REPORT' || rep.status === 'DISMISSED';
+
+        // Dismissed false alarms are completely excluded from live risk map
+        if (isDismissed) return;
+
+        // Once resolved by emergency teams, only display if resolved archive is toggled ON
+        if (isResolved && !showResolvedArchive) return;
+
+        const isVerified = rep.verificationStatus === 'VERIFIED_GENUINE';
+        const landmarkText = rep.landmark || `Hazard near ${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E`;
+        const cityText = rep.landmark && rep.landmark.includes(',') 
+          ? rep.landmark.split(',').pop()?.trim() || 'Local Area' 
+          : 'Local Area';
+
+        const hazardItem: HazardPlace = {
+          id: rep.id,
+          category: rep.category || 'FLOODING',
+          severity: rep.severity || 3,
+          landmark: landmarkText,
+          cityName: cityText,
+          stateName: 'India',
+          lat,
+          lng,
+          waterDepthFeet: rep.waterDepthFeet || (rep.severity >= 4 ? 3.5 : 1.5),
+          rainfallRateMmH: rep.severity * 12,
+          windGustsKmh: 40 + rep.severity * 4,
+          photoUrl: rep.mediaUrl || 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
+          description: rep.description || 'Ground hazard reported by citizen.',
+          safetyGuidance: isResolved
+            ? 'Hazard Resolved & Danger Subsided. Municipal all-clear confirmed.'
+            : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
+              ? `⚡ ${rep.currentActionCategory} — Municipal Emergency Response Mobilized` 
+              : isVerified 
+                ? '✓ Ground Verified Genuine. Municipal emergency crew active.' 
+                : '⏳ Citizen Eyewitness Report. Reviewer radar verification in progress.',
+          verifiedAt: isResolved ? 'Resolved / All Clear' : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification' ? rep.currentActionCategory : isVerified ? 'Verified by Officer' : 'Reported Just now',
+          source: rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
+            ? `Operational Command Directive: ${rep.currentActionCategory}`
+            : isVerified 
+            ? 'Verified Citizen Ground Report' 
+            : 'Citizen Ground Sensor & Corroboration Engine',
+          reportCount: 1,
+        };
+
+        const existingIndex = newHazards.findIndex((h) => h.id === rep.id);
+
+        if (existingIndex >= 0) {
+          newHazards[existingIndex] = hazardItem;
+        } else {
+          newHazards.unshift(hazardItem);
+        }
+      });
+
       setHazards(newHazards);
+
+      // Keep selected place in sync with updated fields
+      setSelectedPlace((prev) => {
+        if (!prev) return null;
+        const refreshed = newHazards.find((h) => h.id === prev.id);
+        return refreshed || prev;
+      });
     } catch {
       // Graceful fallback
     }
@@ -254,7 +270,7 @@ function MapContent() {
     };
   }, [fetchLiveHazards]);
 
-  // If search parameters (lat, lng, or highlight) exist, auto-select matched place
+  // If search parameters (lat, lng, or highlight) exist, auto-select matched place and fly to it
   useEffect(() => {
     if (!hazards.length) return;
     if (paramHighlight || (paramLat && paramLng)) {
@@ -263,67 +279,105 @@ function MapContent() {
       const matched = hazards.find(
         (h) => h.id === paramHighlight || (!isNaN(pLat) && !isNaN(pLng) && Math.abs(h.lat - pLat) < 0.01 && Math.abs(h.lng - pLng) < 0.01)
       );
-      if (matched && (!selectedPlace || selectedPlace.id !== matched.id)) {
-        setSelectedPlace(matched);
+      if (matched) {
+        if (!selectedPlace || selectedPlace.id !== matched.id) {
+          setSelectedPlace(matched);
+        }
+        if (mapRef.current && !hasHandledParams.current) {
+          hasHandledParams.current = true;
+          try {
+            mapRef.current.flyTo({
+              center: [matched.lng, matched.lat],
+              zoom: 14.8,
+              pitch: 35,
+              duration: 1200,
+            });
+          } catch {}
+        }
       }
     }
-  }, [hazards, paramHighlight, paramLat, paramLng, selectedPlace]);
+  }, [hazards, paramHighlight, paramLat, paramLng, selectedPlace, mapReady]);
 
   // Initialize MapLibre GL instance
   useEffect(() => {
-    let isMounted = true;
+    let active = true;
 
     async function initMap() {
       if (!mapContainerRef.current) return;
-      if (mapRef.current) return;
 
-      const maplibreglModule = (await import('maplibre-gl')) as any;
-      const maplibregl = maplibreglModule.default || maplibreglModule;
+      try {
+        const maplibreglModule = (await import('maplibre-gl')) as any;
+        const maplibregl = maplibreglModule.default || maplibreglModule;
 
-      const initialLat = paramLat ? parseFloat(paramLat) : 22.5937;
-      const initialLng = paramLng ? parseFloat(paramLng) : 78.9629;
-      const hasCoordParams = Boolean(paramLat && paramLng && !isNaN(initialLat) && !isNaN(initialLng));
+        if (!active || !mapContainerRef.current) return;
 
-      const map = new maplibregl.Map({
-        container: mapContainerRef.current,
-        style: LAYER_STYLES.street,
-        center: [hasCoordParams ? initialLng : 78.9629, hasCoordParams ? initialLat : 22.5937],
-        zoom: hasCoordParams ? 14.8 : 4.8,
-        minZoom: 3.5,
-        maxZoom: 19,
-        pitch: hasCoordParams ? 35 : 0,
-        pitchWithRotate: true,
-        dragRotate: true,
-      });
-
-      map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
-      map.addControl(
-        new maplibregl.GeolocateControl({
-          positionOptions: { enableHighAccuracy: true },
-          trackUserLocation: true,
-        }),
-        'top-right'
-      );
-
-      map.on('load', () => {
-        if (isMounted) {
-          setMapReady(true);
+        // Clean any existing canvas to prevent WebGL duplicate container crashes
+        if (mapRef.current) {
+          try {
+            mapRef.current.remove();
+          } catch {}
+          mapRef.current = null;
         }
-      });
+        mapContainerRef.current.innerHTML = '';
 
-      if (isMounted) {
+        const initialLat = paramLat ? parseFloat(paramLat) : 22.5937;
+        const initialLng = paramLng ? parseFloat(paramLng) : 78.9629;
+        const hasCoordParams = Boolean(paramLat && paramLng && !isNaN(initialLat) && !isNaN(initialLng));
+
+        const map = new maplibregl.Map({
+          container: mapContainerRef.current,
+          style: LAYER_STYLES.street,
+          center: [hasCoordParams ? initialLng : 78.9629, hasCoordParams ? initialLat : 22.5937],
+          zoom: hasCoordParams ? 14.8 : 4.8,
+          minZoom: 3.5,
+          maxZoom: 19,
+          pitch: hasCoordParams ? 35 : 0,
+          pitchWithRotate: true,
+          dragRotate: true,
+        });
+
+        map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
+        map.addControl(
+          new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: true,
+          }),
+          'top-right'
+        );
+
+        const onReady = () => {
+          if (active) {
+            setMapReady(true);
+          }
+        };
+
+        map.on('load', onReady);
+        map.on('styledata', onReady);
+
         mapRef.current = map;
+
+        // Safety fallback: ensure readiness is true after 800ms
+        setTimeout(() => {
+          if (active && mapRef.current) {
+            setMapReady(true);
+          }
+        }, 800);
+      } catch (err) {
+        console.warn('Map initialization warning:', err);
       }
     }
 
     initMap();
 
     return () => {
-      isMounted = false;
+      active = false;
       if (mapRef.current) {
-        mapRef.current.remove();
+        try {
+          mapRef.current.remove();
+        } catch {}
         mapRef.current = null;
       }
+      setMapReady(false);
     };
   }, [paramLat, paramLng]);
 
@@ -331,81 +385,114 @@ function MapContent() {
   const switchLayer = (layer: BaseLayer) => {
     setActiveLayer(layer);
     if (!mapRef.current) return;
-    mapRef.current.setStyle(LAYER_STYLES[layer]);
+    try {
+      mapRef.current.setStyle(LAYER_STYLES[layer]);
+      mapRef.current.once('styledata', () => {
+        setMapReady(true);
+      });
+    } catch (e) {
+      console.warn('switchLayer error:', e);
+    }
   };
-
 
   // Render markers whenever hazards, active filter, or map readiness changes
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
 
+    let cancelled = false;
+
     async function drawMarkers() {
-      const maplibreglModule = (await import('maplibre-gl')) as any;
-      const maplibregl = maplibreglModule.default || maplibreglModule;
+      try {
+        const maplibreglModule = (await import('maplibre-gl')) as any;
+        const maplibregl = maplibreglModule.default || maplibreglModule;
 
-      // Clear previous markers
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current = [];
+        if (cancelled || !mapRef.current) return;
 
-      const filtered = activeHazardCategory === 'ALL'
-        ? hazards
-        : hazards.filter((h) => h.category === activeHazardCategory);
-
-      filtered.forEach((hazard) => {
-        const el = document.createElement('div');
-        el.className = styles.hazardPinMarker;
-
-        const isCritical = hazard.severity >= 4;
-        const color = isCritical ? '#EF4444' : hazard.severity === 3 ? '#F59E0B' : '#38BDF8';
-        const icon = HAZARD_CATEGORIES[hazard.category as keyof typeof HAZARD_CATEGORIES]?.icon || '⚠️';
-
-        el.innerHTML = `
-          <div class="${styles.hazardPinWrapper}" style="--pin-color: ${color}">
-            <div class="${styles.hazardPulseHalo}"></div>
-            <div class="${styles.hazardPinCore}">
-              <span class="${styles.hazardPinIcon}">${icon}</span>
-              <span class="${styles.hazardPinBadge}">L${hazard.severity}</span>
-            </div>
-            <div class="${styles.hazardPinCallout}">
-              <strong>${hazard.landmark.split(',')[0]}</strong>
-              <span>${hazard.waterDepthFeet ? hazard.waterDepthFeet + ' ft water' : hazard.category}</span>
-            </div>
-          </div>
-        `;
-
-        el.addEventListener('click', () => {
-          setSelectedPlace(hazard);
-          mapRef.current?.flyTo({
-            center: [hazard.lng, hazard.lat],
-            zoom: 14.5,
-            pitch: 35,
-            duration: 1200,
-          });
+        // Clear previous markers
+        markersRef.current.forEach((m) => {
+          try { m.remove(); } catch {}
         });
+        markersRef.current = [];
 
-        const marker = new maplibregl.Marker({ element: el })
-          .setLngLat([hazard.lng, hazard.lat])
-          .addTo(mapRef.current);
+        const filtered = activeHazardCategory === 'ALL'
+          ? hazards
+          : hazards.filter((h) => h.category === activeHazardCategory);
 
-        markersRef.current.push(marker);
-      });
+        filtered.forEach((hazard) => {
+          if (!hazard || !hazard.lat || !hazard.lng || isNaN(hazard.lat) || isNaN(hazard.lng)) return;
+
+          try {
+            const el = document.createElement('div');
+            el.className = styles.hazardPinMarker;
+
+            const isCritical = hazard.severity >= 4;
+            const color = isCritical ? '#EF4444' : hazard.severity === 3 ? '#F59E0B' : '#38BDF8';
+            const icon = HAZARD_CATEGORIES[hazard.category as keyof typeof HAZARD_CATEGORIES]?.icon || '⚠️';
+            const displayLandmark = (hazard.landmark || hazard.category || 'Hazard').split(',')[0];
+
+            el.innerHTML = `
+              <div class="${styles.hazardPinWrapper}" style="--pin-color: ${color}">
+                <div class="${styles.hazardPulseHalo}"></div>
+                <div class="${styles.hazardPinCore}">
+                  <span class="${styles.hazardPinIcon}">${icon}</span>
+                  <span class="${styles.hazardPinBadge}">L${hazard.severity}</span>
+                </div>
+                <div class="${styles.hazardPinCallout}">
+                  <strong>${displayLandmark}</strong>
+                  <span>${hazard.waterDepthFeet ? hazard.waterDepthFeet + ' ft water' : hazard.category}</span>
+                </div>
+              </div>
+            `;
+
+            el.addEventListener('click', () => {
+              setSelectedPlace(hazard);
+              try {
+                mapRef.current?.flyTo({
+                  center: [hazard.lng, hazard.lat],
+                  zoom: 14.5,
+                  pitch: 35,
+                  duration: 1200,
+                });
+              } catch {}
+            });
+
+            const marker = new maplibregl.Marker({ element: el })
+              .setLngLat([hazard.lng, hazard.lat])
+              .addTo(mapRef.current);
+
+            markersRef.current.push(marker);
+          } catch (itemErr) {
+            console.warn('Marker item draw warning:', itemErr);
+          }
+        });
+      } catch (err) {
+        console.warn('drawMarkers warning:', err);
+      }
     }
 
     drawMarkers();
-  }, [hazards, activeHazardCategory, mapReady]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hazards, activeHazardCategory, mapReady, activeLayer]);
 
   // Fly to region preset
   const flyToRegion = (lng: number, lat: number, zoom: number, hazardId?: string) => {
-    if (!mapRef.current) return;
-    mapRef.current.flyTo({
-      center: [lng, lat],
-      zoom,
-      pitch: zoom > 10 ? 35 : 0,
-      duration: 1500,
-    });
     if (hazardId) {
       const place = hazards.find((h) => h.id === hazardId);
       if (place) setSelectedPlace(place);
+    }
+    if (!mapRef.current) return;
+    try {
+      mapRef.current.flyTo({
+        center: [lng, lat],
+        zoom,
+        pitch: zoom > 10 ? 35 : 0,
+        duration: 1500,
+      });
+    } catch (e) {
+      console.warn('flyToRegion error:', e);
     }
   };
 
@@ -418,8 +505,8 @@ function MapContent() {
     try {
       const localMatch = hazards.find(
         (h) =>
-          h.landmark.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          h.cityName.toLowerCase().includes(searchQuery.toLowerCase())
+          (h.landmark || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (h.cityName || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
 
       if (localMatch) {
@@ -627,7 +714,7 @@ function MapContent() {
             style={{ borderColor: '#EF4444', color: '#FCA5A5' }}
             onClick={() => flyToRegion(h.lng, h.lat, 14.5, h.id)}
           >
-            ⚠️ {h.landmark.split(',')[0]} (L{h.severity})
+            ⚠️ {(h.landmark || h.category || 'Hazard').split(',')[0]} (L{h.severity})
           </button>
         ))}
       </div>
@@ -709,7 +796,7 @@ function MapContent() {
                 cursor: 'pointer',
               }}
             >
-              🎯 Focus Latest Hazard ({hazards[0].landmark.split(',')[0]})
+              🎯 Focus Latest Hazard ({(hazards[0]?.landmark || hazards[0]?.category || 'Hazard').split(',')[0]})
             </button>
           </div>
         )}
@@ -983,7 +1070,7 @@ function MapContent() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '18px' }}>🧭</span>
                     <strong style={{ fontSize: '15px', color: '#F7F6F2' }}>
-                      Real 360° Ground Street View — {streetViewPlace.landmark.split(',')[0]}
+                      Real 360° Ground Street View — {(streetViewPlace.landmark || streetViewPlace.category || 'Hazard').split(',')[0]}
                     </strong>
                     <span className="badge badge-success" style={{ fontSize: '11px' }}>
                       Verified Ground Photography

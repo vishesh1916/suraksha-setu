@@ -31,12 +31,49 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
 
 export function getClientReports(): Report[] {
   if (typeof window === 'undefined') return [];
+  const reports: Report[] = [];
   try {
     const raw = localStorage.getItem(STORAGE_REPORTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) reports.push(...parsed);
+    }
+  } catch {}
+
+  // Also harvest from suraksha_my_reports if user submitted prior to clientSync
+  try {
+    const myRaw = localStorage.getItem('suraksha_my_reports');
+    if (myRaw) {
+      const myParsed = JSON.parse(myRaw);
+      if (Array.isArray(myParsed)) {
+        for (const item of myParsed) {
+          if (item && item.id && !reports.some(r => r.id === item.id || r.id.toLowerCase() === item.id.toLowerCase())) {
+            reports.push({
+              id: item.id,
+              reporterId: 'citizen_local',
+              reporterPseudonym: 'Citizen Ground Reporter',
+              category: item.category || 'WATERLOGGING',
+              severity: item.severity || 4,
+              description: item.description || 'Ground hazard report.',
+              location: item.location || { latitude: 28.636, longitude: 77.225, accuracy: 15 },
+              h3Index: '882a7bcfa911fffff',
+              landmark: item.landmark || 'Reported Hazard Location',
+              waterDepthFeet: item.waterDepthFeet || (item.severity >= 4 ? 3.5 : 2.0),
+              consent: true,
+              status: 'RECEIVED',
+              verificationStatus: 'PENDING_VERIFICATION',
+              currentActionCategory: 'Pending Verification',
+              actionHistory: [],
+              createdAt: item.createdAt || new Date().toISOString(),
+              updatedAt: item.createdAt || new Date().toISOString(),
+            });
+          }
+        }
+      }
+    }
+  } catch {}
+
+  return reports;
 }
 
 export function saveClientReport(report: Report): void {

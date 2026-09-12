@@ -311,11 +311,13 @@ export default function ReportPage() {
               <Link href={`/track?id=${reportId}`} className="btn btn-primary btn-lg" style={{ flex: 1, textAlign: 'center' }}>
                 🔍 Track Status in Real Time →
               </Link>
-              {location && (
-                <Link href={`/map?lat=${location.latitude}&lng=${location.longitude}`} className="btn btn-secondary btn-lg" style={{ textAlign: 'center' }}>
-                  🗺️ View on Live Map
-                </Link>
-              )}
+              <Link
+                href={`/map?lat=${(location || { latitude: 28.6139, longitude: 77.2090 }).latitude}&lng=${(location || { latitude: 28.6139, longitude: 77.2090 }).longitude}${reportId ? `&highlight=${reportId}` : ''}`}
+                className="btn btn-secondary btn-lg"
+                style={{ textAlign: 'center' }}
+              >
+                🗺️ View on Live Map
+              </Link>
               <Link href="/" className="btn btn-secondary btn-lg">
                 ← Back to Home
               </Link>
