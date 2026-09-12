@@ -1,6 +1,364 @@
 {
-  "reports": [],
-  "incidents": [],
+  "reports": [
+    {
+      "reporterId": "anon_1789172217503",
+      "reporterPseudonym": "Citizen-002",
+      "category": "CLOUDBURST",
+      "severity": 5,
+      "description": "Intense sudden cloudburst inundating Ridge road with severe runoff. Immediate diversion needed.",
+      "location": {
+        "latitude": 31.1048,
+        "longitude": 77.1734,
+        "accuracy": 25
+      },
+      "h3Index": "882a66b72cc6fffff",
+      "landmark": "Shimla (Station Region)",
+      "consent": true,
+      "status": "REVIEWED",
+      "id": "id_mtxmxyg0_vd2k5ny",
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Verified Genuine — Pending Tactical Action",
+      "actionHistory": [
+        {
+          "id": "id_mtxn1k08_h5wn7zs",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Emergency Administrator",
+          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+          "timestamp": "2026-09-12T00:19:45.416Z"
+        },
+        {
+          "id": "id_mtxmxyg0_jb4abad",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-12T00:16:57.504Z"
+        }
+      ],
+      "createdAt": "2026-09-12T00:16:57.504Z",
+      "updatedAt": "2026-09-12T00:19:45.416Z",
+      "firstActionTaken": "Verified Genuine — Pending Tactical Action",
+      "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+    },
+    {
+      "reporterId": "anon_1789171386755",
+      "reporterPseudonym": "Citizen-001",
+      "category": "WATERLOGGING",
+      "severity": 4,
+      "description": "Test flood report on Ring Road",
+      "location": {
+        "latitude": 28.628,
+        "longitude": 77.24,
+        "accuracy": 10
+      },
+      "h3Index": "882a12266397fffff",
+      "consent": true,
+      "status": "RECEIVED",
+      "id": "id_mtxmg5fo_49chjbt",
+      "verificationStatus": "PENDING_VERIFICATION",
+      "currentActionCategory": "Pending Verification",
+      "actionHistory": [
+        {
+          "id": "id_mtxmg5fo_42kighu",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-12T00:03:06.756Z"
+        }
+      ],
+      "createdAt": "2026-09-12T00:03:06.756Z",
+      "updatedAt": "2026-09-12T00:03:06.756Z"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "inc_real_mtxmxyg1_t6q9",
+      "h3Parent": "882a66b72cc6fffff",
+      "category": "CLOUDBURST",
+      "state": "VERIFIED",
+      "confidenceScore": {
+        "total": 27,
+        "factors": [
+          {
+            "name": "Report Completeness",
+            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Description ✓, Photo missing (optional)",
+            "contribution": 21,
+            "maxContribution": 25,
+            "explanation": "5 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
+          },
+          {
+            "name": "Spatial Corroboration",
+            "signal": "No nearby reports",
+            "contribution": 0,
+            "maxContribution": 30,
+            "explanation": "No other reports of the same hazard within 500m and 20 minutes. Single report — awaiting corroboration."
+          },
+          {
+            "name": "Reporter History",
+            "signal": "New reporter",
+            "contribution": 2,
+            "maxContribution": 15,
+            "explanation": "First-time reporter. Base credibility assigned. Reports are never suppressed solely due to no history."
+          },
+          {
+            "name": "Weather Evidence",
+            "signal": "No weather data available",
+            "contribution": 0,
+            "maxContribution": 20,
+            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
+            "freshness": "unavailable"
+          },
+          {
+            "name": "Contradiction Check",
+            "signal": "No flags detected",
+            "contribution": 4,
+            "maxContribution": 10,
+            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
+          }
+        ],
+        "computedAt": "2026-09-12T00:16:57.505Z"
+      },
+      "impactLevel": "CRITICAL",
+      "reportCount": 1,
+      "reports": [
+        {
+          "reporterId": "anon_1789172217503",
+          "reporterPseudonym": "Citizen-002",
+          "category": "CLOUDBURST",
+          "severity": 5,
+          "description": "Intense sudden cloudburst inundating Ridge road with severe runoff. Immediate diversion needed.",
+          "location": {
+            "latitude": 31.1048,
+            "longitude": 77.1734,
+            "accuracy": 25
+          },
+          "h3Index": "882a66b72cc6fffff",
+          "landmark": "Shimla (Station Region)",
+          "consent": true,
+          "status": "REVIEWED",
+          "id": "id_mtxmxyg0_vd2k5ny",
+          "verificationStatus": "VERIFIED_GENUINE",
+          "currentActionCategory": "Verified Genuine — Pending Tactical Action",
+          "actionHistory": [
+            {
+              "id": "id_mtxn1k08_h5wn7zs",
+              "action": "Verified Genuine — Pending Tactical Action",
+              "actorName": "Emergency Administrator",
+              "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+              "timestamp": "2026-09-12T00:19:45.416Z"
+            },
+            {
+              "id": "id_mtxmxyg0_jb4abad",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-12T00:16:57.504Z"
+            }
+          ],
+          "createdAt": "2026-09-12T00:16:57.504Z",
+          "updatedAt": "2026-09-12T00:19:45.416Z",
+          "firstActionTaken": "Verified Genuine — Pending Tactical Action",
+          "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "id_mtxmxyg1_atm5tb2",
+          "reportId": "id_mtxmxyg0_vd2k5ny",
+          "type": "WEATHER",
+          "source": "Doppler Weather Radar & Automated Rain Gauge",
+          "observedAt": "2026-09-12T00:16:57.505Z",
+          "freshnessSeconds": 45,
+          "value": {
+            "reflectivityDbz": 53,
+            "rainRateMmH": 55
+          },
+          "provenance": "Automated Weather Corroboration Engine"
+        }
+      ],
+      "reviewActions": [],
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Verified Genuine — Pending Tactical Action",
+      "actionHistory": [
+        {
+          "id": "id_mtxn1k08_h5wn7zs",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Emergency Administrator",
+          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+          "timestamp": "2026-09-12T00:19:45.416Z"
+        },
+        {
+          "id": "id_mtxmxyg1_ikgrirb",
+          "action": "Pending Verification",
+          "actorName": "Cluster Engine",
+          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
+          "timestamp": "2026-09-12T00:16:57.504Z"
+        }
+      ],
+      "landmark": "Shimla (Station Region)",
+      "location": {
+        "latitude": 31.1048,
+        "longitude": 77.1734,
+        "accuracy": 25
+      },
+      "createdAt": "2026-09-12T00:16:57.504Z",
+      "updatedAt": "2026-09-12T00:19:45.416Z",
+      "firstActionTaken": "Verified Genuine — Pending Tactical Action"
+    },
+    {
+      "id": "inc_real_mtxmg5fo_pxt2",
+      "h3Parent": "882a12266397fffff",
+      "category": "WATERLOGGING",
+      "state": "CANDIDATE",
+      "confidenceScore": {
+        "total": 27,
+        "factors": [
+          {
+            "name": "Report Completeness",
+            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Description ✓, Photo missing (optional)",
+            "contribution": 21,
+            "maxContribution": 25,
+            "explanation": "5 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
+          },
+          {
+            "name": "Spatial Corroboration",
+            "signal": "No nearby reports",
+            "contribution": 0,
+            "maxContribution": 30,
+            "explanation": "No other reports of the same hazard within 500m and 20 minutes. Single report — awaiting corroboration."
+          },
+          {
+            "name": "Reporter History",
+            "signal": "New reporter",
+            "contribution": 2,
+            "maxContribution": 15,
+            "explanation": "First-time reporter. Base credibility assigned. Reports are never suppressed solely due to no history."
+          },
+          {
+            "name": "Weather Evidence",
+            "signal": "No weather data available",
+            "contribution": 0,
+            "maxContribution": 20,
+            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
+            "freshness": "unavailable"
+          },
+          {
+            "name": "Contradiction Check",
+            "signal": "No flags detected",
+            "contribution": 4,
+            "maxContribution": 10,
+            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
+          }
+        ],
+        "computedAt": "2026-09-12T00:03:06.756Z"
+      },
+      "impactLevel": "CRITICAL",
+      "reportCount": 1,
+      "reports": [
+        {
+          "reporterId": "anon_1789171386755",
+          "reporterPseudonym": "Citizen-001",
+          "category": "WATERLOGGING",
+          "severity": 4,
+          "description": "Test flood report on Ring Road",
+          "location": {
+            "latitude": 28.628,
+            "longitude": 77.24,
+            "accuracy": 10
+          },
+          "h3Index": "882a12266397fffff",
+          "consent": true,
+          "status": "RECEIVED",
+          "id": "id_mtxmg5fo_49chjbt",
+          "verificationStatus": "PENDING_VERIFICATION",
+          "currentActionCategory": "Pending Verification",
+          "actionHistory": [
+            {
+              "id": "id_mtxmg5fo_42kighu",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-12T00:03:06.756Z"
+            }
+          ],
+          "createdAt": "2026-09-12T00:03:06.756Z",
+          "updatedAt": "2026-09-12T00:03:06.756Z"
+        }
+      ],
+      "evidence": [
+        {
+          "id": "id_mtxmg5fo_irp282y",
+          "reportId": "id_mtxmg5fo_49chjbt",
+          "type": "WEATHER",
+          "source": "Doppler Weather Radar & Automated Rain Gauge",
+          "observedAt": "2026-09-12T00:03:06.756Z",
+          "freshnessSeconds": 45,
+          "value": {
+            "reflectivityDbz": 50,
+            "rainRateMmH": 44
+          },
+          "provenance": "Automated Weather Corroboration Engine"
+        }
+      ],
+      "reviewActions": [],
+      "verificationStatus": "PENDING_VERIFICATION",
+      "currentActionCategory": "Pending Verification",
+      "actionHistory": [
+        {
+          "id": "id_mtxmg5fo_foi8f3w",
+          "action": "Pending Verification",
+          "actorName": "Cluster Engine",
+          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
+          "timestamp": "2026-09-12T00:03:06.756Z"
+        }
+      ],
+      "landmark": "WATERLOGGING near 28.628°N, 77.240°E",
+      "location": {
+        "latitude": 28.628,
+        "longitude": 77.24,
+        "accuracy": 10
+      },
+      "createdAt": "2026-09-12T00:03:06.756Z",
+      "updatedAt": "2026-09-12T00:03:06.756Z"
+    }
+  ],
   "alerts": [],
-  "auditEvents": []
+  "auditEvents": [
+    {
+      "id": "id_mtxmg5fo_k1prgmg",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxmg5fo_49chjbt",
+      "action": "CREATE",
+      "metadata": {
+        "category": "WATERLOGGING"
+      },
+      "createdAt": "2026-09-12T00:03:06.756Z"
+    },
+    {
+      "id": "id_mtxmxyg0_05d2b28",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxmxyg0_vd2k5ny",
+      "action": "CREATE",
+      "metadata": {
+        "category": "CLOUDBURST"
+      },
+      "createdAt": "2026-09-12T00:16:57.504Z"
+    },
+    {
+      "id": "id_mtxn1k08_5fqeym6",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxmxyg0_vd2k5ny",
+      "action": "Verified Genuine — Pending Tactical Action",
+      "metadata": {
+        "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+      },
+      "createdAt": "2026-09-12T00:19:45.416Z"
+    }
+  ],
+  "savedAt": "2026-09-12T00:19:45.433Z"
 }

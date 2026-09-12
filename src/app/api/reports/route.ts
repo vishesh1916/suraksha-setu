@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dataStore } from '@/lib/store';
 import type { HazardCategory, SeverityLevel, ReportStatus } from '@/types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -18,11 +21,18 @@ export async function GET(request: NextRequest) {
 
     const reports = dataStore.getReports(filters).slice(0, limit);
 
-    return NextResponse.json({
-      success: true,
-      data: reports,
-      total: reports.length,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: reports,
+        total: reports.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch reports' },

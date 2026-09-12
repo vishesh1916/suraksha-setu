@@ -5,12 +5,14 @@ import Link from 'next/link';
 import type { User, SourceHealth, AuditEvent, Report, Incident, DisasterPredictionResult, ActionCategory, ActionLogItem } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { generateDisasterPrediction } from '@/lib/prediction';
+import { flushOfflineQueue } from '@/lib/offlineQueue';
 import styles from '../staff.module.css';
 
 import { StaffSidebar } from '@/components/StaffSidebar';
 
 type AdminTab =
   | 'all'
+  | 'sentinel'
   | 'verification'
   | 'false_alarm'
   | 'verified_pending'
@@ -38,6 +40,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [indiaRiskScan, setIndiaRiskScan] = useState<any>(null);
+  const [sentinelFilter, setSentinelFilter] = useState<'all' | 'critical' | 'coastal' | 'river' | 'northern'>('all');
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -94,6 +97,7 @@ export default function AdminPage() {
         }
         showToast('🔓 Clearance verified! Welcome to Tactical Emergency Command Desk.');
         fetchData();
+        fetchSentinelRisk();
       } else {
         setLoginError(data.error || 'Authentication denied. Invalid clearance credentials.');
       }
@@ -118,17 +122,24 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     setIsRefreshing(true);
     try {
+      // Auto-flush any pending citizen reports queued in local storage
+      if (typeof window !== 'undefined' && navigator.onLine) {
+        try {
+          await flushOfflineQueue();
+        } catch {}
+      }
+
+      const timestamp = Date.now();
       const results = await Promise.allSettled([
-        fetch('/api/stats'),
-        fetch('/api/admin/sources'),
-        fetch('/api/admin/users'),
-        fetch('/api/admin/audit'),
-        fetch('/api/reports?limit=100'),
-        fetch('/api/incidents'),
-        fetch('/api/risk/india'),
+        fetch(`/api/stats?_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/admin/sources?_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/admin/users?_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/admin/audit?_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/reports?limit=100&_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/incidents?_t=${timestamp}`, { cache: 'no-store' }),
       ]);
 
-      const [statsRes, sourcesRes, usersRes, auditRes, reportsRes, incidentsRes, indiaRiskRes] = results;
+      const [statsRes, sourcesRes, usersRes, auditRes, reportsRes, incidentsRes] = results;
 
       if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
         const data = await statsRes.value.json();
@@ -148,15 +159,15 @@ export default function AdminPage() {
       }
       if (reportsRes.status === 'fulfilled' && reportsRes.value.ok) {
         const data = await reportsRes.value.json();
-        setReports(data.data || []);
+        if (Array.isArray(data.data)) {
+          setReports(data.data);
+        }
       }
       if (incidentsRes.status === 'fulfilled' && incidentsRes.value.ok) {
         const data = await incidentsRes.value.json();
-        setIncidents(data.data || []);
-      }
-      if (indiaRiskRes.status === 'fulfilled' && indiaRiskRes.value.ok) {
-        const data = await indiaRiskRes.value.json();
-        setIndiaRiskScan(data.data || null);
+        if (Array.isArray(data.data)) {
+          setIncidents(data.data);
+        }
       }
     } catch (e) {
       console.warn('Admin fetchData error:', e);
@@ -166,11 +177,28 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchSentinelRisk = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/risk/india?_t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        setIndiaRiskScan(data.data || null);
+      }
+    } catch (e) {
+      console.warn('Sentinel risk fetch error:', e);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 3000); // 3s continuous real-time synchronization
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    fetchSentinelRisk();
+    const opsInterval = setInterval(fetchData, 3000); // 3s fast operational sync
+    const sentinelInterval = setInterval(fetchSentinelRisk, 30000); // 30s weather telemetry sync
+    return () => {
+      clearInterval(opsInterval);
+      clearInterval(sentinelInterval);
+    };
+  }, [fetchData, fetchSentinelRisk]);
 
   // Run prediction calculation whenever hotspot or sliders change
   const computePrediction = useCallback((depth?: number, rain?: number) => {
@@ -1147,167 +1175,52 @@ export default function AdminPage() {
           </div>
         </header>
 
-        {/* 🇮🇳 Pan-India Real-Time Weather Risk Sentinel & Executive Alert Desk */}
+        {/* 🇮🇳 Compact Pan-India Sentinel Executive Bar */}
         <div style={{
-          margin: '0 24px 20px',
-          background: 'linear-gradient(135deg, rgba(7, 21, 36, 0.95) 0%, rgba(15, 30, 50, 0.9) 100%)',
-          border: '1px solid rgba(56, 189, 248, 0.35)',
-          borderRadius: '12px',
-          padding: '16px 20px',
-          boxShadow: '0 4px 25px rgba(0, 0, 0, 0.4)',
+          margin: '0 24px 12px',
+          background: (indiaRiskScan?.criticalZonesCount || 0) > 0
+            ? 'linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.95) 100%)'
+            : 'linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)',
+          border: `1px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(56, 189, 248, 0.3)'}`,
+          borderRadius: '8px',
+          padding: '8px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.4rem' }}>🇮🇳</span>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#F7F6F2', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>Pan-India Real-Time Weather Risk Sentinel</span>
-                  <span style={{
-                    background: 'rgba(34, 197, 94, 0.15)',
-                    border: '1px solid #22C55E',
-                    color: '#22C55E',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '2px 8px',
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }}></span>
-                    11 Indian Hubs Monitored Live
-                  </span>
-                </h3>
-                <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: '#8A99A8' }}>
-                  Continuous Doppler radar, satellite precipitation, and wind telemetry across major vulnerable Indian basins
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{
-                background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.15)',
-                border: `1px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#38BDF8'}`,
-                color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FCA5A5' : '#38BDF8',
-                padding: '4px 12px',
-                borderRadius: '8px',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-              }}>
-                {(indiaRiskScan?.criticalZonesCount || 0) > 0
-                  ? `🚨 ${indiaRiskScan.criticalZonesCount} Critical Zone(s) Detected`
-                  : '✅ All 11 Zones Monitored & Stable'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.2rem' }}>🇮🇳</span>
+            <div>
+              <span style={{ fontSize: '0.86rem', fontWeight: 600, color: '#F1F5F9' }}>
+                <strong style={{ color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FCA5A5' : '#38BDF8' }}>
+                  {(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '🚨 SEVERE WEATHER DETECTED' : 'Pan-India Sentinel'}:
+                </strong>{' '}
+                {indiaRiskScan?.nationalExecutiveBriefing || '11 vulnerable Indian hubs actively scanned via Doppler radar & real-time telemetry.'}
               </span>
             </div>
           </div>
-
-          {/* National Executive Briefing */}
-          {indiaRiskScan?.nationalExecutiveBriefing && (
-            <div style={{
-              background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(56, 189, 248, 0.08)',
-              borderLeft: `4px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#38BDF8'}`,
-              padding: '10px 14px',
-              borderRadius: '0 8px 8px 0',
-              marginBottom: '14px',
-              fontSize: '0.86rem',
-              color: '#F1F5F9',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              flexWrap: 'wrap',
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: '999px',
+              background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+              color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FCA5A5' : '#4ADE80',
+              border: `1px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#22C55E'}`
             }}>
-              <div>
-                <strong>Executive Intelligence:</strong> {indiaRiskScan.nationalExecutiveBriefing}
-              </div>
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-                Telemetry Timestamp: {new Date(indiaRiskScan.scanTimestamp).toLocaleTimeString()}
-              </span>
-            </div>
-          )}
-
-          {/* Live Strip of 11 Indian Zones */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
-            gap: '10px',
-            maxHeight: '260px',
-            overflowY: 'auto',
-            padding: '2px',
-          }}>
-            {indiaRiskScan?.zones?.map((zone: any) => {
-              const isCritical = zone.riskLevel === 'CRITICAL';
-              const isHigh = zone.riskLevel === 'HIGH';
-              const isModerate = zone.riskLevel === 'MODERATE';
-              const statusColor = isCritical ? '#EF4444' : isHigh ? '#F59E0B' : isModerate ? '#38BDF8' : '#34D399';
-
-              return (
-                <div
-                  key={zone.zoneId}
-                  style={{
-                    background: isCritical
-                      ? 'rgba(239, 68, 68, 0.12)'
-                      : isHigh
-                      ? 'rgba(245, 158, 11, 0.1)'
-                      : 'rgba(255, 255, 255, 0.03)',
-                    border: `1px solid ${statusColor}40`,
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '6px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <strong style={{ color: '#F7F6F2', fontSize: '0.86rem', display: 'block' }}>{zone.zoneName}</strong>
-                      <span style={{ fontSize: '0.72rem', color: '#94A3B8' }}>{zone.state}</span>
-                    </div>
-                    <span style={{
-                      background: `${statusColor}20`,
-                      color: statusColor,
-                      fontSize: '10px',
-                      fontWeight: 800,
-                      padding: '1px 6px',
-                      borderRadius: '4px',
-                      border: `1px solid ${statusColor}60`,
-                    }}>
-                      {zone.riskLevel}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: '#CBD5E1' }}>
-                    <span>💧 {zone.currentWeather?.rainRateMmH} mm/h</span>
-                    <span>💨 {zone.currentWeather?.windGustKmh} km/h</span>
-                    <span>🌡️ {zone.currentWeather?.tempC}°C</span>
-                  </div>
-
-                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', lineHeight: 1.2 }}>
-                    {zone.currentWeather?.conditionText}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                    <Link
-                      href={`/map?lat=${zone.lat}&lng=${zone.lng}`}
-                      className="btn btn-secondary"
-                      style={{ flex: 1, fontSize: '0.72rem', padding: '3px 6px', textAlign: 'center' }}
-                    >
-                      🗺️ Map
-                    </Link>
-                    {(isCritical || isHigh) && (
-                      <Link
-                        href={`/staff/alerts?compose=true&headline=${encodeURIComponent('🚨 SEVERE WEATHER ADVISORY: ' + zone.zoneName)}&area=${encodeURIComponent(zone.zoneName)}&severity=${isCritical ? 5 : 4}&category=SEVERE_RAIN`}
-                        className="btn btn-primary"
-                        style={{ flex: 1, fontSize: '0.72rem', padding: '3px 6px', textAlign: 'center', background: '#DC2626', borderColor: '#EF4444' }}
-                      >
-                        📢 Alert
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+              {(indiaRiskScan?.criticalZonesCount || 0) > 0 ? `🚨 ${indiaRiskScan.criticalZonesCount} Critical Zone(s)` : '✅ 11 Hubs Monitored'}
+            </span>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setActiveTab('sentinel')}
+              style={{ fontSize: '0.78rem', padding: '4px 10px', borderColor: '#38BDF8', color: '#38BDF8', fontWeight: 700 }}
+            >
+              Open Dedicated Sentinel Desk →
+            </button>
           </div>
         </div>
 
@@ -1320,6 +1233,24 @@ export default function AdminPage() {
           >
             <span>🌐 0. Master Feed</span>
             <span className={styles.tabBadge}>{reports.length}</span>
+          </button>
+
+          <button
+            type="button"
+            className={`${styles.adminTabBtn} ${activeTab === 'sentinel' ? styles.adminTabBtnActive : ''}`}
+            onClick={() => setActiveTab('sentinel')}
+            style={{
+              borderColor: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#38BDF8',
+              background: activeTab === 'sentinel' ? undefined : (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.08)'
+            }}
+          >
+            <span>🇮🇳 Dedicated Sentinel (11 Hubs)</span>
+            <span className={styles.tabBadge} style={{
+              background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : undefined,
+              color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FFF' : undefined
+            }}>
+              {(indiaRiskScan?.criticalZonesCount || 0) > 0 ? `🚨 ${indiaRiskScan.criticalZonesCount} Alert` : '11 Hubs'}
+            </span>
           </button>
 
           <button
@@ -1586,6 +1517,328 @@ export default function AdminPage() {
             </div>
           );
         })()}
+
+        {/* Dedicated Section: Pan-India Real-Time Weather Risk Sentinel (11 Indian Basin Hubs) */}
+        {activeTab === 'sentinel' && (
+          <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+            {/* Header & Status Card */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(7, 21, 36, 0.98) 0%, rgba(15, 30, 50, 0.95) 100%)',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              borderRadius: '12px',
+              padding: '20px 24px',
+              marginBottom: '20px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '2rem' }}>🇮🇳</span>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: '1.35rem', color: '#F7F6F2', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span>Pan-India Real-Time Weather Risk Sentinel</span>
+                      <span style={{
+                        background: 'rgba(34, 197, 94, 0.15)',
+                        border: '1px solid #22C55E',
+                        color: '#22C55E',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E' }}></span>
+                        11 Major Basin Hubs Monitored
+                      </span>
+                    </h2>
+                    <p style={{ margin: '4px 0 0', fontSize: '0.86rem', color: '#94A3B8' }}>
+                      Continuous Doppler radar, satellite precipitation, and wind telemetry across India's most disaster-vulnerable urban, coastal, and river basin sectors.
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => fetchSentinelRisk()}
+                    style={{ fontSize: '0.82rem', padding: '6px 14px', borderColor: '#38BDF8', color: '#38BDF8', fontWeight: 600 }}
+                  >
+                    🔄 Refresh Radar Telemetry
+                  </button>
+                  <Link href="/map" className="btn btn-secondary" style={{ fontSize: '0.82rem', padding: '6px 14px' }}>
+                    🗺️ Pan-India Live Map
+                  </Link>
+                </div>
+              </div>
+
+              {/* National Executive Briefing */}
+              {indiaRiskScan?.nationalExecutiveBriefing && (
+                <div style={{
+                  background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(56, 189, 248, 0.08)',
+                  borderLeft: `4px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#38BDF8'}`,
+                  padding: '12px 18px',
+                  borderRadius: '0 8px 8px 0',
+                  marginBottom: '16px',
+                  fontSize: '0.9rem',
+                  color: '#F1F5F9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  flexWrap: 'wrap'
+                }}>
+                  <div>
+                    <strong style={{ color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FCA5A5' : '#38BDF8' }}>
+                      Executive Weather Intelligence:
+                    </strong>{' '}
+                    {indiaRiskScan.nationalExecutiveBriefing}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontFamily: 'monospace' }}>
+                    Telemetry Scan: {new Date(indiaRiskScan.scanTimestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+
+              {/* 4 Summary Counters */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                gap: '12px',
+                marginTop: '10px'
+              }}>
+                <div style={{ background: 'rgba(11, 31, 51, 0.7)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '8px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', textTransform: 'uppercase' }}>Active Hubs</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#38BDF8' }}>11 Indian Basins</div>
+                </div>
+                <div style={{ background: 'rgba(11, 31, 51, 0.7)', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '8px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', textTransform: 'uppercase' }}>Severe / Critical Alert Hubs</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#34D399' }}>
+                    {indiaRiskScan?.criticalZonesCount || 0} Zone(s)
+                  </div>
+                </div>
+                <div style={{ background: 'rgba(11, 31, 51, 0.7)', border: '1px solid rgba(245, 158, 11, 0.25)', borderRadius: '8px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', textTransform: 'uppercase' }}>Doppler Radar Network</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#F59E0B' }}>Dual-Polarization Live</div>
+                </div>
+                <div style={{ background: 'rgba(11, 31, 51, 0.7)', border: '1px solid rgba(52, 211, 153, 0.25)', borderRadius: '8px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '0.72rem', color: '#94A3B8', textTransform: 'uppercase' }}>Data Freshness</div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#34D399' }}>Live Telemetry 60s</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hub Category Filter Sub-Pills */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <button
+                type="button"
+                onClick={() => setSentinelFilter('all')}
+                style={{
+                  background: sentinelFilter === 'all' ? '#38BDF8' : 'rgba(11, 31, 51, 0.7)',
+                  color: sentinelFilter === 'all' ? '#071524' : '#E2E8F0',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                All 11 Indian Hubs ({indiaRiskScan?.zones?.length || 11})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSentinelFilter('critical')}
+                style={{
+                  background: sentinelFilter === 'critical' ? '#EF4444' : 'rgba(11, 31, 51, 0.7)',
+                  color: sentinelFilter === 'critical' ? '#FFF' : '#E2E8F0',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🚨 Critical / High Risk Only ({indiaRiskScan?.zones?.filter((z: any) => z.riskLevel === 'CRITICAL' || z.riskLevel === 'HIGH')?.length || 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSentinelFilter('coastal')}
+                style={{
+                  background: sentinelFilter === 'coastal' ? '#0284C7' : 'rgba(11, 31, 51, 0.7)',
+                  color: sentinelFilter === 'coastal' ? '#FFF' : '#E2E8F0',
+                  border: '1px solid rgba(2, 132, 199, 0.4)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🌊 Coastal & Cyclone Sectors (Mumbai, Chennai, Kochi, Bhubaneswar)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSentinelFilter('river')}
+                style={{
+                  background: sentinelFilter === 'river' ? '#10B981' : 'rgba(11, 31, 51, 0.7)',
+                  color: sentinelFilter === 'river' ? '#000' : '#E2E8F0',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🏞️ River & Urban Drainage (Kolkata, Guwahati, Hyderabad, Ahmedabad, Bengaluru)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSentinelFilter('northern')}
+                style={{
+                  background: sentinelFilter === 'northern' ? '#F59E0B' : 'rgba(11, 31, 51, 0.7)',
+                  color: sentinelFilter === 'northern' ? '#000' : '#E2E8F0',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ⛰️ Northern & Mountain Belts (Delhi NCR, Shimla)
+              </button>
+            </div>
+
+            {/* Grid of Hub Telemetry Cards */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '16px'
+            }}>
+              {indiaRiskScan?.zones?.filter((zone: any) => {
+                if (sentinelFilter === 'critical') return zone.riskLevel === 'CRITICAL' || zone.riskLevel === 'HIGH';
+                if (sentinelFilter === 'coastal') return ['mumbai', 'chennai', 'kochi', 'bhubaneswar'].includes(zone.zoneId);
+                if (sentinelFilter === 'river') return ['kolkata', 'guwahati', 'hyderabad', 'ahmedabad', 'bengaluru'].includes(zone.zoneId);
+                if (sentinelFilter === 'northern') return ['delhi', 'shimla'].includes(zone.zoneId);
+                return true;
+              }).map((zone: any) => {
+                const isCritical = zone.riskLevel === 'CRITICAL';
+                const isHigh = zone.riskLevel === 'HIGH';
+                const isModerate = zone.riskLevel === 'MODERATE';
+                const statusColor = isCritical ? '#EF4444' : isHigh ? '#F59E0B' : isModerate ? '#38BDF8' : '#34D399';
+
+                return (
+                  <div
+                    key={zone.zoneId}
+                    style={{
+                      background: isCritical
+                        ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)'
+                        : isHigh
+                        ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 23, 42, 0.95) 100%)'
+                        : 'linear-gradient(135deg, rgba(11, 31, 51, 0.85) 0%, rgba(7, 21, 36, 0.95) 100%)',
+                      border: `1px solid ${statusColor}50`,
+                      borderRadius: '10px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#F7F6F2' }}>{zone.zoneName}</h4>
+                          <span style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{zone.state} · {zone.vulnerabilityType?.replace('_', ' ')}</span>
+                        </div>
+                        <span style={{
+                          background: `${statusColor}20`,
+                          color: statusColor,
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          border: `1px solid ${statusColor}80`
+                        }}>
+                          {zone.riskLevel}
+                        </span>
+                      </div>
+
+                      {/* Live Sensors Grid */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, 1fr)',
+                        gap: '6px',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        padding: '8px',
+                        borderRadius: '6px',
+                        margin: '10px 0',
+                        fontSize: '0.8rem'
+                      }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#8A99A8', display: 'block' }}>RAIN RATE</span>
+                          <strong style={{ color: zone.currentWeather?.rainRateMmH > 5 ? '#EF4444' : '#38BDF8' }}>
+                            {zone.currentWeather?.rainRateMmH} mm/h
+                          </strong>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#8A99A8', display: 'block' }}>WIND GUST</span>
+                          <strong style={{ color: zone.currentWeather?.windGustKmh > 35 ? '#F59E0B' : '#E2E8F0' }}>
+                            {zone.currentWeather?.windGustKmh} km/h
+                          </strong>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#8A99A8', display: 'block' }}>TEMP / HUM</span>
+                          <strong style={{ color: '#E2E8F0' }}>
+                            {zone.currentWeather?.tempC}°C ({zone.currentWeather?.humidityPct}%)
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: '0.82rem', color: '#CBD5E1', marginBottom: '6px' }}>
+                        <strong>Doppler Status:</strong> {zone.currentWeather?.conditionText}
+                      </div>
+
+                      <div style={{ fontSize: '0.8rem', color: '#94A3B8', background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: '4px', borderLeft: `3px solid ${statusColor}` }}>
+                        {zone.threatSummary}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+                      <Link
+                        href={`/map?lat=${zone.lat}&lng=${zone.lng}`}
+                        className="btn btn-secondary"
+                        style={{ flex: 1, fontSize: '0.78rem', padding: '6px 10px', textAlign: 'center' }}
+                      >
+                        🗺️ Inspect on Map
+                      </Link>
+                      <Link
+                        href={`/staff/alerts?compose=true&headline=${encodeURIComponent('🚨 REGIONAL ADVISORY: ' + zone.zoneName)}&area=${encodeURIComponent(zone.zoneName)}&severity=${isCritical ? 5 : isHigh ? 4 : 3}&category=SEVERE_RAIN`}
+                        className="btn btn-primary"
+                        style={{
+                          flex: 1,
+                          fontSize: '0.78rem',
+                          padding: '6px 10px',
+                          textAlign: 'center',
+                          background: isCritical ? '#DC2626' : '#0284C7',
+                          borderColor: isCritical ? '#EF4444' : '#38BDF8'
+                        }}
+                      >
+                        📢 Alert Hub
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Section 1: Verification & Ground Truth Validation (Right vs Wrong Check) */}
         {activeTab === 'verification' && (

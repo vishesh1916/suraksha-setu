@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dataStore } from '@/lib/store';
 import type { IncidentState, HazardCategory } from '@/types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -15,11 +18,18 @@ export async function GET(request: NextRequest) {
 
     const incidents = dataStore.getIncidents(filters);
 
-    return NextResponse.json({
-      success: true,
-      data: incidents,
-      total: incidents.length,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: incidents,
+        total: incidents.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (error) {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch incidents' },
