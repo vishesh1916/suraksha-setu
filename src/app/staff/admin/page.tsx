@@ -25,6 +25,79 @@ type AdminTab =
   | 'prediction'
   | 'system';
 
+function mergeActionHistories(local: ActionLogItem[] = [], server: ActionLogItem[] = []): ActionLogItem[] {
+  const combined = [...local, ...server];
+  const seen = new Set<string>();
+  const result: ActionLogItem[] = [];
+  for (const item of combined) {
+    if (!item) continue;
+    const key = item.id ? item.id : `${item.action}_${(item.timestamp || '').slice(0, 19)}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(item);
+    }
+  }
+  return result.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+function smartMergeReport(localRep: Report | undefined, serverRep: Report): Report {
+  if (!localRep) return serverRep;
+  const mergedHistory = mergeActionHistories(localRep.actionHistory, serverRep.actionHistory);
+  const localTime = new Date(localRep.updatedAt || 0).getTime();
+  const serverTime = new Date(serverRep.updatedAt || 0).getTime();
+
+  const hasLocalAction = Boolean(localRep.currentActionCategory && localRep.currentActionCategory !== 'Pending Verification');
+  const hasServerAction = Boolean(serverRep.currentActionCategory && serverRep.currentActionCategory !== 'Pending Verification');
+
+  // If local has a newer action taken, preserve local status & category to prevent sync resets!
+  if (hasLocalAction && (!hasServerAction || localTime >= serverTime)) {
+    return {
+      ...serverRep,
+      status: localRep.status,
+      verificationStatus: localRep.verificationStatus,
+      currentActionCategory: localRep.currentActionCategory,
+      firstActionTaken: localRep.firstActionTaken || serverRep.firstActionTaken,
+      actionHistory: mergedHistory,
+      verificationRationale: localRep.verificationRationale || serverRep.verificationRationale,
+      updatedAt: localRep.updatedAt,
+    };
+  }
+
+  return {
+    ...serverRep,
+    actionHistory: mergedHistory.length > 0 ? mergedHistory : serverRep.actionHistory,
+  };
+}
+
+function smartMergeIncident(localInc: Incident | undefined, serverInc: Incident): Incident {
+  if (!localInc) return serverInc;
+  const mergedHistory = mergeActionHistories(localInc.actionHistory, serverInc.actionHistory);
+  const localTime = new Date(localInc.updatedAt || 0).getTime();
+  const serverTime = new Date(serverInc.updatedAt || 0).getTime();
+
+  const hasLocalAction = Boolean(localInc.currentActionCategory && localInc.currentActionCategory !== 'Pending Verification');
+  const hasServerAction = Boolean(serverInc.currentActionCategory && serverInc.currentActionCategory !== 'Pending Verification');
+
+  if (hasLocalAction && (!hasServerAction || localTime >= serverTime)) {
+    return {
+      ...serverInc,
+      state: localInc.state,
+      verificationStatus: localInc.verificationStatus,
+      currentActionCategory: localInc.currentActionCategory,
+      firstActionTaken: localInc.firstActionTaken || serverInc.firstActionTaken,
+      actionHistory: mergedHistory,
+      actionedDirective: localInc.actionedDirective,
+      reports: localInc.reports,
+      updatedAt: localInc.updatedAt,
+    };
+  }
+
+  return {
+    ...serverInc,
+    actionHistory: mergedHistory.length > 0 ? mergedHistory : serverInc.actionHistory,
+  };
+}
+
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [loginUsername, setLoginUsername] = useState('admin');
@@ -166,27 +239,12 @@ export default function AdminPage() {
           const incoming: Report[] = data.data;
           setReports((prev) => {
             if (prev.length === 0) return incoming;
-            // Smart merge: if local has a more advanced action history, preserve it!
             const merged = incoming.map((serverRep) => {
               const localRep = prev.find((p) => p.id === serverRep.id);
-              if (!localRep) return serverRep;
-              const localHistLen = localRep.actionHistory?.length || 0;
-              const serverHistLen = serverRep.actionHistory?.length || 0;
-              if (localHistLen > serverHistLen) {
-                return {
-                  ...serverRep,
-                  status: localRep.status,
-                  verificationStatus: localRep.verificationStatus,
-                  currentActionCategory: localRep.currentActionCategory,
-                  firstActionTaken: localRep.firstActionTaken,
-                  actionHistory: localRep.actionHistory,
-                  verificationRationale: localRep.verificationRationale,
-                  updatedAt: localRep.updatedAt,
-                };
-              }
-              return serverRep;
+              return smartMergeReport(localRep, serverRep);
             });
-            return merged;
+            const missingFromIncoming = prev.filter(p => !incoming.some(inc => inc.id === p.id));
+            return [...missingFromIncoming, ...merged];
           });
         }
       }
@@ -198,25 +256,10 @@ export default function AdminPage() {
             if (prev.length === 0) return incoming;
             const merged = incoming.map((serverInc) => {
               const localInc = prev.find((p) => p.id === serverInc.id);
-              if (!localInc) return serverInc;
-              const localHistLen = localInc.actionHistory?.length || 0;
-              const serverHistLen = serverInc.actionHistory?.length || 0;
-              if (localHistLen > serverHistLen) {
-                return {
-                  ...serverInc,
-                  state: localInc.state,
-                  verificationStatus: localInc.verificationStatus,
-                  currentActionCategory: localInc.currentActionCategory,
-                  firstActionTaken: localInc.firstActionTaken,
-                  actionHistory: localInc.actionHistory,
-                  actionedDirective: localInc.actionedDirective,
-                  reports: localInc.reports,
-                  updatedAt: localInc.updatedAt,
-                };
-              }
-              return serverInc;
+              return smartMergeIncident(localInc, serverInc);
             });
-            return merged;
+            const missingFromIncoming = prev.filter(p => !incoming.some(inc => inc.id === p.id));
+            return [...missingFromIncoming, ...merged];
           });
         }
       }
@@ -412,6 +455,54 @@ export default function AdminPage() {
     }
   };
 
+  const handleReopenIncident = async (incidentId: string) => {
+    try {
+      showToast('↩️ Re-opening hazard back to Stage 1 Ground Verification…');
+      const res = await fetch(`/api/incidents/${incidentId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'RESTORE' }),
+      });
+      if (res.ok) {
+        showToast('✅ Hazard re-opened to Stage 1: Ground Verification.');
+        fetchData();
+        setActiveTab('verification');
+      } else {
+        showToast('Server error re-opening incident');
+      }
+    } catch {
+      showToast('Failed to re-open incident');
+    }
+  };
+
+  const handleFastReport = async () => {
+    try {
+      showToast('⚡ Submitting fresh citizen hazard report (Minto Bridge)…');
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'WATERLOGGING',
+          severity: 4,
+          description: 'Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.',
+          location: { latitude: 28.636, longitude: 77.225, accuracy: 15 },
+          landmark: 'Minto Bridge Underpass, Connaught Place, New Delhi',
+          waterDepthFeet: 4.5,
+          consent: true,
+        }),
+      });
+      if (res.ok) {
+        showToast('✅ Fresh ground hazard reported! Queued for ground verification in Tab 1.');
+        fetchData();
+        setActiveTab('verification');
+      } else {
+        showToast('Error submitting test report');
+      }
+    } catch {
+      showToast('Connection error submitting report');
+    }
+  };
+
   const handleTakeReportAction = async (reportId: string, action: ActionCategory, notes: string = '') => {
     // 1. Optimistic local UI update so buttons respond instantly with 0 latency
     const timestamp = new Date().toISOString();
@@ -510,6 +601,11 @@ export default function AdminPage() {
 
     showToast(successMsg);
 
+    // Smooth transition: If in a specific stage tab (e.g. verification), follow card to its new stage tab!
+    if (activeTab !== 'all' && targetTab !== 'all' && activeTab !== targetTab) {
+      setActiveTab(targetTab);
+    }
+
     try {
       const res = await fetch('/api/reports', {
         method: 'PATCH',
@@ -524,7 +620,19 @@ export default function AdminPage() {
       if (res.ok) {
         const patchData = await res.json();
         if (patchData.success && patchData.data) {
-          setReports(prev => prev.map(r => r.id === reportId ? patchData.data : r));
+          const updatedRep: Report = patchData.data;
+          setReports(prev => prev.map(r => r.id === reportId ? smartMergeReport(r, updatedRep) : r));
+          setIncidents(prev => prev.map(inc => {
+            if (!inc.reports.some(r => r.id === reportId)) return inc;
+            return {
+              ...inc,
+              currentActionCategory: updatedRep.currentActionCategory,
+              verificationStatus: updatedRep.verificationStatus,
+              state: updatedRep.status === 'DISMISSED' ? 'DISMISSED' : updatedRep.status === 'RESOLVED' ? 'RESOLVED' : 'ESCALATED',
+              reports: inc.reports.map(r => r.id === reportId ? updatedRep : r),
+              updatedAt: updatedRep.updatedAt,
+            };
+          }));
         }
       } else {
         showToast('Failed to record report action on server');
@@ -564,58 +672,57 @@ export default function AdminPage() {
       i.actionedDirective === 'MUNICIPAL_ORDER_DISPATCHED'
   );
 
-  // Workflow Categorization by First Action Taken & Verification Status
+  // Clean Workflow Categorization by First Action Taken & Verification Status
   const pendingVerificationReports = reports.filter(r => 
-    ((!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
+    (!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
     r.status !== 'DISMISSED' &&
-    r.status !== 'RESOLVED') ||
-    (activeTab === 'verification' && Boolean(recentlyActionedReports[r.id]))
+    r.status !== 'RESOLVED' &&
+    (!r.currentActionCategory || r.currentActionCategory === 'Pending Verification')
   );
+
   const falseAlarmReports = reports.filter(r => 
     r.verificationStatus === 'FLAGGED_FALSE_REPORT' || 
     r.status === 'DISMISSED' || 
     r.firstActionTaken === 'Flagged False Alarm / Dismissed' ||
-    r.currentActionCategory === 'Flagged False Alarm / Dismissed' ||
-    (activeTab === 'false_alarm' && Boolean(recentlyActionedReports[r.id]))
+    r.currentActionCategory === 'Flagged False Alarm / Dismissed'
   );
+
   const verifiedPendingReports = reports.filter(r => 
-    (r.verificationStatus === 'VERIFIED_GENUINE' &&
+    r.verificationStatus === 'VERIFIED_GENUINE' &&
     r.status !== 'DISMISSED' &&
     r.status !== 'RESOLVED' &&
-    (!r.currentActionCategory || r.currentActionCategory === 'Verified Genuine — Pending Tactical Action' || r.currentActionCategory === 'Pending Verification')) ||
-    (activeTab === 'verified_pending' && Boolean(recentlyActionedReports[r.id]))
+    (!r.currentActionCategory || r.currentActionCategory === 'Verified Genuine — Pending Tactical Action' || r.currentActionCategory === 'Pending Verification')
   );
 
   const evacuationReports = reports.filter(r => 
-    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Evacuation Ordered' || (r.firstActionTaken === 'Evacuation Ordered' && r.currentActionCategory !== 'Hazard Resolved'))) ||
-    (activeTab === 'evacuation' && Boolean(recentlyActionedReports[r.id]))
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Evacuation Ordered' || (r.firstActionTaken === 'Evacuation Ordered' && r.currentActionCategory !== 'Hazard Resolved'))
   );
+
   const dewateringReports = reports.filter(r => 
-    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Dewatering & Municipal Crew Dispatched' || (r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched' && r.currentActionCategory !== 'Hazard Resolved'))) ||
-    (activeTab === 'dewatering' && Boolean(recentlyActionedReports[r.id]))
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Dewatering & Municipal Crew Dispatched' || (r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched' && r.currentActionCategory !== 'Hazard Resolved'))
   );
+
   const capWarningReports = reports.filter(r => 
-    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Public Warning Issued (CAP 1.2)' || (r.firstActionTaken === 'Public Warning Issued (CAP 1.2)' && r.currentActionCategory !== 'Hazard Resolved'))) ||
-    (activeTab === 'cap_warning' && Boolean(recentlyActionedReports[r.id]))
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Public Warning Issued (CAP 1.2)' || (r.firstActionTaken === 'Public Warning Issued (CAP 1.2)' && r.currentActionCategory !== 'Hazard Resolved'))
   );
+
   const sarReports = reports.filter(r => 
-    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Search & Rescue Deployed' || (r.firstActionTaken === 'Search & Rescue Deployed' && r.currentActionCategory !== 'Hazard Resolved'))) ||
-    (activeTab === 'sar' && Boolean(recentlyActionedReports[r.id]))
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Search & Rescue Deployed' || (r.firstActionTaken === 'Search & Rescue Deployed' && r.currentActionCategory !== 'Hazard Resolved'))
   );
+
   const monitoringReports = reports.filter(r => 
-    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Meteorological Monitoring' || (r.firstActionTaken === 'Meteorological Monitoring' && r.currentActionCategory !== 'Hazard Resolved'))) ||
-    (activeTab === 'monitoring' && Boolean(recentlyActionedReports[r.id]))
+    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Meteorological Monitoring' || (r.firstActionTaken === 'Meteorological Monitoring' && r.currentActionCategory !== 'Hazard Resolved'))
   );
+
   const resolvedReports = reports.filter(r => 
     r.status === 'RESOLVED' || 
     r.currentActionCategory === 'Hazard Resolved' || 
-    r.firstActionTaken === 'Hazard Resolved' ||
-    (activeTab === 'resolved' && Boolean(recentlyActionedReports[r.id]))
+    r.firstActionTaken === 'Hazard Resolved'
   );
 
   if (authenticated === null) {
@@ -1264,9 +1371,27 @@ export default function AdminPage() {
           )}
 
           {isResolved && (
-            <span style={{ color: '#34D399', fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>✅</span> Corridor fully drained and restored to safe public transit.
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ color: '#34D399', fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>✅</span> Corridor fully drained and restored to safe public transit.
+              </span>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  const inc = incidents.find(i => i.reports.some(r => r.id === report.id));
+                  if (inc) {
+                    handleReopenIncident(inc.id);
+                  } else {
+                    handleTakeReportAction(report.id, 'Pending Verification', 'Hazard re-opened for review.');
+                  }
+                }}
+                style={{ fontSize: '0.78rem', padding: '5px 12px', color: '#F59E0B', borderColor: '#F59E0B', fontWeight: 600 }}
+                title="Re-open resolved hazard back to Stage 1 Verification"
+              >
+                ↩️ Re-open Hazard to Stage 1
+              </button>
+            </div>
           )}
 
           {isFalseAlarm && (
@@ -1374,6 +1499,28 @@ export default function AdminPage() {
                 Synced: {lastSyncTime}
               </span>
             )}
+
+            <button
+              type="button"
+              onClick={handleFastReport}
+              style={{
+                fontSize: '0.78rem',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: '1px solid #38BDF8',
+                background: 'rgba(56, 189, 248, 0.15)',
+                color: '#38BDF8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontWeight: 700
+              }}
+              title="Submit a realistic Minto Bridge waterlogging report for triage"
+            >
+              <span>⚡</span>
+              <span>Fast Hazard Report</span>
+            </button>
 
             <button
               type="button"
@@ -2090,22 +2237,116 @@ export default function AdminPage() {
             </div>
 
             {pendingVerificationReports.length === 0 ? (
-              <div className="empty-state" style={{ padding: '48px', background: 'rgba(11, 31, 51, 0.6)', borderRadius: '12px', textAlign: 'center' }}>
+              <div className="empty-state" style={{ padding: '36px 24px', background: 'rgba(11, 31, 51, 0.6)', borderRadius: '12px', textAlign: 'center' }}>
                 <span className="empty-state-icon">✅</span>
-                <h3 style={{ color: '#34D399' }}>All Incoming Reports Verified</h3>
-                <p style={{ color: '#8A99A8', maxWidth: '460px', margin: '8px auto' }}>
-                  No unverified citizen hazard submissions pending. All claims have been checked against Doppler AWS radar.
+                <h3 style={{ color: '#34D399', margin: '8px 0' }}>All Incoming Reports Verified</h3>
+                <p style={{ color: '#8A99A8', maxWidth: '480px', margin: '4px auto 16px', fontSize: '0.86rem' }}>
+                  No unverified citizen hazard submissions pending. All claims have been corroborated against Doppler AWS radar.
                 </p>
-                {verifiedPendingReports.length > 0 && (
+
+                {/* Pipeline Cross-Stage Directory so reports never seem lost */}
+                {reports.length > 0 && (
+                  <div style={{
+                    maxWidth: '640px',
+                    margin: '0 auto 20px',
+                    background: 'rgba(0,0,0,0.25)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '10px',
+                    padding: '14px',
+                    textAlign: 'left'
+                  }}>
+                    <div style={{ fontSize: '0.78rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                      Active Hazard Pipeline Status ({reports.length} Reports on Record):
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {reports.map((r) => {
+                        const stage = getReportStageInfo(r);
+                        return (
+                          <div key={r.id} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '10px',
+                            background: 'rgba(11, 31, 51, 0.6)',
+                            border: `1px solid ${stage.badgeColor}40`,
+                            borderRadius: '8px',
+                            padding: '8px 12px',
+                            flexWrap: 'wrap'
+                          }}>
+                            <div>
+                              <strong style={{ color: '#F7F6F2', fontSize: '0.86rem' }}>
+                                📍 {r.landmark || r.category}
+                              </strong>
+                              <div style={{ fontSize: '0.75rem', color: stage.badgeColor, marginTop: '2px', fontWeight: 600 }}>
+                                ● {stage.label}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                  if (r.status === 'RESOLVED') setActiveTab('resolved');
+                                  else if (r.status === 'DISMISSED') setActiveTab('false_alarm');
+                                  else if (r.verificationStatus === 'VERIFIED_GENUINE') {
+                                    if (r.currentActionCategory?.includes('Evacuation')) setActiveTab('evacuation');
+                                    else if (r.currentActionCategory?.includes('Dewatering')) setActiveTab('dewatering');
+                                    else if (r.currentActionCategory?.includes('Warning')) setActiveTab('cap_warning');
+                                    else if (r.currentActionCategory?.includes('SAR') || r.currentActionCategory?.includes('Search')) setActiveTab('sar');
+                                    else if (r.currentActionCategory?.includes('Monitoring')) setActiveTab('monitoring');
+                                    else setActiveTab('verified_pending');
+                                  } else {
+                                    setActiveTab('all');
+                                  }
+                                }}
+                                style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+                              >
+                                Jump to Tab →
+                              </button>
+                              {(r.status === 'RESOLVED' || r.status === 'DISMISSED' || r.verificationStatus === 'VERIFIED_GENUINE') && (
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary"
+                                  onClick={() => {
+                                    const inc = incidents.find(i => i.reports.some(rep => rep.id === r.id));
+                                    if (inc) {
+                                      handleReopenIncident(inc.id);
+                                    } else {
+                                      handleTakeReportAction(r.id, 'Pending Verification', 'Re-opened for ground verification.');
+                                    }
+                                  }}
+                                  style={{ fontSize: '0.75rem', padding: '4px 10px', color: '#F59E0B', borderColor: '#F59E0B' }}
+                                  title="Re-open to Stage 1 Verification"
+                                >
+                                  ↩️ Re-open to Stage 1
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     className="btn btn-primary"
-                    onClick={() => setActiveTab('verified_pending')}
-                    style={{ marginTop: '12px' }}
+                    onClick={handleFastReport}
+                    style={{ fontSize: '0.84rem', padding: '8px 16px', background: '#0284C7', borderColor: '#38BDF8', fontWeight: 700 }}
                   >
-                    View Verified Genuine Hazards ({verifiedPendingReports.length}) →
+                    ⚡ Submit Fresh Ground Hazard (Minto Bridge)
                   </button>
-                )}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setActiveTab('all')}
+                    style={{ fontSize: '0.84rem', padding: '8px 16px' }}
+                  >
+                    🌐 Open Master Feed ({reports.length})
+                  </button>
+                </div>
               </div>
             ) : (
               pendingVerificationReports.map(r => renderReportCard(r, true))

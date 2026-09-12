@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
+import type { Report } from '@/types';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import styles from './weather.module.css';
 
@@ -109,6 +111,33 @@ export default function AllIndiaWeatherPage() {
       setLoading(false);
     }
   }, []);
+
+  const [reports, setReports] = useState<Report[]>([]);
+
+  const fetchReports = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/reports?limit=50&_t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const d = await res.json();
+        setReports(d.data || []);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+    const interval = setInterval(fetchReports, 4000);
+    return () => clearInterval(interval);
+  }, [fetchReports]);
+
+  const regionalHazards = reports.filter(r => {
+    if (r.status === 'DISMISSED' || r.status === 'RESOLVED') return false;
+    if (!weather?.location?.name) return false;
+    const locName = weather.location.name.toLowerCase();
+    const stateName = (weather.location.state || '').toLowerCase();
+    const landmark = (r.landmark || '').toLowerCase();
+    return landmark.includes(locName) || (stateName && landmark.includes(stateName)) || (locName.includes('delhi') && landmark.includes('delhi')) || (locName.includes('mumbai') && landmark.includes('mumbai'));
+  });
 
   useEffect(() => {
     fetchWeather('Delhi NCR');
@@ -234,6 +263,40 @@ export default function AllIndiaWeatherPage() {
                   </span>
                 </div>
               </div>
+
+              {regionalHazards.length > 0 && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid #EF4444',
+                  borderRadius: '10px',
+                  padding: '12px 18px',
+                  margin: '16px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                  flexWrap: 'wrap'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '1.6rem' }}>⚠️</span>
+                    <div>
+                      <strong style={{ color: '#EF4444', fontSize: '0.96rem' }}>
+                        Active Ground Hazard in {weather.location.name}: {regionalHazards[0].landmark || regionalHazards[0].category}
+                      </strong>
+                      <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#FEE2E2' }}>
+                        Directive: <strong>{regionalHazards[0].currentActionCategory || 'Citizen Observation Active'}</strong> · Severity: Level {regionalHazards[0].severity} · Depth: {regionalHazards[0].waterDepthFeet ? regionalHazards[0].waterDepthFeet + ' ft' : 'Submerged'}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/map?lat=${regionalHazards[0].location?.latitude}&lng=${regionalHazards[0].location?.longitude}&highlight=${regionalHazards[0].id}`}
+                    className="btn btn-primary"
+                    style={{ fontSize: '0.82rem', padding: '6px 14px', fontWeight: 700 }}
+                  >
+                    Inspect on Live Map →
+                  </Link>
+                </div>
+              )}
 
               {/* Telemetry Grid */}
               <div className={styles.telemetryGrid}>

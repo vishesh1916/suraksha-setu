@@ -448,13 +448,14 @@ export default function LandingPage() {
     };
   }, [currentHazard]);
 
-  // Fetch live alerts & stats from store with fast 4-second polling
+  // Fetch live alerts & stats from store with fast 3-second polling
   const fetchData = useCallback(async () => {
     try {
+      const timestamp = Date.now();
       const [alertsRes, reportsRes, statsRes] = await Promise.all([
-        fetch('/api/alerts?status=active'),
-        fetch('/api/reports?limit=10'),
-        fetch('/api/stats'),
+        fetch(`/api/alerts?status=active&_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/reports?limit=50&_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/stats?_t=${timestamp}`, { cache: 'no-store' }),
       ]);
 
       if (alertsRes.ok) {
@@ -478,7 +479,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 4000); // 4-second live polling
+    const interval = setInterval(fetchData, 3000); // 3-second live polling
     return () => clearInterval(interval);
   }, [fetchData]);
 

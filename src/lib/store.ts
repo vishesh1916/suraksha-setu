@@ -239,6 +239,31 @@ class DataStore {
     this.reports.unshift(report);
     this.logAudit('system', 'CITIZEN', 'report', report.id, 'CREATE', { category: report.category });
 
+    // Automatically register Ground Hazard Advisory in alerts for universal platform visibility
+    if (report.severity >= 3) {
+      const hazardLabel = report.category.replace('_', ' ');
+      const newAlert: Alert = {
+        id: `alert_obs_${report.id}`,
+        incidentId: report.id,
+        polygon: {
+          type: 'Polygon',
+          coordinates: [[[report.location.longitude - 0.03, report.location.latitude - 0.03], [report.location.longitude + 0.03, report.location.latitude - 0.03], [report.location.longitude + 0.03, report.location.latitude + 0.03], [report.location.longitude - 0.03, report.location.latitude + 0.03], [report.location.longitude - 0.03, report.location.latitude - 0.03]]],
+        },
+        severity: report.severity,
+        category: report.category,
+        headline: `⚠️ GROUND OBSERVATION: Severe ${hazardLabel} — ${report.landmark || 'Regional Sector'}`,
+        guidance: report.description || 'Ground hazard reported by eyewitness. Meteorological review in progress. Avoid submerged transit corridors and seek safe ground.',
+        startsAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 6 * 3600000).toISOString(),
+        publishedBy: 'Doppler AWS Telemetry Gateway',
+        status: 'PUBLISHED',
+        source: 'Ground Sensor & Citizen Eyewitness Corroborator',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      this.alerts.unshift(newAlert);
+    }
+
     // Automatically cluster into or create an Incident for the Reviewer Queue!
     this.clusterReportIntoIncident(report);
 
@@ -400,6 +425,13 @@ class DataStore {
       report.verificationStatus = 'FLAGGED_FALSE_REPORT';
       report.status = 'DISMISSED';
       report.verificationRationale = notes || 'Discrepancy flagged against radar/gauge telemetry.';
+      // Expire any alerts created for this report
+      this.alerts.forEach(a => {
+        if (a.incidentId === reportId || a.id.includes(reportId)) {
+          a.status = 'EXPIRED';
+          a.updatedAt = new Date().toISOString();
+        }
+      });
     } else if (action === 'Verified Genuine — Pending Tactical Action') {
       report.verificationStatus = 'VERIFIED_GENUINE';
       report.status = 'REVIEWED';
@@ -408,15 +440,15 @@ class DataStore {
       report.status = 'RESOLVED';
       // Mark any associated active alerts as EXPIRED with all-clear
       this.alerts.forEach(a => {
-        if (a.incidentId === reportId || a.incidentId === report.h3Index) {
+        if (a.incidentId === reportId || a.incidentId === report.h3Index || a.id.includes(reportId)) {
           a.status = 'EXPIRED';
+          a.guidance = 'All-clear confirmed. Municipal pumps completed dewatering and normal transit is restored.';
           a.updatedAt = new Date().toISOString();
         }
       });
     } else if (action === 'Public Warning Issued (CAP 1.2)') {
       report.verificationStatus = 'VERIFIED_GENUINE';
       report.status = 'REVIEWED';
-      // Auto-publish official CAP public alert to citizen feed & alerts directory
       const newAlert: Alert = {
         id: generateId(),
         incidentId: reportId,
@@ -437,6 +469,75 @@ class DataStore {
         updatedAt: new Date().toISOString(),
       };
       this.alerts.unshift(newAlert);
+    } else if (action === 'Evacuation Ordered') {
+      report.verificationStatus = 'VERIFIED_GENUINE';
+      report.status = 'REVIEWED';
+      const evacAlert: Alert = {
+        id: `alert_evac_${report.id}`,
+        incidentId: reportId,
+        polygon: {
+          type: 'Polygon',
+          coordinates: [[[report.location.longitude - 0.04, report.location.latitude - 0.04], [report.location.longitude + 0.04, report.location.latitude - 0.04], [report.location.longitude + 0.04, report.location.latitude + 0.04], [report.location.longitude - 0.04, report.location.latitude + 0.04], [report.location.longitude - 0.04, report.location.latitude - 0.04]]],
+        },
+        severity: 5,
+        category: report.category,
+        headline: `🚨 MANDATORY CIVIL EVACUATION ORDER — ${report.landmark || report.category}`,
+        guidance: notes || 'Dangerous conditions corroborated by Doppler radar and ground telemetry. Civil defense orders immediate high-ground evacuation. Avoid all submerged transit routes.',
+        startsAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 8 * 3600000).toISOString(),
+        publishedBy: actorName || 'Executive Disaster Command Centre',
+        status: 'PUBLISHED',
+        source: 'District Disaster Management Authority (DDMA)',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      this.alerts.unshift(evacAlert);
+    } else if (action === 'Dewatering & Municipal Crew Dispatched') {
+      report.verificationStatus = 'VERIFIED_GENUINE';
+      report.status = 'REVIEWED';
+      const pumpAlert: Alert = {
+        id: `alert_pump_${report.id}`,
+        incidentId: reportId,
+        polygon: {
+          type: 'Polygon',
+          coordinates: [[[report.location.longitude - 0.02, report.location.latitude - 0.02], [report.location.longitude + 0.02, report.location.latitude - 0.02], [report.location.longitude + 0.02, report.location.latitude + 0.02], [report.location.longitude - 0.02, report.location.latitude + 0.02], [report.location.longitude - 0.02, report.location.latitude - 0.02]]],
+        },
+        severity: report.severity,
+        category: report.category,
+        headline: `🚒 MUNICIPAL DEWATERING DISPATCHED — ${report.landmark || report.category}`,
+        guidance: notes || 'High-capacity 500HP dewatering pumps mobilized. Traffic diversions in place. Follow municipal traffic police advisories.',
+        startsAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 6 * 3600000).toISOString(),
+        publishedBy: actorName || 'Municipal Disaster Control Room',
+        status: 'PUBLISHED',
+        source: 'Municipal Corporation Emergency Services',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      this.alerts.unshift(pumpAlert);
+    } else if (action === 'Search & Rescue Deployed') {
+      report.verificationStatus = 'VERIFIED_GENUINE';
+      report.status = 'REVIEWED';
+      const sarAlert: Alert = {
+        id: `alert_sar_${report.id}`,
+        incidentId: reportId,
+        polygon: {
+          type: 'Polygon',
+          coordinates: [[[report.location.longitude - 0.03, report.location.latitude - 0.03], [report.location.longitude + 0.03, report.location.latitude - 0.03], [report.location.longitude + 0.03, report.location.latitude + 0.03], [report.location.longitude - 0.03, report.location.latitude + 0.03], [report.location.longitude - 0.03, report.location.latitude - 0.03]]],
+        },
+        severity: 5,
+        category: report.category,
+        headline: `🚤 SEARCH & RESCUE DEPLOYED — ${report.landmark || report.category}`,
+        guidance: notes || 'NDRF and SDRF watercraft crews deployed to sector. Move to upper levels and signal rescue teams.',
+        startsAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 6 * 3600000).toISOString(),
+        publishedBy: actorName || 'State Disaster Response Force',
+        status: 'PUBLISHED',
+        source: 'NDRF / SDRF Joint Operations',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      this.alerts.unshift(sarAlert);
     } else {
       report.verificationStatus = 'VERIFIED_GENUINE';
       report.status = 'REVIEWED';
@@ -637,6 +738,15 @@ class DataStore {
       });
     });
 
+    // Also mark any associated active alerts as EXPIRED with all-clear
+    this.alerts.forEach(a => {
+      if (a.incidentId === incidentId || incident.reports.some(r => r.id === a.incidentId || a.id.includes(r.id))) {
+        a.status = 'EXPIRED';
+        a.guidance = 'All-clear confirmed. Drainage restored and transit reopened.';
+        a.updatedAt = new Date().toISOString();
+      }
+    });
+
     this.logAudit(actorId, 'ADMIN', 'incident', incidentId, 'RESOLVE', { resolutionNotes });
     this.persist();
     return incident;
@@ -746,15 +856,32 @@ class DataStore {
     const incident = this.incidents.find(i => i.id === incidentId);
     if (!incident) return undefined;
     incident.state = 'CANDIDATE';
+    incident.verificationStatus = 'PENDING_VERIFICATION';
+    incident.currentActionCategory = 'Pending Verification';
+    incident.firstActionTaken = 'Pending Verification';
     incident.actionedDirective = 'NONE';
     incident.updatedAt = new Date().toISOString();
+
+    const restoreLog: ActionLogItem = {
+      id: generateId(),
+      action: 'Pending Verification',
+      actorName: 'Command Operations',
+      notes: 'Hazard re-opened to Candidate status for fresh meteorological triage.',
+      timestamp: new Date().toISOString(),
+    };
+    if (!incident.actionHistory) incident.actionHistory = [];
+    incident.actionHistory.unshift(restoreLog);
+
     incident.reports.forEach(r => {
       const storeReport = this.reports.find(rep => rep.id === r.id);
       const targets = [r, storeReport].filter((t): t is Report => Boolean(t));
       targets.forEach(target => {
-        target.status = 'ATTACHED';
+        target.status = 'RECEIVED';
         target.verificationStatus = 'PENDING_VERIFICATION';
         target.currentActionCategory = 'Pending Verification';
+        target.firstActionTaken = 'Pending Verification';
+        if (!target.actionHistory) target.actionHistory = [];
+        target.actionHistory.unshift(restoreLog);
         target.updatedAt = new Date().toISOString();
       });
     });

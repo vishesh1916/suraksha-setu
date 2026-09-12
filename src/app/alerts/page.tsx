@@ -28,7 +28,7 @@ export default function AlertsDirectoryPage() {
 
   const fetchAlerts = useCallback(async () => {
     try {
-      const res = await fetch('/api/alerts?status=active');
+      const res = await fetch(`/api/alerts?status=active&_t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const d = await res.json();
         setAlerts(d.data || []);
@@ -42,7 +42,7 @@ export default function AlertsDirectoryPage() {
 
   useEffect(() => {
     fetchAlerts();
-    const timer = setInterval(fetchAlerts, 30000);
+    const timer = setInterval(fetchAlerts, 4000); // 4-second live polling
     return () => clearInterval(timer);
   }, [fetchAlerts]);
 

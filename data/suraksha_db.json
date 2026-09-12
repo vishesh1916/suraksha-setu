@@ -1,6 +1,91 @@
 {
   "reports": [
     {
+      "reporterId": "anon_1789176123452",
+      "reporterPseudonym": "Citizen-003",
+      "category": "WATERLOGGING",
+      "severity": 4,
+      "description": "Connaught Place Radial Underpass 4.2ft waterlogged. Traffic stranded.",
+      "location": {
+        "latitude": 28.632,
+        "longitude": 77.218,
+        "accuracy": 12
+      },
+      "h3Index": "882ab520b325fffff",
+      "landmark": "Radial Underpass 2, Connaught Place, New Delhi",
+      "waterDepthFeet": 4.2,
+      "consent": true,
+      "status": "RESOLVED",
+      "id": "id_mtxp9oak_s7v4byu",
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxp9pru_xigtzvd",
+          "action": "Hazard Resolved",
+          "actorName": "Emergency Administrator",
+          "notes": "Underpass drained, pumps demobilized, traffic fully cleared.",
+          "timestamp": "2026-09-12T01:22:05.370Z"
+        },
+        {
+          "id": "id_mtxp9pqs_obqvbnm",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Emergency Administrator",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-12T01:22:05.332Z"
+        },
+        {
+          "id": "id_mtxp9ppv_8w4p1y6",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Dr. Priya Sharma (Lead Reviewer)",
+          "notes": "Doppler AWS corroborates 54.0 dBZ echo and rain rate 48mm/h.",
+          "timestamp": "2026-09-12T01:22:05.299Z"
+        },
+        {
+          "id": "id_mtxp9oak_zhk2jke",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-12T01:22:03.452Z"
+        }
+      ],
+      "createdAt": "2026-09-12T01:22:03.452Z",
+      "updatedAt": "2026-09-12T01:22:05.370Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+      "verificationRationale": "Doppler AWS corroborates 54.0 dBZ echo and rain rate 48mm/h."
+    },
+    {
+      "reporterId": "anon_1789176060334",
+      "reporterPseudonym": "Citizen-002",
+      "category": "WATERLOGGING",
+      "severity": 4,
+      "description": "Connaught Place Radial Underpass 4.2ft waterlogged. Traffic stranded.",
+      "location": {
+        "latitude": 28.632,
+        "longitude": 77.218,
+        "accuracy": 12
+      },
+      "h3Index": "882a6d86a058fffff",
+      "landmark": "Radial Underpass 2, Connaught Place, New Delhi",
+      "waterDepthFeet": 4.2,
+      "consent": true,
+      "status": "RECEIVED",
+      "id": "id_mtxp8blb_0r6ig0x",
+      "verificationStatus": "PENDING_VERIFICATION",
+      "currentActionCategory": "Pending Verification",
+      "actionHistory": [
+        {
+          "id": "id_mtxp8blb_uf8hob6",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-12T01:21:00.336Z"
+        }
+      ],
+      "createdAt": "2026-09-12T01:21:00.336Z",
+      "updatedAt": "2026-09-12T01:21:00.336Z"
+    },
+    {
       "reporterId": "anon_1789174535354",
       "reporterPseudonym": "Citizen-001",
       "category": "WATERLOGGING",
@@ -56,6 +141,200 @@
     }
   ],
   "incidents": [
+    {
+      "id": "inc_real_mtxp8ble_9iuq",
+      "h3Parent": "882a6d86a058fffff",
+      "category": "WATERLOGGING",
+      "state": "RESOLVED",
+      "confidenceScore": {
+        "total": 38,
+        "factors": [
+          {
+            "name": "Report Completeness",
+            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Description ✓, Photo missing (optional)",
+            "contribution": 21,
+            "maxContribution": 25,
+            "explanation": "5 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
+          },
+          {
+            "name": "Spatial Corroboration",
+            "signal": "1 independent report within 500m / 20min",
+            "contribution": 8,
+            "maxContribution": 30,
+            "explanation": "1 independent report(s) of waterlogging found nearby. Reports are deduplicated by device and content hash before counting."
+          },
+          {
+            "name": "Reporter History",
+            "signal": "1 prior confirmed report",
+            "contribution": 5,
+            "maxContribution": 15,
+            "explanation": "Reporter has 1 previously confirmed report(s). History provides a bounded credibility signal (capped at 15 points)."
+          },
+          {
+            "name": "Weather Evidence",
+            "signal": "No weather data available",
+            "contribution": 0,
+            "maxContribution": 20,
+            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
+            "freshness": "unavailable"
+          },
+          {
+            "name": "Contradiction Check",
+            "signal": "No flags detected",
+            "contribution": 4,
+            "maxContribution": 10,
+            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
+          }
+        ],
+        "computedAt": "2026-09-12T01:22:03.453Z"
+      },
+      "impactLevel": "CRITICAL",
+      "reportCount": 2,
+      "reports": [
+        {
+          "reporterId": "anon_1789176123452",
+          "reporterPseudonym": "Citizen-003",
+          "category": "WATERLOGGING",
+          "severity": 4,
+          "description": "Connaught Place Radial Underpass 4.2ft waterlogged. Traffic stranded.",
+          "location": {
+            "latitude": 28.632,
+            "longitude": 77.218,
+            "accuracy": 12
+          },
+          "h3Index": "882ab520b325fffff",
+          "landmark": "Radial Underpass 2, Connaught Place, New Delhi",
+          "waterDepthFeet": 4.2,
+          "consent": true,
+          "status": "RESOLVED",
+          "id": "id_mtxp9oak_s7v4byu",
+          "verificationStatus": "VERIFIED_GENUINE",
+          "currentActionCategory": "Hazard Resolved",
+          "actionHistory": [
+            {
+              "id": "id_mtxp9pru_xigtzvd",
+              "action": "Hazard Resolved",
+              "actorName": "Emergency Administrator",
+              "notes": "Underpass drained, pumps demobilized, traffic fully cleared.",
+              "timestamp": "2026-09-12T01:22:05.370Z"
+            },
+            {
+              "id": "id_mtxp9pqs_obqvbnm",
+              "action": "Dewatering & Municipal Crew Dispatched",
+              "actorName": "Emergency Administrator",
+              "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+              "timestamp": "2026-09-12T01:22:05.332Z"
+            },
+            {
+              "id": "id_mtxp9ppv_8w4p1y6",
+              "action": "Verified Genuine — Pending Tactical Action",
+              "actorName": "Dr. Priya Sharma (Lead Reviewer)",
+              "notes": "Doppler AWS corroborates 54.0 dBZ echo and rain rate 48mm/h.",
+              "timestamp": "2026-09-12T01:22:05.299Z"
+            },
+            {
+              "id": "id_mtxp9oak_zhk2jke",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-12T01:22:03.452Z"
+            }
+          ],
+          "createdAt": "2026-09-12T01:22:03.452Z",
+          "updatedAt": "2026-09-12T01:22:05.370Z",
+          "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+          "verificationRationale": "Doppler AWS corroborates 54.0 dBZ echo and rain rate 48mm/h."
+        },
+        {
+          "reporterId": "anon_1789176060334",
+          "reporterPseudonym": "Citizen-002",
+          "category": "WATERLOGGING",
+          "severity": 4,
+          "description": "Connaught Place Radial Underpass 4.2ft waterlogged. Traffic stranded.",
+          "location": {
+            "latitude": 28.632,
+            "longitude": 77.218,
+            "accuracy": 12
+          },
+          "h3Index": "882a6d86a058fffff",
+          "landmark": "Radial Underpass 2, Connaught Place, New Delhi",
+          "waterDepthFeet": 4.2,
+          "consent": true,
+          "status": "RECEIVED",
+          "id": "id_mtxp8blb_0r6ig0x",
+          "verificationStatus": "PENDING_VERIFICATION",
+          "currentActionCategory": "Pending Verification",
+          "actionHistory": [
+            {
+              "id": "id_mtxp8blb_uf8hob6",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-12T01:21:00.336Z"
+            }
+          ],
+          "createdAt": "2026-09-12T01:21:00.336Z",
+          "updatedAt": "2026-09-12T01:21:00.336Z"
+        }
+      ],
+      "evidence": [
+        {
+          "id": "id_mtxp8ble_4caf4td",
+          "reportId": "id_mtxp8blb_0r6ig0x",
+          "type": "WEATHER",
+          "source": "Doppler Weather Radar & Automated Rain Gauge",
+          "observedAt": "2026-09-12T01:21:00.338Z",
+          "freshnessSeconds": 45,
+          "value": {
+            "reflectivityDbz": 50,
+            "rainRateMmH": 44
+          },
+          "provenance": "Automated Weather Corroboration Engine"
+        }
+      ],
+      "reviewActions": [],
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxp9pru_xigtzvd",
+          "action": "Hazard Resolved",
+          "actorName": "Emergency Administrator",
+          "notes": "Underpass drained, pumps demobilized, traffic fully cleared.",
+          "timestamp": "2026-09-12T01:22:05.370Z"
+        },
+        {
+          "id": "id_mtxp9pqs_obqvbnm",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Emergency Administrator",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-12T01:22:05.332Z"
+        },
+        {
+          "id": "id_mtxp9ppv_8w4p1y6",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Dr. Priya Sharma (Lead Reviewer)",
+          "notes": "Doppler AWS corroborates 54.0 dBZ echo and rain rate 48mm/h.",
+          "timestamp": "2026-09-12T01:22:05.299Z"
+        },
+        {
+          "id": "id_mtxp8ble_p43bq3j",
+          "action": "Pending Verification",
+          "actorName": "Cluster Engine",
+          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
+          "timestamp": "2026-09-12T01:21:00.336Z"
+        }
+      ],
+      "landmark": "Radial Underpass 2, Connaught Place, New Delhi",
+      "location": {
+        "latitude": 28.632,
+        "longitude": 77.218,
+        "accuracy": 12
+      },
+      "createdAt": "2026-09-12T01:21:00.336Z",
+      "updatedAt": "2026-09-12T01:22:05.370Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched"
+    },
     {
       "id": "inc_real_mtxobmwu_6sin",
       "h3Parent": "882a533748dffffff",
@@ -220,7 +499,92 @@
       "firstActionTaken": "Dewatering & Municipal Crew Dispatched"
     }
   ],
-  "alerts": [],
+  "alerts": [
+    {
+      "id": "alert_pump_id_mtxp9oak_s7v4byu",
+      "incidentId": "id_mtxp9oak_s7v4byu",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              77.19800000000001,
+              28.612000000000002
+            ],
+            [
+              77.238,
+              28.612000000000002
+            ],
+            [
+              77.238,
+              28.652
+            ],
+            [
+              77.19800000000001,
+              28.652
+            ],
+            [
+              77.19800000000001,
+              28.612000000000002
+            ]
+          ]
+        ]
+      },
+      "severity": 4,
+      "category": "WATERLOGGING",
+      "headline": "🚒 MUNICIPAL DEWATERING DISPATCHED — Radial Underpass 2, Connaught Place, New Delhi",
+      "guidance": "All-clear confirmed. Municipal pumps completed dewatering and normal transit is restored.",
+      "startsAt": "2026-09-12T01:22:05.332Z",
+      "expiresAt": "2026-09-12T07:22:05.332Z",
+      "publishedBy": "Emergency Administrator",
+      "status": "EXPIRED",
+      "source": "Municipal Corporation Emergency Services",
+      "createdAt": "2026-09-12T01:22:05.332Z",
+      "updatedAt": "2026-09-12T01:22:05.370Z"
+    },
+    {
+      "id": "alert_obs_id_mtxp9oak_s7v4byu",
+      "incidentId": "id_mtxp9oak_s7v4byu",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              77.188,
+              28.602
+            ],
+            [
+              77.248,
+              28.602
+            ],
+            [
+              77.248,
+              28.662000000000003
+            ],
+            [
+              77.188,
+              28.662000000000003
+            ],
+            [
+              77.188,
+              28.602
+            ]
+          ]
+        ]
+      },
+      "severity": 4,
+      "category": "WATERLOGGING",
+      "headline": "⚠️ GROUND OBSERVATION: Severe WATERLOGGING — Radial Underpass 2, Connaught Place, New Delhi",
+      "guidance": "All-clear confirmed. Municipal pumps completed dewatering and normal transit is restored.",
+      "startsAt": "2026-09-12T01:22:03.452Z",
+      "expiresAt": "2026-09-12T07:22:03.452Z",
+      "publishedBy": "Doppler AWS Telemetry Gateway",
+      "status": "EXPIRED",
+      "source": "Ground Sensor & Citizen Eyewitness Corroborator",
+      "createdAt": "2026-09-12T01:22:03.452Z",
+      "updatedAt": "2026-09-12T01:22:05.370Z"
+    }
+  ],
   "auditEvents": [
     {
       "id": "id_mtxnqd9s_slfs17s",
@@ -305,7 +669,67 @@
         "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety."
       },
       "createdAt": "2026-09-12T00:58:26.876Z"
+    },
+    {
+      "id": "id_mtxp8blc_hfrrygp",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxp8blb_0r6ig0x",
+      "action": "CREATE",
+      "metadata": {
+        "category": "WATERLOGGING"
+      },
+      "createdAt": "2026-09-12T01:21:00.336Z"
+    },
+    {
+      "id": "id_mtxp9oak_ofw6a9v",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxp9oak_s7v4byu",
+      "action": "CREATE",
+      "metadata": {
+        "category": "WATERLOGGING"
+      },
+      "createdAt": "2026-09-12T01:22:03.452Z"
+    },
+    {
+      "id": "id_mtxp9ppv_je3xxs0",
+      "actorId": "Dr. Priya Sharma (Lead Reviewer)",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxp9oak_s7v4byu",
+      "action": "Verified Genuine — Pending Tactical Action",
+      "metadata": {
+        "notes": "Doppler AWS corroborates 54.0 dBZ echo and rain rate 48mm/h."
+      },
+      "createdAt": "2026-09-12T01:22:05.299Z"
+    },
+    {
+      "id": "id_mtxp9pqs_2yvigkh",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxp9oak_s7v4byu",
+      "action": "Dewatering & Municipal Crew Dispatched",
+      "metadata": {
+        "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions."
+      },
+      "createdAt": "2026-09-12T01:22:05.332Z"
+    },
+    {
+      "id": "id_mtxp9pru_in52ix2",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxp9oak_s7v4byu",
+      "action": "Hazard Resolved",
+      "metadata": {
+        "notes": "Underpass drained, pumps demobilized, traffic fully cleared."
+      },
+      "createdAt": "2026-09-12T01:22:05.370Z"
     }
   ],
-  "savedAt": "2026-09-12T00:58:26.880Z"
+  "savedAt": "2026-09-12T01:22:05.370Z"
 }

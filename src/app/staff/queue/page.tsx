@@ -161,7 +161,7 @@ export default function ReviewQueuePage() {
     try {
       const params = new URLSearchParams();
       if (filter) params.set('state', filter);
-      const res = await fetch(`/api/incidents?${params}&_t=${Date.now()}`);
+      const res = await fetch(`/api/incidents?${params}&_t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         const incList: Incident[] = data.data || [];
@@ -188,11 +188,13 @@ export default function ReviewQueuePage() {
           });
         });
 
-        // Keep selected incident reference up-to-date
+        // Auto-select first incident if none selected or if previously selected was removed
         setSelectedIncident((prev) => {
-          if (!prev) return prev;
+          if (!prev) {
+            return incList.length > 0 ? incList[0] : null;
+          }
           const matched = incList.find((i) => i.id === prev.id);
-          if (!matched) return prev;
+          if (!matched) return incList.length > 0 ? incList[0] : null;
           const localHistLen = prev.actionHistory?.length || 0;
           const serverHistLen = matched.actionHistory?.length || 0;
           return localHistLen > serverHistLen ? prev : matched;
@@ -224,6 +226,15 @@ export default function ReviewQueuePage() {
     const interval = setInterval(fetchIncidents, 20000); // Calm 20s background sync
     return () => clearInterval(interval);
   }, [fetchIncidents]);
+
+  // Auto-select first incident in current filtered view so right workspace is never an empty blank placeholder
+  useEffect(() => {
+    if (filteredIncidents.length > 0) {
+      if (!selectedIncident || !filteredIncidents.some((i) => i.id === selectedIncident.id)) {
+        setSelectedIncident(filteredIncidents[0]);
+      }
+    }
+  }, [filter, hazardFilter, minConfidence, searchQuery, incidents.length]);
 
   const handleIncidentAction = async (action: string, customReason?: string) => {
     if (!selectedIncident) return;
@@ -302,10 +313,9 @@ export default function ReviewQueuePage() {
 
       if (res.ok) {
         const data = await res.json();
-        if (data.data) {
-          setSelectedIncident(data.data);
-          setIncidents((prev) => prev.map((inc) => (inc.id === currentId ? data.data : inc)));
-        }
+        const serverInc = (data.data && data.data.reports && data.data.id === currentId) ? data.data : updatedInc;
+        setSelectedIncident(serverInc);
+        setIncidents((prev) => prev.map((inc) => (inc.id === currentId ? serverInc : inc)));
       } else {
         setActionMessage('Failed to sync review action with server');
       }
@@ -327,10 +337,40 @@ export default function ReviewQueuePage() {
         setActionMessage('Incident successfully restored to Candidate queue.');
         setTimeout(() => setActionMessage(null), 4000);
         setLastActionResult(null);
+        setFilter('CANDIDATE');
         fetchIncidents();
       }
     } catch {
       setActionMessage('Failed to restore incident');
+    }
+  };
+
+  const handleFastReport = async () => {
+    try {
+      setActionMessage('⚡ Submitting fresh ground hazard report (Minto Bridge Waterlogging)…');
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'WATERLOGGING',
+          severity: 4,
+          description: 'Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.',
+          location: { latitude: 28.636, longitude: 77.225, accuracy: 15 },
+          landmark: 'Minto Bridge Underpass, Connaught Place, New Delhi',
+          waterDepthFeet: 4.5,
+          consent: true,
+        }),
+      });
+      if (res.ok) {
+        setActionMessage('✅ Fresh hazard reported! Added to Candidate queue for verification.');
+        setTimeout(() => setActionMessage(null), 4000);
+        setFilter('CANDIDATE');
+        fetchIncidents();
+      } else {
+        setActionMessage('Server error submitting report');
+      }
+    } catch {
+      setActionMessage('Failed to submit report');
     }
   };
 
@@ -514,6 +554,29 @@ export default function ReviewQueuePage() {
               <option value="60">Conf ≥ 60</option>
               <option value="80">Conf ≥ 80 (High)</option>
             </select>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleFastReport}
+              style={{ fontSize: '0.8rem', padding: '6px 12px', background: '#0284C7', borderColor: '#38BDF8', fontWeight: 700 }}
+              title="Submit a realistic Minto Bridge waterlogging report for triage testing"
+            >
+              ⚡ Fast Test Hazard
+            </button>
+            {incidents.some((i) => i.state === 'RESOLVED' || i.state === 'DISMISSED') && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  const target = incidents.find((i) => i.state === 'RESOLVED' || i.state === 'DISMISSED');
+                  if (target) handleUndoDismiss(target.id);
+                }}
+                style={{ fontSize: '0.8rem', padding: '6px 12px', color: '#F59E0B', borderColor: '#F59E0B', fontWeight: 600 }}
+                title="Re-open resolved hazard back to Candidate state for testing"
+              >
+                ↩️ Re-open Hazard
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-secondary"
@@ -738,9 +801,44 @@ export default function ReviewQueuePage() {
                 <p>Loading real ground incidents…</p>
               </div>
             ) : filteredIncidents.length === 0 ? (
-              <div className="empty-state">
+              <div className="empty-state" style={{ padding: '28px 16px', textAlign: 'center' }}>
                 <span className="empty-state-icon">✅</span>
-                <p>No incidents match the active filters</p>
+                <p style={{ margin: '8px 0', color: '#E2E8F0', fontWeight: 600 }}>
+                  {filter === 'CANDIDATE' ? 'No unreviewed candidate submissions' : 'No incidents match active filter'}
+                </p>
+                {filter !== '' && incidents.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setFilter('')}
+                    style={{ fontSize: '0.8rem', padding: '6px 12px', marginTop: '6px' }}
+                  >
+                    View All Incidents ({incidents.length}) →
+                  </button>
+                )}
+                {incidents.some((i) => i.state === 'RESOLVED') && filter === 'CANDIDATE' && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      const resInc = incidents.find((i) => i.state === 'RESOLVED');
+                      if (resInc) handleUndoDismiss(resInc.id);
+                    }}
+                    style={{ fontSize: '0.8rem', padding: '6px 12px', marginTop: '6px', color: '#38BDF8', borderColor: '#38BDF8' }}
+                  >
+                    ↩️ Re-open Resolved Hazard for Testing
+                  </button>
+                )}
+                {incidents.length === 0 && (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleFastReport}
+                    style={{ fontSize: '0.82rem', padding: '7px 14px', marginTop: '8px' }}
+                  >
+                    ⚡ Submit Test Hazard Report
+                  </button>
+                )}
               </div>
             ) : (
               filteredIncidents.map((incident) => {

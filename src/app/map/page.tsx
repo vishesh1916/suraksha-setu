@@ -152,9 +152,10 @@ function MapContent() {
   // Fetch real ground hazards from API with continuous polling
   const fetchLiveHazards = useCallback(async () => {
     try {
+      const timestamp = Date.now();
       const [reportsRes, alertsRes] = await Promise.all([
-        fetch('/api/reports?limit=100'),
-        fetch('/api/alerts?status=active'),
+        fetch(`/api/reports?limit=100&_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/alerts?status=active&_t=${timestamp}`, { cache: 'no-store' }),
       ]);
 
       const newHazards: HazardPlace[] = [...BENCHMARK_HAZARDS];
@@ -200,13 +201,17 @@ function MapContent() {
             description: rep.description || 'Ground hazard reported by citizen.',
             safetyGuidance: isResolved
               ? 'Hazard Resolved & Danger Subsided. Municipal all-clear confirmed.'
-              : rep.currentActionCategory 
-                ? `${rep.currentActionCategory} — Municipal Emergency Response Active` 
+              : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
+                ? `⚡ ${rep.currentActionCategory} — Municipal Emergency Response Mobilized` 
                 : isVerified 
-                  ? 'Verified Genuine Incident. Emergency municipal response active.' 
-                  : 'Reported by local citizen. Reviewer verification in progress.',
-            verifiedAt: isResolved ? 'Resolved / All Clear' : isVerified ? 'Verified by Officer' : 'Reported Just now',
-            source: isVerified ? 'Verified Citizen Ground Report' : 'Citizen Ground Sensor & Corroboration Engine',
+                  ? '✓ Ground Verified Genuine. Municipal emergency crew active.' 
+                  : '⏳ Citizen Eyewitness Report. Reviewer radar verification in progress.',
+            verifiedAt: isResolved ? 'Resolved / All Clear' : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification' ? rep.currentActionCategory : isVerified ? 'Verified by Officer' : 'Reported Just now',
+            source: rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
+              ? `Operational Command Directive: ${rep.currentActionCategory}`
+              : isVerified 
+              ? 'Verified Citizen Ground Report' 
+              : 'Citizen Ground Sensor & Corroboration Engine',
             reportCount: 1,
           };
 

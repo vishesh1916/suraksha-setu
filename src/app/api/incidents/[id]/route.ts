@@ -113,9 +113,12 @@ export async function POST(
       resultState: stateMap[reviewActionType],
     });
 
+    const updatedIncident = dataStore.getIncident(id) || incident;
+
     return NextResponse.json({
       success: true,
-      data: reviewAction,
+      data: updatedIncident,
+      reviewAction,
       message: `Incident ${action.toLowerCase()}ed successfully`,
     });
   } catch (error) {
