@@ -128,9 +128,12 @@
   width: 100%;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 120px 48px 60px;
   background-color: var(--color-navy-midnight);
   overflow: hidden;
   transition: background 0.8s ease;
+  gap: 36px;
 }
 
 /* Atmospheric vignette & telemetry lines */
@@ -215,9 +218,17 @@
 .heroContent {
   position: relative;
   z-index: 10;
-  max-width: 720px;
-  padding: 130px 0 80px 48px;
+  max-width: 660px;
+  padding: 0;
   animation: heroEntrance 0.75s ease-out forwards;
+}
+
+.heroRadarWrapper {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 @keyframes heroEntrance {
@@ -1139,12 +1150,32 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 105px 24px 60px;
+    gap: 36px;
+  }
+  .heroContent {
+    max-width: 100%;
+  }
+  .heroRadarWrapper {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar {
     padding: 0 16px;
   }
+  .hero {
+    padding: 95px 18px 45px;
+    gap: 28px;
+  }
   .heroContent {
-    padding: 95px 18px 36px;
+    padding: 0;
   }
   .headline {
     font-size: clamp(2.1rem, 7vw, 3.2rem);
@@ -1175,8 +1206,12 @@
 
 /* Mobile-First Deep Refinement for 320px to 430px devices */
 @media (max-width: 440px) {
+  .hero {
+    padding: 85px 14px 36px;
+    gap: 22px;
+  }
   .heroContent {
-    padding: 85px 14px 28px;
+    padding: 0;
   }
   .statusStrip {
     width: 100%;

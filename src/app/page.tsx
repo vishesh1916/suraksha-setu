@@ -6,6 +6,7 @@ import type { Alert, Report } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { Navbar } from '@/components/Navbar';
 import { WeatherHeroAtmosphere } from '@/components/WeatherHeroAtmosphere';
+import { WeatherRadarHologram } from '@/components/WeatherRadarHologram';
 import { AlertWorkflowSequence } from '@/components/AlertWorkflowSequence';
 import {
   type WeatherAtmosphereType,
@@ -37,8 +38,6 @@ export default function LandingPage() {
     updatedAt?: string;
   } | null>(null);
   const [isManualOverride, setIsManualOverride] = useState(false);
-
-  const miniRadarCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Active ground hazards currently reported and unaddressed
   const activeHazards = reports.filter(
@@ -127,239 +126,6 @@ export default function LandingPage() {
   }, []);
 
   const scrollProgress = Math.min(1, Math.max(0, scrollY / 750));
-
-  // Dedicated Tactical Mini Radar Canvas (Standby Weather Radar OR Live Hazard Target Lock)
-  useEffect(() => {
-    const canvas = miniRadarCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let sweepAngle = 0;
-    let pulsePhase = 0;
-
-    const renderMini = () => {
-      const w = canvas.width;
-      const h = canvas.height;
-      const cx = w / 2;
-      const cy = h / 2;
-
-      ctx.clearRect(0, 0, w, h);
-
-      // Deep tactical background
-      ctx.fillStyle = '#051322';
-      ctx.fillRect(0, 0, w, h);
-
-      // Grid coordinate lines
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 4]);
-
-      // Horizontal & Vertical center axes
-      ctx.beginPath();
-      ctx.moveTo(0, cy);
-      ctx.lineTo(w, cy);
-      ctx.moveTo(cx, 0);
-      ctx.lineTo(cx, h);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      if (!currentHazard) {
-        // ====================================================
-        // SCENARIO 1: REAL-TIME DOPPLER RADAR SWEEP (Standby Mode)
-        // ====================================================
-        sweepAngle += 0.024;
-
-        // Concentric Radar Range Rings
-        const rings = [24, 48, 75, 110];
-        rings.forEach((r, idx) => {
-          ctx.beginPath();
-          ctx.arc(cx, cy, r, 0, Math.PI * 2);
-          ctx.strokeStyle = idx === 1 ? 'rgba(56, 189, 248, 0.24)' : 'rgba(56, 189, 248, 0.1)';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-
-          // Range Distance labels
-          ctx.font = '8px monospace';
-          ctx.fillStyle = 'rgba(138, 153, 168, 0.45)';
-          ctx.fillText(`${(idx + 1) * 25}km`, cx + 3, cy - r + 9);
-        });
-
-        // Compass Ticks
-        ctx.font = '9px monospace';
-        ctx.fillStyle = 'rgba(138, 153, 168, 0.7)';
-        ctx.textAlign = 'center';
-        ctx.fillText('N', cx, 12);
-        ctx.fillText('S', cx, h - 4);
-        ctx.textAlign = 'left';
-        ctx.fillText('E', w - 14, cy + 3);
-        ctx.textAlign = 'right';
-        ctx.fillText('W', 14, cy + 3);
-
-        // Ambient Organic Moisture Echo Waves (Reflectivity)
-        for (let i = 0; i < 3; i++) {
-          const echoRadius = 35 + i * 22;
-          const echoAngle = Math.sin(sweepAngle * 0.4 + i) * 0.8 + (i * Math.PI) / 2;
-          const ex = cx + Math.cos(echoAngle) * (20 + i * 15);
-          const ey = cy + Math.sin(echoAngle) * (15 + i * 12);
-
-          const grad = ctx.createRadialGradient(ex, ey, 0, ex, ey, echoRadius);
-          grad.addColorStop(0, 'rgba(16, 185, 129, 0.16)');
-          grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.06)');
-          grad.addColorStop(1, 'transparent');
-
-          ctx.beginPath();
-          ctx.arc(ex, ey, echoRadius, 0, Math.PI * 2);
-          ctx.fillStyle = grad;
-          ctx.fill();
-        }
-
-        // Phosphor Sweep Beam & Trailing Gradient
-        const sweepLength = 125;
-        const trailAngle = 0.65;
-        const sweepGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, sweepLength);
-        sweepGrad.addColorStop(0, 'rgba(52, 211, 153, 0.32)');
-        sweepGrad.addColorStop(0.7, 'rgba(16, 185, 129, 0.08)');
-        sweepGrad.addColorStop(1, 'transparent');
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, sweepLength, sweepAngle - trailAngle, sweepAngle, false);
-        ctx.closePath();
-        ctx.fillStyle = sweepGrad;
-        ctx.fill();
-
-        // Sharp Sweep Front Line
-        const sx = cx + Math.cos(sweepAngle) * sweepLength;
-        const sy = cy + Math.sin(sweepAngle) * sweepLength;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(sx, sy);
-        ctx.strokeStyle = 'rgba(52, 211, 153, 0.85)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
-
-        // Radar center antenna hub
-        ctx.beginPath();
-        ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-        ctx.fillStyle = '#34D399';
-        ctx.fill();
-
-        // Tactical HUD text readouts
-        ctx.font = '8.5px monospace';
-        ctx.fillStyle = 'rgba(138, 153, 168, 0.65)';
-        ctx.textAlign = 'left';
-        ctx.fillText('SWEEP: 0.5 RPM · S-BAND', 10, 16);
-        ctx.fillText(`AZ: ${Math.round(((sweepAngle * 180) / Math.PI) % 360)}°`, 10, h - 8);
-
-        ctx.textAlign = 'right';
-        ctx.fillStyle = 'rgba(52, 211, 153, 0.85)';
-        ctx.fillText('STANDBY: NOMINAL', w - 10, 16);
-        ctx.fillStyle = 'rgba(138, 153, 168, 0.65)';
-        ctx.fillText('ECHO: < 15 dBZ', w - 10, h - 8);
-
-      } else {
-        // ====================================================
-        // SCENARIO 2: LIVE HAZARD TARGET LOCK & H3 HEX RETICLE
-        // ====================================================
-        pulsePhase = (pulsePhase + 0.04) % (Math.PI * 2);
-
-        const isCritical = currentHazard.severity >= 4;
-        const mainColor = isCritical ? '#EF4444' : currentHazard.severity === 3 ? '#F59E0B' : '#38BDF8';
-        const icon = HAZARD_CATEGORIES[currentHazard.category]?.icon || '⚠️';
-
-        const tx = cx;
-        const ty = cy;
-
-        // Expanding Sonar Ping Rings from Hazard Point
-        [0, 1, 2].forEach((idx) => {
-          const ringProgress = (pulsePhase / (Math.PI * 2) + idx / 3) % 1;
-          const ringRadius = 12 + ringProgress * 75;
-          const alpha = (1 - ringProgress) * 0.55;
-
-          ctx.beginPath();
-          ctx.arc(tx, ty, ringRadius, 0, Math.PI * 2);
-          ctx.strokeStyle = isCritical
-            ? `rgba(239, 68, 68, ${alpha})`
-            : `rgba(245, 158, 11, ${alpha})`;
-          ctx.lineWidth = 1.4;
-          ctx.stroke();
-        });
-
-        // Fixed Hazard Boundary Target Reticle
-        const reticleR = 36;
-        ctx.strokeStyle = mainColor;
-        ctx.lineWidth = 1.5;
-
-        // 4 corner brackets
-        const bSize = 10;
-        // Top-left
-        ctx.beginPath();
-        ctx.moveTo(tx - reticleR, ty - reticleR + bSize);
-        ctx.lineTo(tx - reticleR, ty - reticleR);
-        ctx.lineTo(tx - reticleR + bSize, ty - reticleR);
-        ctx.stroke();
-        // Top-right
-        ctx.beginPath();
-        ctx.moveTo(tx + reticleR - bSize, ty - reticleR);
-        ctx.lineTo(tx + reticleR, ty - reticleR);
-        ctx.lineTo(tx + reticleR, ty - reticleR + bSize);
-        ctx.stroke();
-        // Bottom-left
-        ctx.beginPath();
-        ctx.moveTo(tx - reticleR, ty + reticleR - bSize);
-        ctx.lineTo(tx - reticleR, ty + reticleR);
-        ctx.lineTo(tx - reticleR + bSize, ty + reticleR);
-        ctx.stroke();
-        // Bottom-right
-        ctx.beginPath();
-        ctx.moveTo(tx + reticleR - bSize, ty + reticleR);
-        ctx.lineTo(tx + reticleR, ty + reticleR);
-        ctx.lineTo(tx + reticleR, ty + reticleR - bSize);
-        ctx.stroke();
-
-        // Center Hazard Category Glyph
-        ctx.font = '22px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(icon, tx, ty - 6);
-
-        // Severity Pill at Center Bottom
-        ctx.font = 'bold 9px monospace';
-        ctx.fillStyle = mainColor;
-        ctx.fillText(`LEVEL ${currentHazard.severity} HAZARD`, tx, ty + 18);
-
-        // HUD Readouts
-        ctx.font = '8.5px monospace';
-        ctx.textAlign = 'left';
-        ctx.fillStyle = mainColor;
-        ctx.fillText(`TARGET: ${currentHazard.category}`, 10, 16);
-        ctx.fillStyle = 'rgba(138, 153, 168, 0.8)';
-        ctx.fillText(`LAT: ${currentHazard.location.latitude.toFixed(3)}°N`, 10, h - 8);
-
-        ctx.textAlign = 'right';
-        ctx.fillStyle = mainColor;
-        ctx.fillText(
-          currentHazard.waterDepthFeet ? `${currentHazard.waterDepthFeet} FT INUNDATION` : `${currentHazard.severity * 14} mm/h ECHO`,
-          w - 10,
-          16
-        );
-        ctx.fillStyle = 'rgba(138, 153, 168, 0.8)';
-        ctx.fillText(`LNG: ${currentHazard.location.longitude.toFixed(3)}°E`, w - 10, h - 8);
-      }
-
-      animId = requestAnimationFrame(renderMini);
-    };
-
-    renderMini();
-
-    return () => {
-      cancelAnimationFrame(animId);
-    };
-  }, [currentHazard]);
 
   // Fetch live alerts & stats from store with fast 3-second polling
   const fetchData = useCallback(async () => {
@@ -514,147 +280,19 @@ export default function LandingPage() {
         </div>
 
         {/* ============================================================
-            3. Operational Map Overlay (Lower-Right Hero Edge)
-            Automatically displays real ground hazards, or weather radar animation
+            3. Tactical 3D Weather Radar Hologram & Telemetry Hub
+            Dual-pol Doppler Radar, Wind Vector, H3 Hex Risk, Interactive Parallax
             ============================================================ */}
-        <div
-          className={styles.operationalOverlay}
-          id="operational-map-overlay"
-          style={
-            currentHazard
-              ? {
-                  borderColor: currentHazard.severity >= 4 ? 'rgba(239, 68, 68, 0.5)' : 'rgba(245, 158, 11, 0.5)',
-                  boxShadow: currentHazard.severity >= 4 ? '0 16px 40px rgba(239, 68, 68, 0.25)' : '0 16px 40px rgba(0, 0, 0, 0.45)',
-                }
-              : {}
-          }
-        >
-          <div className={styles.overlayHeader}>
-            <div className={styles.overlayHeaderLeft}>
-              <span
-                className={styles.overlayTag}
-                style={{
-                  color: currentHazard
-                    ? currentHazard.severity >= 4
-                      ? '#EF4444'
-                      : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
-                      ? '#34D399'
-                      : '#F59E0B'
-                    : '#34D399',
-                }}
-              >
-                <span
-                  className={styles.overlayTagDot}
-                  style={{
-                    background: currentHazard
-                      ? currentHazard.severity >= 4
-                        ? '#EF4444'
-                        : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
-                        ? '#34D399'
-                        : '#F59E0B'
-                      : '#34D399',
-                    boxShadow: currentHazard
-                      ? currentHazard.severity >= 4
-                        ? '0 0 8px #EF4444'
-                        : '0 0 8px #F59E0B'
-                        : '0 0 8px #34D399',
-                  }}
-                />
-                {currentHazard
-                  ? currentHazard.currentActionCategory && currentHazard.currentActionCategory !== 'Pending Verification'
-                    ? currentHazard.currentActionCategory
-                    : currentHazard.verificationStatus === 'VERIFIED_GENUINE'
-                    ? 'Verified Local Hazard'
-                    : 'Active Ground Observation'
-                  : 'Doppler Radar Net · Standby Monitoring'}
-              </span>
-
-              {/* H3 Risk Hexagon Pulse Indicator */}
-              <div
-                className={`${styles.h3RiskBadge} ${currentHazard ? styles.h3RiskBadgeActive : ''}`}
-                title="H3 Spatial Resolution Grid Hex Cell"
-              >
-                <span>⬡</span>
-                <span>{currentHazard ? 'H3-HEX ALERT ACTIVE' : 'H3-HEX NOMINAL'}</span>
-              </div>
-            </div>
-
-            {currentHazard && activeHazards.length > 1 ? (
-              <div className={styles.hazardNavGroup}>
-                <button
-                  type="button"
-                  className={styles.hazardNavBtn}
-                  onClick={() => setSelectedHazardIndex((prev) => (prev - 1 + activeHazards.length) % activeHazards.length)}
-                  title="Previous hazard"
-                >
-                  ‹
-                </button>
-                <span className={styles.hazardNavCount}>
-                  {(selectedHazardIndex % activeHazards.length) + 1} / {activeHazards.length}
-                </span>
-                <button
-                  type="button"
-                  className={styles.hazardNavBtn}
-                  onClick={() => setSelectedHazardIndex((prev) => (prev + 1) % activeHazards.length)}
-                  title="Next hazard"
-                >
-                  ›
-                </button>
-              </div>
-            ) : (
-              <span className={styles.overlayCoords}>
-                {currentHazard
-                  ? `${currentHazard.location.latitude.toFixed(3)}°N, ${currentHazard.location.longitude.toFixed(3)}°E`
-                  : '26°51′N, 80°56′E · 45 STNS'}
-              </span>
-            )}
-          </div>
-
-          <div className={styles.overlayMapCanvas}>
-            <canvas ref={miniRadarCanvasRef} width={340} height={140} className={styles.miniRadarCanvas} />
-          </div>
-
-          <div className={styles.overlayFooter}>
-            <div className={styles.overlayLocationTitle}>
-              {currentHazard
-                ? currentHazard.landmark || `Hazard near ${currentHazard.location.latitude.toFixed(3)}°N, ${currentHazard.location.longitude.toFixed(3)}°E`
-                : 'Awadh & Pan-India Severe Weather Surveillance Active'}
-            </div>
-            <div className={styles.overlayTelemetry}>
-              {currentHazard
-                ? `"${currentHazard.description}"`
-                : 'Continuous dual-polarization radar surveillance across 45 IMD radar stations and citizen sensors. Zero critical unaddressed hazards active nationwide.'}
-            </div>
-            <div className={styles.overlayMetaRow}>
-              <span
-                className={styles.overlayConfidence}
-                style={{
-                  color: currentHazard
-                    ? currentHazard.verificationStatus === 'VERIFIED_GENUINE'
-                      ? '#34D399'
-                      : '#F59E0B'
-                    : '#34D399',
-                }}
-              >
-                <span>{currentHazard ? (currentHazard.verificationStatus === 'VERIFIED_GENUINE' ? '✓' : '⏳') : '●'}</span>
-                {currentHazard
-                  ? currentHazard.verificationStatus === 'VERIFIED_GENUINE'
-                    ? 'Official Verification: Genuine'
-                    : 'Triage & Corroboration Active'
-                  : 'System Status: Baseline Nominal'}
-              </span>
-              <Link
-                href={
-                  currentHazard
-                    ? `/map?lat=${currentHazard.location.latitude}&lng=${currentHazard.location.longitude}&highlight=${currentHazard.id}`
-                    : '/map'
-                }
-                className={styles.overlayLink}
-              >
-                {currentHazard ? 'Inspect Sector on Map →' : 'Live Radar Map →'}
-              </Link>
-            </div>
-          </div>
+        <div className={styles.heroRadarWrapper}>
+          <WeatherRadarHologram
+            atmosphere={activeAtmosphere}
+            liveWeather={liveLucknowData}
+            activeHazard={currentHazard}
+            activeHazardsCount={activeHazards.length}
+            onCycleHazard={() =>
+              setSelectedHazardIndex((prev) => (prev + 1) % Math.max(1, activeHazards.length))
+            }
+          />
         </div>
 
         {/* Scroll Weather Indicator */}
