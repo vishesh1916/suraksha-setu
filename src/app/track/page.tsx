@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
-import { getClientReport, getClientReports, saveClientReport, subscribeToSync } from '@/lib/clientSync';
+import { getClientReport, getClientReports, saveClientReport, subscribeToSync, isDemoReport } from '@/lib/clientSync';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import styles from './track.module.css';
 
@@ -66,7 +66,7 @@ function TrackContent() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]');
+        const saved = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]').filter((r: any) => !isDemoReport(r));
         setMyReports(saved);
         if (!initialId) {
           const lastId = localStorage.getItem('suraksha_last_report_id') || saved[0]?.id;
@@ -162,21 +162,6 @@ function TrackContent() {
         weatherSignal: 'Doppler AWS Telemetry Verified: 52 dBZ reflectivity match',
         reviewNote: stageStatusDesc,
       });
-
-      // Background re-sync to server if missing
-      fetch('/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category: clientRep.category,
-          severity: clientRep.severity,
-          description: clientRep.description,
-          location: clientRep.location,
-          landmark: clientRep.landmark,
-          waterDepthFeet: clientRep.waterDepthFeet,
-          consent: true,
-        }),
-      }).catch(() => {});
     } else {
       setTracking(null);
     }
@@ -194,6 +179,13 @@ function TrackContent() {
   // Real-time zero-latency sync subscription across tabs (BroadcastChannel + storage)
   useEffect(() => {
     const unsubscribe = subscribeToSync((msg) => {
+      if (msg.type === 'PURGE_ALL') {
+        setMyReports([]);
+        setTracking(null);
+        setActiveTrackId('');
+        setReportIdInput('');
+        return;
+      }
       if (!activeTrackId) return;
       const cleanActive = activeTrackId.trim().toLowerCase();
       const targetId = (msg.reportId || msg.report?.id || '').toLowerCase();

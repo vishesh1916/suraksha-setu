@@ -7,7 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import type { Alert, Report, Incident } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { generateDisasterPrediction } from '@/lib/prediction';
-import { getClientReports, subscribeToSync } from '@/lib/clientSync';
+import { getClientReports, subscribeToSync, isDemoReport, purgeClientStorage } from '@/lib/clientSync';
 import styles from './map.module.css';
 
 export interface HazardPlace {
@@ -121,7 +121,7 @@ function MapContent() {
   const paramLat = searchParams.get('lat');
   const paramLng = searchParams.get('lng');
   const paramHighlight = searchParams.get('highlight');
-  const hasHandledParams = useRef(false);
+  const lastHandledKey = useRef<string | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,11 +166,13 @@ function MapContent() {
       if (reportsRes) {
         try {
           const rData = await reportsRes.json();
-          if (Array.isArray(rData.data)) serverReps = rData.data;
+          if (Array.isArray(rData.data)) {
+            serverReps = rData.data.filter((r: Report) => !isDemoReport(r));
+          }
         } catch {}
       }
 
-      const clientReps = getClientReports();
+      const clientReps = getClientReports().filter(r => !isDemoReport(r));
       const incomingReports: Report[] = [...serverReps];
       for (const cr of clientReps) {
         const idx = incomingReports.findIndex(sr => sr.id === cr.id || sr.id.toLowerCase() === cr.id.toLowerCase());
@@ -184,12 +186,15 @@ function MapContent() {
       const newHazards: HazardPlace[] = [...BENCHMARK_HAZARDS];
 
       incomingReports.forEach((rep) => {
+        // Exclude any demo reports
+        if (isDemoReport(rep)) return;
+
         const rawLat = rep.location?.latitude ?? (rep.location as any)?.lat;
         const rawLng = rep.location?.longitude ?? (rep.location as any)?.lng;
         if (rawLat === undefined || rawLng === undefined || rawLat === null || rawLng === null) return;
         const lat = Number(rawLat);
         const lng = Number(rawLng);
-        if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return;
+        if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
 
         const isResolved = rep.status === 'RESOLVED' || rep.currentActionCategory === 'Hazard Resolved';
         const isDismissed = rep.verificationStatus === 'FLAGGED_FALSE_REPORT' || rep.status === 'DISMISSED';
@@ -201,7 +206,7 @@ function MapContent() {
         if (isResolved && !showResolvedArchive) return;
 
         const isVerified = rep.verificationStatus === 'VERIFIED_GENUINE';
-        const landmarkText = rep.landmark || `Hazard near ${lat.toFixed(3)}°N, ${lng.toFixed(3)}°E`;
+        const landmarkText = rep.landmark || `Hazard near ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`;
         const cityText = rep.landmark && rep.landmark.includes(',') 
           ? rep.landmark.split(',').pop()?.trim() || 'Local Area' 
           : 'Local Area';
@@ -260,8 +265,19 @@ function MapContent() {
 
   useEffect(() => {
     fetchLiveHazards();
-    const unsubscribe = subscribeToSync(() => {
-      fetchLiveHazards();
+    const unsubscribe = subscribeToSync((msg) => {
+      if (msg.type === 'PURGE_ALL') {
+        setHazards([]);
+        setSelectedPlace(null);
+        if (markersRef.current) {
+          markersRef.current.forEach((m) => {
+            try { m.remove(); } catch {}
+          });
+          markersRef.current = [];
+        }
+      } else {
+        fetchLiveHazards();
+      }
     });
     const interval = setInterval(fetchLiveHazards, 3000);
     return () => {
@@ -270,10 +286,12 @@ function MapContent() {
     };
   }, [fetchLiveHazards]);
 
-  // If search parameters (lat, lng, or highlight) exist, auto-select matched place and fly to it;
-  // otherwise, auto-focus on the reported hazards (fly to the single hazard or fit bounds for multiple).
+  // Camera focus controller: smoothly tracks requested coordinates / highlighted report,
+  // or auto-centers on active reported hazard(s).
   useEffect(() => {
     if (!hazards.length || !mapReady || !mapRef.current) return;
+
+    const currentKey = `${paramHighlight || ''}_${paramLat || ''}_${paramLng || ''}_${hazards.map(h => h.id).join(',')}`;
 
     if (paramHighlight || (paramLat && paramLng)) {
       const pLat = paramLat ? parseFloat(paramLat) : NaN;
@@ -286,8 +304,8 @@ function MapContent() {
           setSelectedPlace(matched);
         }
       }
-      if (!hasHandledParams.current) {
-        hasHandledParams.current = true;
+      if (lastHandledKey.current !== currentKey) {
+        lastHandledKey.current = currentKey;
         try {
           const targetLng = matched ? matched.lng : pLng;
           const targetLat = matched ? matched.lat : pLat;
@@ -301,8 +319,8 @@ function MapContent() {
           }
         } catch {}
       }
-    } else if (!hasHandledParams.current) {
-      hasHandledParams.current = true;
+    } else if (lastHandledKey.current !== currentKey) {
+      lastHandledKey.current = currentKey;
       if (hazards.length === 1) {
         const singleHazard = hazards[0];
         if (singleHazard && !isNaN(singleHazard.lng) && !isNaN(singleHazard.lat)) {
@@ -310,7 +328,7 @@ function MapContent() {
           try {
             mapRef.current.flyTo({
               center: [singleHazard.lng, singleHazard.lat],
-              zoom: 14.5,
+              zoom: 14.8,
               pitch: 35,
               duration: 1200,
             });
@@ -355,15 +373,15 @@ function MapContent() {
         }
         mapContainerRef.current.innerHTML = '';
 
-        const initialLat = paramLat ? parseFloat(paramLat) : 22.5937;
-        const initialLng = paramLng ? parseFloat(paramLng) : 78.9629;
+        const initialLat = paramLat ? parseFloat(paramLat) : 26.8467;
+        const initialLng = paramLng ? parseFloat(paramLng) : 80.9462;
         const hasCoordParams = Boolean(paramLat && paramLng && !isNaN(initialLat) && !isNaN(initialLng));
 
         const map = new maplibregl.Map({
           container: mapContainerRef.current,
           style: LAYER_STYLES.street,
-          center: [hasCoordParams ? initialLng : 78.9629, hasCoordParams ? initialLat : 22.5937],
-          zoom: hasCoordParams ? 14.8 : 4.8,
+          center: [hasCoordParams ? initialLng : 80.9462, hasCoordParams ? initialLat : 26.8467],
+          zoom: hasCoordParams ? 14.8 : 5.5,
           minZoom: 3.5,
           maxZoom: 19,
           pitch: hasCoordParams ? 35 : 0,

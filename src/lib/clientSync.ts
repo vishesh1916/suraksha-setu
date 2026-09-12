@@ -29,49 +29,155 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
+export function isDemoReport(item: any): boolean {
+  if (!item) return true;
+  const id = String(item.id || '').toLowerCase();
+  const desc = String(item.description || '').toLowerCase();
+  const landmark = String(item.landmark || '').toLowerCase();
+  const reporterId = String(item.reporterId || '').toLowerCase();
+  const reporterPseudonym = String(item.reporterPseudonym || '').toLowerCase();
+
+  // Explicit demo identifiers from past prototypes & tests
+  if (
+    id.includes('demo') ||
+    id.includes('minto') ||
+    id.startsWith('mock_') ||
+    id.startsWith('test_') ||
+    id.startsWith('seed_') ||
+    id.startsWith('rep_minto') ||
+    id === 'report_1' ||
+    id === 'report_2' ||
+    id === 'report_3'
+  ) {
+    return true;
+  }
+
+  if (
+    landmark.includes('minto bridge') ||
+    landmark.includes('demo report') ||
+    landmark.includes('mock hazard') ||
+    landmark.includes('test underpass')
+  ) {
+    return true;
+  }
+
+  if (
+    desc.includes('minto bridge') ||
+    desc.includes('4.5ft under minto bridge') ||
+    desc.includes('demo test report') ||
+    desc.includes('dummy hazard')
+  ) {
+    return true;
+  }
+
+  if (
+    reporterId.includes('demo') ||
+    reporterId === 'mock_reporter' ||
+    reporterPseudonym.includes('demo')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function purgeClientStorage(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(STORAGE_REPORTS_KEY);
+    localStorage.removeItem('suraksha_my_reports');
+    localStorage.removeItem('suraksha_last_report_id');
+    localStorage.removeItem('suraksha_offline_reports_queue');
+    localStorage.removeItem('suraksha_recent_tracking');
+
+    // Broadcast PURGE_ALL event to all open tabs
+    broadcastSync({
+      type: 'PURGE_ALL',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.warn('purgeClientStorage error:', e);
+  }
+}
+
 export function getClientReports(): Report[] {
   if (typeof window === 'undefined') return [];
   const reports: Report[] = [];
+  let clientNeedsPruning = false;
+  let myNeedsPruning = false;
+
   try {
     const raw = localStorage.getItem(STORAGE_REPORTS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) reports.push(...parsed);
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (isDemoReport(item)) {
+            clientNeedsPruning = true;
+          } else {
+            reports.push(item);
+          }
+        }
+      }
     }
   } catch {}
 
+  if (clientNeedsPruning) {
+    try {
+      localStorage.setItem(STORAGE_REPORTS_KEY, JSON.stringify(reports.slice(0, 50)));
+    } catch {}
+  }
+
   // Also harvest from suraksha_my_reports if user submitted prior to clientSync
+  const myClean: any[] = [];
   try {
     const myRaw = localStorage.getItem('suraksha_my_reports');
     if (myRaw) {
       const myParsed = JSON.parse(myRaw);
       if (Array.isArray(myParsed)) {
         for (const item of myParsed) {
+          if (isDemoReport(item)) {
+            myNeedsPruning = true;
+            continue;
+          }
+          myClean.push(item);
           if (item && item.id && !reports.some(r => r.id === item.id || r.id.toLowerCase() === item.id.toLowerCase())) {
-            reports.push({
-              id: item.id,
-              reporterId: 'citizen_local',
-              reporterPseudonym: 'Citizen Ground Reporter',
-              category: item.category || 'WATERLOGGING',
-              severity: item.severity || 4,
-              description: item.description || 'Ground hazard report.',
-              location: item.location || (item.latitude && item.longitude ? { latitude: item.latitude, longitude: item.longitude, accuracy: 25 } : { latitude: 26.8467, longitude: 80.9462, accuracy: 25 }),
-              h3Index: item.h3Index || '882a7bcfa911fffff',
-              landmark: item.landmark || 'Reported Hazard Location',
-              waterDepthFeet: item.waterDepthFeet || (item.severity >= 4 ? 3.5 : 2.0),
-              consent: true,
-              status: 'RECEIVED',
-              verificationStatus: 'PENDING_VERIFICATION',
-              currentActionCategory: 'Pending Verification',
-              actionHistory: [],
-              createdAt: item.createdAt || new Date().toISOString(),
-              updatedAt: item.createdAt || new Date().toISOString(),
-            });
+            const rawLat = item.location?.latitude ?? item.latitude;
+            const rawLng = item.location?.longitude ?? item.longitude;
+            if (rawLat !== undefined && rawLng !== undefined && !isNaN(Number(rawLat)) && !isNaN(Number(rawLng))) {
+              const latNum = Number(rawLat);
+              const lngNum = Number(rawLng);
+              reports.push({
+                id: item.id,
+                reporterId: 'citizen_local',
+                reporterPseudonym: 'Citizen Ground Reporter',
+                category: item.category || 'WATERLOGGING',
+                severity: item.severity || 4,
+                description: item.description || 'Ground hazard report.',
+                location: { latitude: latNum, longitude: lngNum, accuracy: item.location?.accuracy || 25 },
+                h3Index: item.h3Index || '882a7bcfa911fffff',
+                landmark: item.landmark || `Reported Hazard (${latNum.toFixed(4)}°N, ${lngNum.toFixed(4)}°E)`,
+                waterDepthFeet: item.waterDepthFeet || (item.severity >= 4 ? 3.5 : 2.0),
+                consent: true,
+                status: 'RECEIVED',
+                verificationStatus: 'PENDING_VERIFICATION',
+                currentActionCategory: 'Pending Verification',
+                actionHistory: [],
+                createdAt: item.createdAt || new Date().toISOString(),
+                updatedAt: item.createdAt || new Date().toISOString(),
+              });
+            }
           }
         }
       }
     }
   } catch {}
+
+  if (myNeedsPruning) {
+    try {
+      localStorage.setItem('suraksha_my_reports', JSON.stringify(myClean));
+    } catch {}
+  }
 
   return reports;
 }
@@ -79,6 +185,7 @@ export function getClientReports(): Report[] {
 export function saveClientReport(report: Report): void {
   if (typeof window === 'undefined') return;
   try {
+    if (isDemoReport(report)) return;
     const current = getClientReports();
     const existingIdx = current.findIndex(
       (r) => r.id === report.id || r.id.toLowerCase() === report.id.toLowerCase()
@@ -265,7 +372,14 @@ export function subscribeToSync(callback: (msg: SyncMessage) => void): () => voi
   };
 
   const onStorageChange = (e: StorageEvent) => {
-    if (e.key === STORAGE_REPORTS_KEY && e.newValue) {
+    if (e.key === STORAGE_REPORTS_KEY) {
+      if (!e.newValue || e.newValue === '[]') {
+        callback({
+          type: 'PURGE_ALL',
+          timestamp: new Date().toISOString(),
+        });
+        return;
+      }
       try {
         const parsed: Report[] = JSON.parse(e.newValue);
         if (parsed.length > 0) {

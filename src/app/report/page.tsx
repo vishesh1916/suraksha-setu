@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { compressImage } from '@/lib/imageCompression';
 import { saveOfflineReport, flushOfflineQueue } from '@/lib/offlineQueue';
-import { saveClientReport } from '@/lib/clientSync';
+import { saveClientReport, isDemoReport } from '@/lib/clientSync';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import type { HazardCategory, SeverityLevel, GeoPoint, Report } from '@/types';
@@ -109,14 +109,14 @@ export default function ReportPage() {
     setLang(getSavedLanguage());
     if (typeof window !== 'undefined') {
       try {
-        const saved = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]');
+        const saved = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]').filter((r: any) => !isDemoReport(r));
         setRecentReports(saved);
       } catch {}
     }
     flushOfflineQueue((localId, serverId) => {
       if (typeof window !== 'undefined') {
         try {
-          const existing = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]');
+          const existing = JSON.parse(localStorage.getItem('suraksha_my_reports') || '[]').filter((r: any) => !isDemoReport(r));
           const updated = existing.map((r: any) => r.id === localId ? { ...r, id: serverId } : r);
           localStorage.setItem('suraksha_my_reports', JSON.stringify(updated));
           if (localStorage.getItem('suraksha_last_report_id') === localId) {
@@ -356,7 +356,7 @@ export default function ReportPage() {
                 🔍 Track Status in Real Time →
               </Link>
               <Link
-                href={`/map?lat=${(location || { latitude: 28.6139, longitude: 77.2090 }).latitude}&lng=${(location || { latitude: 28.6139, longitude: 77.2090 }).longitude}${reportId ? `&highlight=${reportId}` : ''}`}
+                href={`/map?lat=${(location || { latitude: 26.8467, longitude: 80.9462 }).latitude}&lng=${(location || { latitude: 26.8467, longitude: 80.9462 }).longitude}${reportId ? `&highlight=${reportId}` : ''}`}
                 className="btn btn-secondary btn-lg"
                 style={{ textAlign: 'center' }}
               >

@@ -9,7 +9,7 @@ import styles from '../staff.module.css';
 
 import { StaffSidebar } from '@/components/StaffSidebar';
 import { generateDisasterPrediction } from '@/lib/prediction';
-import { getClientReports, updateClientReportAction, subscribeToSync } from '@/lib/clientSync';
+import { getClientReports, updateClientReportAction, subscribeToSync, isDemoReport } from '@/lib/clientSync';
 
 function ConfidenceBar({ score }: { score: number }) {
   const color = getConfidenceColor(score);
@@ -165,10 +165,10 @@ export default function ReviewQueuePage() {
       const res = await fetch(`/api/incidents?${params}&_t=${Date.now()}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        const incList: Incident[] = data.data || [];
+        const incList: Incident[] = (data.data || []).filter((inc: Incident) => !inc.reports?.some(r => isDemoReport(r)));
 
         // Also incorporate any newly submitted citizen reports from client storage
-        const clientReps = getClientReports();
+        const clientReps = getClientReports().filter(r => !isDemoReport(r));
         for (const cr of clientReps) {
           const alreadyCovered = incList.some(i => i.reports.some(r => r.id === cr.id || r.id.toLowerCase() === cr.id.toLowerCase()));
           if (!alreadyCovered) {
@@ -261,8 +261,13 @@ export default function ReviewQueuePage() {
 
   useEffect(() => {
     fetchIncidents();
-    const unsubscribe = subscribeToSync(() => {
-      fetchIncidents();
+    const unsubscribe = subscribeToSync((msg) => {
+      if (msg.type === 'PURGE_ALL') {
+        setIncidents([]);
+        setSelectedIncident(null);
+      } else {
+        fetchIncidents();
+      }
     });
     const interval = setInterval(fetchIncidents, 10000);
     return () => {
@@ -286,8 +291,8 @@ export default function ReviewQueuePage() {
     const currentId = selectedIncident.id;
     const currentCat = selectedIncident.category;
     const currentSev = selectedIncident.reports[0]?.severity || (selectedIncident.impactLevel === 'CRITICAL' ? 5 : 4);
-    const currentLat = selectedIncident.location?.latitude || 28.6139;
-    const currentLng = selectedIncident.location?.longitude || 77.2090;
+    const currentLat = selectedIncident.location?.latitude || 26.8467;
+    const currentLng = selectedIncident.location?.longitude || 80.9462;
 
     const reason = customReason !== undefined ? customReason : actionReason;
 
@@ -1091,8 +1096,8 @@ export default function ReviewQueuePage() {
                     category: selectedIncident.category,
                     currentWaterDepthFeet: selectedIncident.reports[0]?.waterDepthFeet || 3.5,
                     currentRainRateMmH: 52.0,
-                    lat: selectedIncident.location?.latitude || 28.6139,
-                    lng: selectedIncident.location?.longitude || 77.2090,
+                    lat: selectedIncident.location?.latitude || 26.8467,
+                    lng: selectedIncident.location?.longitude || 80.9462,
                   });
 
                   return (
@@ -1119,7 +1124,7 @@ export default function ReviewQueuePage() {
                         gap: '8px',
                         marginBottom: '14px',
                       }}>
-                        {pred.trajectory.map((pt) => (
+                        {pred.trajectory.map((pt: any) => (
                           <div
                             key={pt.timeHorizon}
                             style={{

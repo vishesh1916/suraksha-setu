@@ -6,7 +6,7 @@ import type { User, SourceHealth, AuditEvent, Report, Incident, DisasterPredicti
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { generateDisasterPrediction } from '@/lib/prediction';
 import { flushOfflineQueue } from '@/lib/offlineQueue';
-import { getClientReports, updateClientReportAction, subscribeToSync } from '@/lib/clientSync';
+import { getClientReports, updateClientReportAction, subscribeToSync, purgeClientStorage, isDemoReport } from '@/lib/clientSync';
 import styles from '../staff.module.css';
 
 import { StaffSidebar } from '@/components/StaffSidebar';
@@ -271,8 +271,8 @@ export default function AdminPage() {
       if (reportsRes.status === 'fulfilled' && reportsRes.value.ok) {
         const data = await reportsRes.value.json();
         if (Array.isArray(data.data)) {
-          const clientReps = getClientReports();
-          const serverReps: Report[] = data.data;
+          const clientReps = getClientReports().filter(r => !isDemoReport(r));
+          const serverReps: Report[] = data.data.filter((r: Report) => !isDemoReport(r));
           // Combine server reports and client reports seamlessly
           const incoming = [...serverReps];
           for (const cr of clientReps) {
@@ -341,7 +341,11 @@ export default function AdminPage() {
   // Real-time zero-latency sync subscription across tabs (BroadcastChannel + storage)
   useEffect(() => {
     const unsubscribe = subscribeToSync((msg) => {
-      if (msg.type === 'NEW_REPORT' && msg.report) {
+      if (msg.type === 'PURGE_ALL') {
+        setReports([]);
+        setIncidents([]);
+        setRecentlyActionedReports({});
+      } else if (msg.type === 'NEW_REPORT' && msg.report && !isDemoReport(msg.report)) {
         setReports((prev) => {
           const exists = prev.some((r) => r.id === msg.report!.id || r.id.toLowerCase() === msg.report!.id.toLowerCase());
           if (exists) {
@@ -370,12 +374,13 @@ export default function AdminPage() {
       return;
     }
     try {
+      purgeClientStorage();
+      setReports([]);
+      setIncidents([]);
+      setRecentlyActionedReports({});
       const res = await fetch('/api/admin/reset', { method: 'POST' });
       if (res.ok) {
         showToast('🧹 Clean slate: All demo and test records successfully purged.');
-        setReports([]);
-        setIncidents([]);
-        setRecentlyActionedReports({});
         fetchData();
       }
     } catch {
