@@ -14,17 +14,17 @@ export async function GET(request: NextRequest) {
     const categoryParam = (searchParams.get('category') as HazardCategory) || 'WATERLOGGING';
     const waterDepthParam = parseFloat(searchParams.get('waterDepth') || '3.5');
     const rainRateParam = parseFloat(searchParams.get('rainRate') || '50.0');
-    const latParam = parseFloat(searchParams.get('lat') || '28.6360');
-    const lngParam = parseFloat(searchParams.get('lng') || '77.2250');
+    const latParam = parseFloat(searchParams.get('lat') || '26.8467');
+    const lngParam = parseFloat(searchParams.get('lng') || '80.9462');
 
-    let landmark = landmarkParam || 'Minto Bridge Underpass, Connaught Place';
+    let landmark = landmarkParam || 'Hazratganj Urban Corridor, Lucknow';
     let waterDepth = waterDepthParam;
     let rainRate = rainRateParam;
     let category = categoryParam;
     let lat = latParam;
     let lng = lngParam;
-    let cityName = 'Delhi NCR';
-    let stateName = 'Delhi';
+    let cityName = 'Lucknow';
+    let stateName = 'Uttar Pradesh';
 
     if (incidentId) {
       const inc = dataStore.getIncident(incidentId);
@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
       currentRainRateMmH: Number(body.currentRainRateMmH || 55.0),
       radarReflectivityDbz: Number(body.radarReflectivityDbz || 50.0),
       windGustKmh: Number(body.windGustKmh || 45.0),
-      lat: Number(body.lat || 28.6360),
-      lng: Number(body.lng || 77.2250),
+      lat: Number(body.lat || 26.8467),
+      lng: Number(body.lng || 80.9462),
       hourlyRainForecast: body.hourlyRainForecast,
     });
 

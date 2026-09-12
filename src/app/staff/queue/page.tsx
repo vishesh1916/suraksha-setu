@@ -400,35 +400,6 @@ export default function ReviewQueuePage() {
     }
   };
 
-  const handleFastReport = async () => {
-    try {
-      setActionMessage('⚡ Submitting fresh ground hazard report (Minto Bridge Waterlogging)…');
-      const res = await fetch('/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category: 'WATERLOGGING',
-          severity: 4,
-          description: 'Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.',
-          location: { latitude: 28.636, longitude: 77.225, accuracy: 15 },
-          landmark: 'Minto Bridge Underpass, Connaught Place, New Delhi',
-          waterDepthFeet: 4.5,
-          consent: true,
-        }),
-      });
-      if (res.ok) {
-        setActionMessage('✅ Fresh hazard reported! Added to Candidate queue for verification.');
-        setTimeout(() => setActionMessage(null), 4000);
-        setFilter('CANDIDATE');
-        fetchIncidents();
-      } else {
-        setActionMessage('Server error submitting report');
-      }
-    } catch {
-      setActionMessage('Failed to submit report');
-    }
-  };
-
   // In-Situ Clearance Panel if not authenticated
   if (authenticated === false) {
     return (
@@ -609,15 +580,6 @@ export default function ReviewQueuePage() {
               <option value="60">Conf ≥ 60</option>
               <option value="80">Conf ≥ 80 (High)</option>
             </select>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleFastReport}
-              style={{ fontSize: '0.8rem', padding: '6px 12px', background: '#0284C7', borderColor: '#38BDF8', fontWeight: 700 }}
-              title="Submit a realistic Minto Bridge waterlogging report for triage testing"
-            >
-              ⚡ Fast Test Hazard
-            </button>
             {incidents.some((i) => i.state === 'RESOLVED' || i.state === 'DISMISSED') && (
               <button
                 type="button"
@@ -889,16 +851,6 @@ export default function ReviewQueuePage() {
                     style={{ fontSize: '0.8rem', padding: '6px 12px', marginTop: '6px', color: '#38BDF8', borderColor: '#38BDF8' }}
                   >
                     ↩️ Re-open Resolved Hazard for Testing
-                  </button>
-                )}
-                {incidents.length === 0 && (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleFastReport}
-                    style={{ fontSize: '0.82rem', padding: '7px 14px', marginTop: '8px' }}
-                  >
-                    ⚡ Submit Test Hazard Report
                   </button>
                 )}
               </div>

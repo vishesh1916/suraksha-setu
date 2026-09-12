@@ -42,8 +42,8 @@ export function generateDisasterPrediction(input: PredictionInput): DisasterPred
     currentRainRateMmH = 45.0,
     radarReflectivityDbz = 48.0,
     windGustKmh = 45.0,
-    lat = 28.6360,
-    lng = 77.2250,
+    lat = 26.8467,
+    lng = 80.9462,
     reportedAt = new Date().toISOString(),
     hourlyRainForecast,
   } = input;

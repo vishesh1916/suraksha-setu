@@ -20,8 +20,16 @@ export default function ReportPage() {
   const [step, setStep] = useState<Step>('category');
   const [category, setCategory] = useState<HazardCategory | null>(null);
   const [severity, setSeverity] = useState<SeverityLevel | null>(null);
-  const [location, setLocation] = useState<GeoPoint | null>({ latitude: 28.6139, longitude: 77.2090, accuracy: 25 });
-  const [locationName, setLocationName] = useState('Delhi NCR (Connaught Place / Minto Bridge)');
+  const [location, setLocation] = useState<GeoPoint | null>(null);
+  const [locationName, setLocationName] = useState('');
+  const [geocodeSuggestions, setGeocodeSuggestions] = useState<Array<{
+    id: number;
+    name: string;
+    admin1?: string;
+    latitude: number;
+    longitude: number;
+  }>>([]);
+  const [isGeocoding, setIsGeocoding] = useState(false);
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -52,6 +60,7 @@ export default function ReportPage() {
         id,
         category: reportPayload.category,
         severity: reportPayload.severity,
+        location: reportPayload.location,
         landmark: reportPayload.landmark || `${reportPayload.location?.latitude?.toFixed(4) || ''}°N, ${reportPayload.location?.longitude?.toFixed(4) || ''}°E`,
         description: reportPayload.description,
         createdAt: new Date().toISOString(),
@@ -62,6 +71,39 @@ export default function ReportPage() {
       setRecentReports(updated);
     } catch {}
   };
+
+  // Live Open-Meteo Indian Location Geocoder with debouncing
+  useEffect(() => {
+    if (!locationName || locationName.startsWith('GPS Position:')) {
+      setGeocodeSuggestions([]);
+      return;
+    }
+    const clean = locationName.trim();
+    if (clean.length < 2) {
+      setGeocodeSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsGeocoding(true);
+      try {
+        const res = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(clean)}&count=6&language=en&format=json&country_code=IN`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.results)) {
+            setGeocodeSuggestions(data.results);
+          } else {
+            setGeocodeSuggestions([]);
+          }
+        }
+      } catch {}
+      setIsGeocoding(false);
+    }, 280);
+
+    return () => clearTimeout(timer);
+  }, [locationName]);
 
   useEffect(() => {
     setLang(getSavedLanguage());
@@ -108,22 +150,19 @@ export default function ReportPage() {
             longitude: pos.coords.longitude,
             accuracy: pos.coords.accuracy,
           });
-          setLocationName(`${pos.coords.latitude.toFixed(4)}°N, ${pos.coords.longitude.toFixed(4)}°E`);
+          setLocationName(`GPS Position: ${pos.coords.latitude.toFixed(4)}°N, ${pos.coords.longitude.toFixed(4)}°E`);
+          setGeocodeSuggestions([]);
           setGpsLoading(false);
         },
-        (err) => {
-          setGpsError('Could not get GPS. Using default coordinates (Delhi NCR).');
+        () => {
+          setGpsError('GPS permission not granted or signal timed out. Please select your city or search your neighborhood below.');
           setGpsLoading(false);
-          setLocation({ latitude: 28.6139, longitude: 77.2090, accuracy: 50 });
-          setLocationName('Delhi NCR (Connaught Place / Minto Bridge)');
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
-      setGpsError('GPS not available on this device. Using default coordinates.');
+      setGpsError('Geolocation is not supported by this browser. Please select or search your city below.');
       setGpsLoading(false);
-      setLocation({ latitude: 28.6139, longitude: 77.2090, accuracy: 50 });
-      setLocationName('Delhi NCR (Connaught Place / Minto Bridge)');
     }
   };
 
@@ -155,12 +194,17 @@ export default function ReportPage() {
       setError('Please provide a brief description of observed hazard (minimum 5 characters).');
       return;
     }
+    if (!location) {
+      setError('Please specify your hazard location using GPS or by selecting a city/searching your neighborhood.');
+      setStep('location');
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
 
-    const finalLocation = location || { latitude: 28.6139, longitude: 77.2090, accuracy: 25 };
-    const finalLandmark = locationName || 'Delhi NCR (Station Region)';
+    const finalLocation = location;
+    const finalLandmark = locationName.trim() || `Sector near ${location.latitude.toFixed(4)}°N, ${location.longitude.toFixed(4)}°E`;
 
     const payload = {
       category,
@@ -419,41 +463,9 @@ export default function ReportPage() {
         {/* Step 1: Category */}
         {step === 'category' && (
           <div className={styles.stepContent}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '12px',
-              marginBottom: '16px'
-            }}>
-              <div>
-                <h2 className={styles.stepTitle} style={{ margin: 0 }}>What hazard do you see?</h2>
-                <p className={styles.stepSubtitle} style={{ margin: '4px 0 0' }}>Select the type of weather hazard you are observing</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setCategory('WATERLOGGING');
-                  setSeverity(4);
-                  setLocation({ latitude: 28.6360, longitude: 77.2250, accuracy: 15 });
-                  setLocationName('Minto Bridge Underpass, Connaught Place, New Delhi');
-                  setDescription('Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.');
-                  setStep('review');
-                }}
-                style={{
-                  background: 'rgba(56, 189, 248, 0.15)',
-                  border: '1px solid #38BDF8',
-                  color: '#38BDF8',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                ⚡ 1-Click Fast Hazard Report (Minto Bridge Waterlogging)
-              </button>
+            <div style={{ marginBottom: '16px' }}>
+              <h2 className={styles.stepTitle} style={{ margin: 0 }}>What hazard do you see?</h2>
+              <p className={styles.stepSubtitle} style={{ margin: '4px 0 0' }}>Select the type of weather hazard you are observing</p>
             </div>
             <div className={styles.categoryGrid}>
               {(Object.entries(HAZARD_CATEGORIES) as [HazardCategory, typeof HAZARD_CATEGORIES[HazardCategory]][]).map(([key, info]) => (
@@ -519,9 +531,9 @@ export default function ReportPage() {
                 style={{ width: '100%' }}
               >
                 {gpsLoading ? (
-                  <><div className="spinner" style={{ width: 20, height: 20 }} /> Getting location…</>
+                  <><div className="spinner" style={{ width: 20, height: 20 }} /> Acquiring GPS coordinates…</>
                 ) : (
-                  <>📍 Use My Current Location (GPS)</>
+                  <>📍 Detect My Current Location (GPS)</>
                 )}
               </button>
 
@@ -531,40 +543,47 @@ export default function ReportPage() {
                 <div className={styles.locationResult}>
                   <span className={styles.locationPin}>📍</span>
                   <div>
-                    <p className={styles.locationName}>{locationName}</p>
+                    <p className={styles.locationName}>{locationName || 'Location Established'}</p>
                     <p className={styles.locationAccuracy}>
-                      Accuracy: ±{location.accuracy ? Math.round(location.accuracy) : '?'}m
-                      {location.accuracy && location.accuracy > 100 && (
-                        <span className={styles.accuracyWarn}> (low accuracy)</span>
-                      )}
+                      GPS Coordinates: {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E (±{location.accuracy ? Math.round(location.accuracy) : '20'}m)
                     </p>
                   </div>
                 </div>
               )}
 
               <div className={styles.locationDivider}>
-                <span>or select Indian hub / enter manually</span>
+                <span>or select Indian metropolitan hub</span>
               </div>
 
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
                 {[
+                  { name: 'Lucknow', lat: 26.8467, lng: 80.9462 },
                   { name: 'Delhi NCR', lat: 28.6139, lng: 77.2090 },
                   { name: 'Mumbai', lat: 19.0760, lng: 72.8777 },
                   { name: 'Bengaluru', lat: 12.9716, lng: 77.5946 },
-                  { name: 'Chennai', lat: 13.0827, lng: 80.2707 },
                   { name: 'Kolkata', lat: 22.5726, lng: 88.3639 },
+                  { name: 'Chennai', lat: 13.0827, lng: 80.2707 },
+                  { name: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
+                  { name: 'Ahmedabad', lat: 23.0225, lng: 72.5714 },
+                  { name: 'Pune', lat: 18.5204, lng: 73.8567 },
+                  { name: 'Jaipur', lat: 26.9124, lng: 75.7873 },
                   { name: 'Guwahati', lat: 26.1445, lng: 91.7362 },
                   { name: 'Shimla', lat: 31.1048, lng: 77.1734 },
-                  { name: 'Hyderabad', lat: 17.3850, lng: 78.4867 },
                 ].map((c) => (
                   <button
                     key={c.name}
                     type="button"
                     className="btn btn-ghost btn-sm"
-                    style={{ fontSize: 11, padding: '5px 9px', background: 'rgba(255,255,255,0.06)' }}
+                    style={{
+                      fontSize: 11,
+                      padding: '5px 9px',
+                      background: location && Math.abs(location.latitude - c.lat) < 0.05 && Math.abs(location.longitude - c.lng) < 0.05 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.06)',
+                      borderColor: location && Math.abs(location.latitude - c.lat) < 0.05 && Math.abs(location.longitude - c.lng) < 0.05 ? '#38BDF8' : 'rgba(255,255,255,0.15)',
+                    }}
                     onClick={() => {
                       setLocation({ latitude: c.lat, longitude: c.lng, accuracy: 25 });
                       setLocationName(`${c.name} (Station Region)`);
+                      setGeocodeSuggestions([]);
                     }}
                   >
                     📍 {c.name}
@@ -572,19 +591,81 @@ export default function ReportPage() {
                 ))}
               </div>
 
-              <input
-                type="text"
-                className="input"
-                placeholder="Search city, sector, landmark, or PIN code in India…"
-                value={locationName}
-                onChange={(e) => {
-                  setLocationName(e.target.value);
-                  if (!location) {
-                    setLocation({ latitude: 20.5937, longitude: 78.9629, accuracy: 500 });
-                  }
-                }}
-                id="location-search"
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Type city, street, or sector in India (e.g. Hazratganj Lucknow, Dadar Mumbai)..."
+                  value={locationName}
+                  onChange={(e) => setLocationName(e.target.value)}
+                  id="location-search"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+                {isGeocoding && (
+                  <span style={{ position: 'absolute', right: 12, top: 12, fontSize: 11, color: '#38BDF8' }}>
+                    Searching coordinates…
+                  </span>
+                )}
+
+                {/* Geocoding suggestions dropdown */}
+                {geocodeSuggestions.length > 0 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 50,
+                    background: '#0a1d30',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    borderRadius: '8px',
+                    marginTop: '4px',
+                    boxShadow: '0 12px 28px rgba(0, 0, 0, 0.65)',
+                    overflow: 'hidden',
+                  }}>
+                    {geocodeSuggestions.map((item) => (
+                      <button
+                        key={`${item.id}-${item.latitude}`}
+                        type="button"
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '10px 14px',
+                          background: 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.07)',
+                          color: '#F8FAFC',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          fontSize: '12.5px',
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.15)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                        onClick={() => {
+                          setLocation({
+                            latitude: item.latitude,
+                            longitude: item.longitude,
+                            accuracy: 25,
+                          });
+                          setLocationName(`${item.name}${item.admin1 ? `, ${item.admin1}` : ''}, India`);
+                          setGeocodeSuggestions([]);
+                        }}
+                      >
+                        <div>
+                          <strong>📍 {item.name}</strong>
+                          <span style={{ color: '#94A3B8', marginLeft: 6 }}>
+                            {item.admin1 ? `${item.admin1}, India` : 'India'}
+                          </span>
+                        </div>
+                        <span style={{ fontFamily: 'monospace', fontSize: '10.5px', color: '#38BDF8' }}>
+                          {item.latitude.toFixed(3)}°N, {item.longitude.toFixed(3)}°E
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className={styles.stepActions}>

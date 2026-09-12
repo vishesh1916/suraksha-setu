@@ -542,34 +542,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleFastReport = async () => {
-    try {
-      showToast('⚡ Submitting fresh citizen hazard report (Minto Bridge)…');
-      const res = await fetch('/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category: 'WATERLOGGING',
-          severity: 4,
-          description: 'Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.',
-          location: { latitude: 28.636, longitude: 77.225, accuracy: 15 },
-          landmark: 'Minto Bridge Underpass, Connaught Place, New Delhi',
-          waterDepthFeet: 4.5,
-          consent: true,
-        }),
-      });
-      if (res.ok) {
-        showToast('✅ Fresh ground hazard reported! Queued for ground verification in Tab 1.');
-        fetchData();
-        setActiveTab('verification');
-      } else {
-        showToast('Error submitting test report');
-      }
-    } catch {
-      showToast('Connection error submitting report');
-    }
-  };
-
   const handleTakeReportAction = async (reportId: string, action: ActionCategory, notes: string = '') => {
     // 1. Optimistic local UI update so buttons respond instantly with 0 latency
     const timestamp = new Date().toISOString();
@@ -1568,28 +1540,6 @@ export default function AdminPage() {
 
             <button
               type="button"
-              onClick={handleFastReport}
-              style={{
-                fontSize: '0.78rem',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: '1px solid #38BDF8',
-                background: 'rgba(56, 189, 248, 0.15)',
-                color: '#38BDF8',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                fontWeight: 700
-              }}
-              title="Submit a realistic Minto Bridge waterlogging report for triage"
-            >
-              <span>⚡</span>
-              <span>Fast Hazard Report</span>
-            </button>
-
-            <button
-              type="button"
               onClick={handlePurgeData}
               style={{
                 fontSize: '0.78rem',
@@ -2396,14 +2346,6 @@ export default function AdminPage() {
                 )}
 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleFastReport}
-                    style={{ fontSize: '0.84rem', padding: '8px 16px', background: '#0284C7', borderColor: '#38BDF8', fontWeight: 700 }}
-                  >
-                    ⚡ Submit Fresh Ground Hazard (Minto Bridge)
-                  </button>
                   <button
                     type="button"
                     className="btn btn-secondary"

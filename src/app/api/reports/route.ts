@@ -105,12 +105,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: {
-          id: report.id,
-          pseudonym: report.reporterPseudonym,
-          status: report.status,
-          createdAt: report.createdAt,
-        },
+        data: report,
         message: 'Report received successfully. Thank you for helping keep your community safe.',
       },
       { status: 201 }

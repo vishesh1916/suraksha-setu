@@ -270,9 +270,11 @@ function MapContent() {
     };
   }, [fetchLiveHazards]);
 
-  // If search parameters (lat, lng, or highlight) exist, auto-select matched place and fly to it
+  // If search parameters (lat, lng, or highlight) exist, auto-select matched place and fly to it;
+  // otherwise, auto-focus on the reported hazards (fly to the single hazard or fit bounds for multiple).
   useEffect(() => {
-    if (!hazards.length) return;
+    if (!hazards.length || !mapReady || !mapRef.current) return;
+
     if (paramHighlight || (paramLat && paramLng)) {
       const pLat = paramLat ? parseFloat(paramLat) : NaN;
       const pLng = paramLng ? parseFloat(paramLng) : NaN;
@@ -283,17 +285,50 @@ function MapContent() {
         if (!selectedPlace || selectedPlace.id !== matched.id) {
           setSelectedPlace(matched);
         }
-        if (mapRef.current && !hasHandledParams.current) {
-          hasHandledParams.current = true;
+      }
+      if (!hasHandledParams.current) {
+        hasHandledParams.current = true;
+        try {
+          const targetLng = matched ? matched.lng : pLng;
+          const targetLat = matched ? matched.lat : pLat;
+          if (!isNaN(targetLng) && !isNaN(targetLat)) {
+            mapRef.current.flyTo({
+              center: [targetLng, targetLat],
+              zoom: 14.8,
+              pitch: 35,
+              duration: 1200,
+            });
+          }
+        } catch {}
+      }
+    } else if (!hasHandledParams.current) {
+      hasHandledParams.current = true;
+      if (hazards.length === 1) {
+        const singleHazard = hazards[0];
+        if (singleHazard && !isNaN(singleHazard.lng) && !isNaN(singleHazard.lat)) {
+          setSelectedPlace(singleHazard);
           try {
             mapRef.current.flyTo({
-              center: [matched.lng, matched.lat],
-              zoom: 14.8,
+              center: [singleHazard.lng, singleHazard.lat],
+              zoom: 14.5,
               pitch: 35,
               duration: 1200,
             });
           } catch {}
         }
+      } else if (hazards.length > 1) {
+        try {
+          import('maplibre-gl').then((maplibreglModule: any) => {
+            const maplibregl = maplibreglModule.default || maplibreglModule;
+            const bounds = new maplibregl.LngLatBounds();
+            hazards.forEach((h) => {
+              if (h.lng && h.lat && !isNaN(h.lng) && !isNaN(h.lat)) {
+                bounds.extend([h.lng, h.lat]);
+              }
+            });
+            mapRef.current.fitBounds(bounds, { padding: 80, maxZoom: 15 });
+          });
+        } catch {}
       }
     }
   }, [hazards, paramHighlight, paramLat, paramLng, selectedPlace, mapReady]);
@@ -456,7 +491,7 @@ function MapContent() {
               } catch {}
             });
 
-            const marker = new maplibregl.Marker({ element: el })
+            const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
               .setLngLat([hazard.lng, hazard.lat])
               .addTo(mapRef.current);
 
@@ -548,7 +583,7 @@ function MapContent() {
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="Search place, street, or hazard landmark (e.g. Minto Bridge, Dadar, Bellandur, Shimla)..."
+            placeholder="Search place, street, or hazard landmark (e.g. Hazratganj, Gomti Nagar, Dadar, Bellandur)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -676,6 +711,12 @@ function MapContent() {
           onClick={() => flyToRegion(78.9629, 22.5937, 4.8)}
         >
           🇮🇳 All-India Overview
+        </button>
+        <button
+          className={styles.quickJumpBtn}
+          onClick={() => flyToRegion(80.9462, 26.8467, 12)}
+        >
+          📍 Lucknow
         </button>
         <button
           className={styles.quickJumpBtn}

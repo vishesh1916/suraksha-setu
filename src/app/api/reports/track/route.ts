@@ -13,7 +13,7 @@ export const revalidate = 0;
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const reportId = searchParams.get('id')?.trim();
+    const reportId = (searchParams.get('id') || searchParams.get('reportId'))?.trim();
 
     if (!reportId) {
       return NextResponse.json(
