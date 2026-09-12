@@ -163,13 +163,61 @@ export default function AdminPage() {
       if (reportsRes.status === 'fulfilled' && reportsRes.value.ok) {
         const data = await reportsRes.value.json();
         if (Array.isArray(data.data)) {
-          setReports(data.data);
+          const incoming: Report[] = data.data;
+          setReports((prev) => {
+            if (prev.length === 0) return incoming;
+            // Smart merge: if local has a more advanced action history, preserve it!
+            const merged = incoming.map((serverRep) => {
+              const localRep = prev.find((p) => p.id === serverRep.id);
+              if (!localRep) return serverRep;
+              const localHistLen = localRep.actionHistory?.length || 0;
+              const serverHistLen = serverRep.actionHistory?.length || 0;
+              if (localHistLen > serverHistLen) {
+                return {
+                  ...serverRep,
+                  status: localRep.status,
+                  verificationStatus: localRep.verificationStatus,
+                  currentActionCategory: localRep.currentActionCategory,
+                  firstActionTaken: localRep.firstActionTaken,
+                  actionHistory: localRep.actionHistory,
+                  verificationRationale: localRep.verificationRationale,
+                  updatedAt: localRep.updatedAt,
+                };
+              }
+              return serverRep;
+            });
+            return merged;
+          });
         }
       }
       if (incidentsRes.status === 'fulfilled' && incidentsRes.value.ok) {
         const data = await incidentsRes.value.json();
         if (Array.isArray(data.data)) {
-          setIncidents(data.data);
+          const incoming: Incident[] = data.data;
+          setIncidents((prev) => {
+            if (prev.length === 0) return incoming;
+            const merged = incoming.map((serverInc) => {
+              const localInc = prev.find((p) => p.id === serverInc.id);
+              if (!localInc) return serverInc;
+              const localHistLen = localInc.actionHistory?.length || 0;
+              const serverHistLen = serverInc.actionHistory?.length || 0;
+              if (localHistLen > serverHistLen) {
+                return {
+                  ...serverInc,
+                  state: localInc.state,
+                  verificationStatus: localInc.verificationStatus,
+                  currentActionCategory: localInc.currentActionCategory,
+                  firstActionTaken: localInc.firstActionTaken,
+                  actionHistory: localInc.actionHistory,
+                  actionedDirective: localInc.actionedDirective,
+                  reports: localInc.reports,
+                  updatedAt: localInc.updatedAt,
+                };
+              }
+              return serverInc;
+            });
+            return merged;
+          });
         }
       }
       setLastSyncTime(new Date().toLocaleTimeString());
@@ -882,29 +930,64 @@ export default function AdminPage() {
           &ldquo;{report.description}&rdquo;
         </p>
 
-        {/* Earlier Action Taken & Audit Box */}
+        {/* Prominent Action Performed & Live Audit History Trail */}
         <div style={{
-          padding: '10px 14px',
-          background: report.firstActionTaken ? 'rgba(56, 189, 248, 0.08)' : 'rgba(245, 158, 11, 0.08)',
-          border: report.firstActionTaken ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
+          padding: '12px 16px',
+          background: report.currentActionCategory && report.currentActionCategory !== 'Pending Verification' 
+            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(11, 31, 51, 0.9) 100%)' 
+            : 'rgba(245, 158, 11, 0.08)',
+          border: report.currentActionCategory && report.currentActionCategory !== 'Pending Verification'
+            ? '1px solid rgba(16, 185, 129, 0.4)'
+            : '1px solid rgba(245, 158, 11, 0.3)',
           borderRadius: '8px',
           marginBottom: '14px',
-          fontSize: '0.82rem'
+          fontSize: '0.84rem'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: report.firstActionTaken ? '#38BDF8' : '#F59E0B', fontWeight: 700 }}>
-              {report.firstActionTaken ? `📍 First Action Taken Earlier: ${report.firstActionTaken}` : '⏳ Initial Action: Pending Triage & Command Order'}
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: '1.1rem' }}>
+                {report.status === 'RESOLVED' ? '🏁' : report.currentActionCategory?.includes('Evacuation') ? '🚨' : report.currentActionCategory?.includes('Dewatering') ? '🚒' : report.currentActionCategory?.includes('Verified') ? '✅' : '⏳'}
+              </span>
+              <span style={{
+                color: report.status === 'RESOLVED' ? '#34D399' : report.currentActionCategory && report.currentActionCategory !== 'Pending Verification' ? '#10B981' : '#F59E0B',
+                fontWeight: 800,
+                fontSize: '0.9rem'
+              }}>
+                {report.currentActionCategory && report.currentActionCategory !== 'Pending Verification' 
+                  ? `⚡ Action Performed: ${report.currentActionCategory}` 
+                  : '⏳ Initial Action: Pending Ground Verification & Command Directive'}
+              </span>
+            </div>
             {report.actionHistory && report.actionHistory[0] && (
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-                Latest: {new Date(report.actionHistory[0].timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} by {report.actionHistory[0].actorName}
+              <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontFamily: 'monospace' }}>
+                Executed: {new Date(report.actionHistory[0].timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {report.actionHistory[0].actorName}
               </span>
             )}
           </div>
+
           {report.actionHistory && report.actionHistory[0]?.notes && (
-            <p style={{ margin: '4px 0 0', color: '#E2E8F0', fontSize: '0.78rem' }}>
-              Note: &ldquo;{report.actionHistory[0].notes}&rdquo;
+            <p style={{ margin: '4px 0 6px', color: '#E2E8F0', fontSize: '0.8rem', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '6px' }}>
+              <strong>Operational Directive:</strong> &ldquo;{report.actionHistory[0].notes}&rdquo;
             </p>
+          )}
+
+          {/* Chronological Action History Trail if multiple actions exist */}
+          {report.actionHistory && report.actionHistory.length > 1 && (
+            <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+              <span style={{ fontSize: '0.72rem', color: '#8A99A8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
+                Workflow Action Trail ({report.actionHistory.length} Steps Recorded):
+              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {report.actionHistory.map((item, idx) => (
+                  <div key={item.id || idx} style={{ fontSize: '0.76rem', color: idx === 0 ? '#38BDF8' : '#94A3B8', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>{idx === 0 ? '▶' : '•'}</span>
+                    <span style={{ fontFamily: 'monospace' }}>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <strong style={{ color: idx === 0 ? '#F7F6F2' : '#CBD5E1' }}>{item.action}</strong>
+                    <span>({item.actorName})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 

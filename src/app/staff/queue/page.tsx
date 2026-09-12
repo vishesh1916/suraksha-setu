@@ -161,17 +161,41 @@ export default function ReviewQueuePage() {
     try {
       const params = new URLSearchParams();
       if (filter) params.set('state', filter);
-      const res = await fetch(`/api/incidents?${params}`);
+      const res = await fetch(`/api/incidents?${params}&_t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         const incList: Incident[] = data.data || [];
-        setIncidents(incList);
+        setIncidents((prev) => {
+          if (prev.length === 0) return incList;
+          // Smart merge: preserve any local incident action that has a longer action history
+          return incList.map((serverInc) => {
+            const localInc = prev.find((p) => p.id === serverInc.id);
+            if (!localInc) return serverInc;
+            const localHistLen = localInc.actionHistory?.length || 0;
+            const serverHistLen = serverInc.actionHistory?.length || 0;
+            if (localHistLen > serverHistLen) {
+              return {
+                ...serverInc,
+                state: localInc.state,
+                verificationStatus: localInc.verificationStatus,
+                currentActionCategory: localInc.currentActionCategory,
+                firstActionTaken: localInc.firstActionTaken,
+                actionHistory: localInc.actionHistory,
+                updatedAt: localInc.updatedAt,
+              };
+            }
+            return serverInc;
+          });
+        });
 
         // Keep selected incident reference up-to-date
         setSelectedIncident((prev) => {
           if (!prev) return prev;
           const matched = incList.find((i) => i.id === prev.id);
-          return matched || prev;
+          if (!matched) return prev;
+          const localHistLen = prev.actionHistory?.length || 0;
+          const serverHistLen = matched.actionHistory?.length || 0;
+          return localHistLen > serverHistLen ? prev : matched;
         });
       }
     } catch {
@@ -211,6 +235,57 @@ export default function ReviewQueuePage() {
     const currentLng = selectedIncident.location?.longitude || 77.2090;
 
     const reason = customReason !== undefined ? customReason : actionReason;
+
+    // 1. Optimistic Local State Update (Zero Latency Display)
+    const nextState: IncidentState = action === 'VERIFY' ? 'VERIFIED' : action === 'DISMISS' ? 'DISMISSED' : action === 'RESOLVE' ? 'RESOLVED' : 'ESCALATED';
+    const nextActionCategory = action === 'VERIFY' ? 'Verified Genuine — Pending Tactical Action' : action === 'DISMISS' ? 'Flagged False Alarm / Dismissed' : action === 'RESOLVE' ? 'Hazard Resolved' : 'Evacuation Ordered';
+    const actionLog = {
+      id: 'act_' + Date.now(),
+      action: nextActionCategory,
+      actorName: 'Dr. Priya Sharma (IMD Lead Reviewer)',
+      notes: reason,
+      timestamp: new Date().toISOString(),
+    };
+
+    const updatedInc: Incident = {
+      ...selectedIncident,
+      state: nextState,
+      verificationStatus: action === 'DISMISS' ? 'FLAGGED_FALSE_REPORT' : 'VERIFIED_GENUINE',
+      currentActionCategory: nextActionCategory as any,
+      firstActionTaken: selectedIncident.firstActionTaken || (nextActionCategory as any),
+      actionHistory: [actionLog, ...(selectedIncident.actionHistory || [])],
+      updatedAt: new Date().toISOString(),
+    };
+
+    setSelectedIncident(updatedInc);
+    setIncidents((prev) => prev.map((inc) => (inc.id === currentId ? updatedInc : inc)));
+
+    let msg = `Incident marked as ${action}`;
+    if (action === 'RESOLVE') {
+      msg = '✅ Hazard SOLVED! Problem closed and cleared from live danger map.';
+    } else if (action === 'VERIFY') {
+      msg = '✓ Verified as Genuine Hazard against Doppler AWS radar telemetry.';
+    } else if (action === 'DISMISS') {
+      msg = '✕ Flagged as False Alarm and archived with audit trail.';
+    } else if (action === 'ESCALATE') {
+      msg = '🚨 Escalated to Disaster Operations Command Desk for mandatory action.';
+    }
+
+    setActionMessage(msg);
+    setTimeout(() => setActionMessage(null), 5000);
+    setActionReason('');
+
+    setLastActionResult({
+      type: action,
+      incidentId: currentId,
+      landmark: currentLandmark,
+      category: currentCat,
+      severity: currentSev,
+      lat: currentLat,
+      lng: currentLng,
+      reason,
+    });
+
     setIsActionSubmitting(true);
 
     try {
@@ -226,35 +301,13 @@ export default function ReviewQueuePage() {
       });
 
       if (res.ok) {
-        let msg = `Incident marked as ${action}`;
-        if (action === 'RESOLVE') {
-          msg = '✅ Hazard SOLVED! Problem closed and cleared from live danger map.';
-        } else if (action === 'VERIFY') {
-          msg = '✓ Verified as Genuine Hazard against Doppler AWS radar telemetry.';
-        } else if (action === 'DISMISS') {
-          msg = '✕ Flagged as False Alarm and archived with audit trail.';
-        } else if (action === 'ESCALATE') {
-          msg = '🚨 Escalated to Disaster Operations Command Desk for mandatory action.';
+        const data = await res.json();
+        if (data.data) {
+          setSelectedIncident(data.data);
+          setIncidents((prev) => prev.map((inc) => (inc.id === currentId ? data.data : inc)));
         }
-
-        setActionMessage(msg);
-        setTimeout(() => setActionMessage(null), 5000);
-        setActionReason('');
-
-        setLastActionResult({
-          type: action,
-          incidentId: currentId,
-          landmark: currentLandmark,
-          category: currentCat,
-          severity: currentSev,
-          lat: currentLat,
-          lng: currentLng,
-          reason,
-        });
-
-        await fetchIncidents();
       } else {
-        setActionMessage('Failed to submit review action');
+        setActionMessage('Failed to sync review action with server');
       }
     } catch {
       setActionMessage('Failed to connect to incident controller');

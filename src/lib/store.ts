@@ -120,7 +120,6 @@ class DataStore {
   private getDbFilePath(): string {
     if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
       const tmpPath = path.join('/tmp', 'suraksha_db.json');
-      // If /tmp doesn't have it yet, seed from bundled file if exists
       if (!fs.existsSync(tmpPath)) {
         try {
           const bundledPath = path.join(process.cwd(), 'data', 'suraksha_db.json');
@@ -142,12 +141,12 @@ class DataStore {
       const dbPath = this.getDbFilePath();
       if (fs.existsSync(dbPath)) {
         const stats = fs.statSync(dbPath);
-        if (stats.mtimeMs > this.lastLoadedMtime) {
+        if (stats.mtimeMs !== this.lastLoadedMtime) {
           this.loadFromDisk();
         }
       }
     } catch {
-      // In case of transient lock or read error, preserve memory state
+      // Preserve memory state if file read encounters lock
     }
   }
 
@@ -171,13 +170,31 @@ class DataStore {
     }
   }
 
-  persist(): void {
+  persist(isExplicitClear: boolean = false): void {
     try {
       const dbPath = this.getDbFilePath();
       const dir = path.dirname(dbPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
+
+      // Safety guard: If memory reports are empty but disk has reports, and this is NOT an explicit purge,
+      // reload from disk first to prevent accidental wipe from a freshly spun-up worker!
+      if (!isExplicitClear && this.reports.length === 0 && fs.existsSync(dbPath)) {
+        try {
+          const raw = fs.readFileSync(dbPath, 'utf-8');
+          if (raw.trim()) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed.reports) && parsed.reports.length > 0) {
+              this.reports = parsed.reports;
+              if (Array.isArray(parsed.incidents)) this.incidents = parsed.incidents;
+              if (Array.isArray(parsed.alerts)) this.alerts = parsed.alerts;
+              if (Array.isArray(parsed.auditEvents)) this.auditEvents = parsed.auditEvents;
+            }
+          }
+        } catch {}
+      }
+
       const data = {
         reports: this.reports,
         incidents: this.incidents,
@@ -185,7 +202,6 @@ class DataStore {
         auditEvents: this.auditEvents,
         savedAt: new Date().toISOString(),
       };
-      // Direct write ensures zero Windows EBUSY / EPERM file-lock collisions
       fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf-8');
       try {
         const stats = fs.statSync(dbPath);
@@ -197,7 +213,6 @@ class DataStore {
       console.warn('Database persistence write warning:', e);
     }
   }
-
 
   // —— Report Operations ——
 
@@ -318,7 +333,7 @@ class DataStore {
     this.reports = [];
     this.alerts = [];
     this.auditEvents = [];
-    this.persist();
+    this.persist(true);
   }
 
   getReport(id: string): Report | undefined {
@@ -391,6 +406,37 @@ class DataStore {
       report.verificationRationale = notes || 'Validated against Doppler AWS and ground corroboration.';
     } else if (action === 'Hazard Resolved') {
       report.status = 'RESOLVED';
+      // Mark any associated active alerts as EXPIRED with all-clear
+      this.alerts.forEach(a => {
+        if (a.incidentId === reportId || a.incidentId === report.h3Index) {
+          a.status = 'EXPIRED';
+          a.updatedAt = new Date().toISOString();
+        }
+      });
+    } else if (action === 'Public Warning Issued (CAP 1.2)') {
+      report.verificationStatus = 'VERIFIED_GENUINE';
+      report.status = 'REVIEWED';
+      // Auto-publish official CAP public alert to citizen feed & alerts directory
+      const newAlert: Alert = {
+        id: generateId(),
+        incidentId: reportId,
+        polygon: {
+          type: 'Polygon',
+          coordinates: [[[report.location.longitude - 0.03, report.location.latitude - 0.03], [report.location.longitude + 0.03, report.location.latitude - 0.03], [report.location.longitude + 0.03, report.location.latitude + 0.03], [report.location.longitude - 0.03, report.location.latitude + 0.03], [report.location.longitude - 0.03, report.location.latitude - 0.03]]],
+        },
+        severity: report.severity,
+        category: report.category,
+        headline: `🚨 EMERGENCY WEATHER ALERT — ${report.landmark || report.category}`,
+        guidance: notes || 'Dangerous conditions corroborated by Doppler radar. Emergency response dispatched. Avoid underpass and low-lying transit corridors.',
+        startsAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 6 * 3600000).toISOString(),
+        publishedBy: actorName || 'Platform Administrator (DDMA Emergency Desk)',
+        status: 'PUBLISHED',
+        source: 'Executive Disaster Command Centre',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      this.alerts.unshift(newAlert);
     } else {
       report.verificationStatus = 'VERIFIED_GENUINE';
       report.status = 'REVIEWED';

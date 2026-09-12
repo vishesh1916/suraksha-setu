@@ -1,6 +1,225 @@
 {
-  "reports": [],
-  "incidents": [],
+  "reports": [
+    {
+      "reporterId": "anon_1789174535354",
+      "reporterPseudonym": "Citizen-001",
+      "category": "WATERLOGGING",
+      "severity": 4,
+      "description": "Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.",
+      "location": {
+        "latitude": 28.636,
+        "longitude": 77.225,
+        "accuracy": 15
+      },
+      "h3Index": "882a533748dffffff",
+      "landmark": "Minto Bridge Underpass, Connaught Place, New Delhi",
+      "waterDepthFeet": 4.5,
+      "consent": true,
+      "status": "RESOLVED",
+      "id": "id_mtxobmws_uxs6x55",
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxofb98_p20p28a",
+          "action": "Hazard Resolved",
+          "actorName": "Emergency Administrator",
+          "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety.",
+          "timestamp": "2026-09-12T00:58:26.876Z"
+        },
+        {
+          "id": "id_mtxocnca_1h1rnry",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Emergency Administrator",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-12T00:56:22.570Z"
+        },
+        {
+          "id": "id_mtxoccgi_ugpkmh2",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Emergency Administrator",
+          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+          "timestamp": "2026-09-12T00:56:08.466Z"
+        },
+        {
+          "id": "id_mtxobmws_kzvrpre",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+          "timestamp": "2026-09-12T00:55:35.356Z"
+        }
+      ],
+      "createdAt": "2026-09-12T00:55:35.356Z",
+      "updatedAt": "2026-09-12T00:58:26.876Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+      "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+    }
+  ],
+  "incidents": [
+    {
+      "id": "inc_real_mtxobmwu_6sin",
+      "h3Parent": "882a533748dffffff",
+      "category": "WATERLOGGING",
+      "state": "RESOLVED",
+      "confidenceScore": {
+        "total": 27,
+        "factors": [
+          {
+            "name": "Report Completeness",
+            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Description ✓, Photo missing (optional)",
+            "contribution": 21,
+            "maxContribution": 25,
+            "explanation": "5 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
+          },
+          {
+            "name": "Spatial Corroboration",
+            "signal": "No nearby reports",
+            "contribution": 0,
+            "maxContribution": 30,
+            "explanation": "No other reports of the same hazard within 500m and 20 minutes. Single report — awaiting corroboration."
+          },
+          {
+            "name": "Reporter History",
+            "signal": "New reporter",
+            "contribution": 2,
+            "maxContribution": 15,
+            "explanation": "First-time reporter. Base credibility assigned. Reports are never suppressed solely due to no history."
+          },
+          {
+            "name": "Weather Evidence",
+            "signal": "No weather data available",
+            "contribution": 0,
+            "maxContribution": 20,
+            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
+            "freshness": "unavailable"
+          },
+          {
+            "name": "Contradiction Check",
+            "signal": "No flags detected",
+            "contribution": 4,
+            "maxContribution": 10,
+            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
+          }
+        ],
+        "computedAt": "2026-09-12T00:55:35.358Z"
+      },
+      "impactLevel": "CRITICAL",
+      "reportCount": 1,
+      "reports": [
+        {
+          "reporterId": "anon_1789174535354",
+          "reporterPseudonym": "Citizen-001",
+          "category": "WATERLOGGING",
+          "severity": 4,
+          "description": "Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.",
+          "location": {
+            "latitude": 28.636,
+            "longitude": 77.225,
+            "accuracy": 15
+          },
+          "h3Index": "882a533748dffffff",
+          "landmark": "Minto Bridge Underpass, Connaught Place, New Delhi",
+          "waterDepthFeet": 4.5,
+          "consent": true,
+          "status": "RESOLVED",
+          "id": "id_mtxobmws_uxs6x55",
+          "verificationStatus": "VERIFIED_GENUINE",
+          "currentActionCategory": "Hazard Resolved",
+          "actionHistory": [
+            {
+              "id": "id_mtxofb98_p20p28a",
+              "action": "Hazard Resolved",
+              "actorName": "Emergency Administrator",
+              "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety.",
+              "timestamp": "2026-09-12T00:58:26.876Z"
+            },
+            {
+              "id": "id_mtxocnca_1h1rnry",
+              "action": "Dewatering & Municipal Crew Dispatched",
+              "actorName": "Emergency Administrator",
+              "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+              "timestamp": "2026-09-12T00:56:22.570Z"
+            },
+            {
+              "id": "id_mtxoccgi_ugpkmh2",
+              "action": "Verified Genuine — Pending Tactical Action",
+              "actorName": "Emergency Administrator",
+              "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+              "timestamp": "2026-09-12T00:56:08.466Z"
+            },
+            {
+              "id": "id_mtxobmws_kzvrpre",
+              "action": "Pending Verification",
+              "actorName": "Telemetry Gateway",
+              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
+              "timestamp": "2026-09-12T00:55:35.356Z"
+            }
+          ],
+          "createdAt": "2026-09-12T00:55:35.356Z",
+          "updatedAt": "2026-09-12T00:58:26.876Z",
+          "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+          "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+        }
+      ],
+      "evidence": [
+        {
+          "id": "id_mtxobmwu_gnu2449",
+          "reportId": "id_mtxobmws_uxs6x55",
+          "type": "WEATHER",
+          "source": "Doppler Weather Radar & Automated Rain Gauge",
+          "observedAt": "2026-09-12T00:55:35.358Z",
+          "freshnessSeconds": 45,
+          "value": {
+            "reflectivityDbz": 50,
+            "rainRateMmH": 44
+          },
+          "provenance": "Automated Weather Corroboration Engine"
+        }
+      ],
+      "reviewActions": [],
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Hazard Resolved",
+      "actionHistory": [
+        {
+          "id": "id_mtxofb98_p20p28a",
+          "action": "Hazard Resolved",
+          "actorName": "Emergency Administrator",
+          "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety.",
+          "timestamp": "2026-09-12T00:58:26.876Z"
+        },
+        {
+          "id": "id_mtxocnca_1h1rnry",
+          "action": "Dewatering & Municipal Crew Dispatched",
+          "actorName": "Emergency Administrator",
+          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
+          "timestamp": "2026-09-12T00:56:22.570Z"
+        },
+        {
+          "id": "id_mtxoccgi_ugpkmh2",
+          "action": "Verified Genuine — Pending Tactical Action",
+          "actorName": "Emergency Administrator",
+          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
+          "timestamp": "2026-09-12T00:56:08.466Z"
+        },
+        {
+          "id": "id_mtxobmwu_tp2jlva",
+          "action": "Pending Verification",
+          "actorName": "Cluster Engine",
+          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
+          "timestamp": "2026-09-12T00:55:35.356Z"
+        }
+      ],
+      "landmark": "Minto Bridge Underpass, Connaught Place, New Delhi",
+      "location": {
+        "latitude": 28.636,
+        "longitude": 77.225,
+        "accuracy": 15
+      },
+      "createdAt": "2026-09-12T00:55:35.356Z",
+      "updatedAt": "2026-09-12T00:58:26.876Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched"
+    }
+  ],
   "alerts": [],
   "auditEvents": [
     {
@@ -38,7 +257,55 @@
         "notes": "3x 500HP pumps dispatched to drain underpass."
       },
       "createdAt": "2026-09-12T00:39:03.189Z"
+    },
+    {
+      "id": "id_mtxobmws_tiiw8pq",
+      "actorId": "system",
+      "actorRole": "CITIZEN",
+      "entityType": "report",
+      "entityId": "id_mtxobmws_uxs6x55",
+      "action": "CREATE",
+      "metadata": {
+        "category": "WATERLOGGING"
+      },
+      "createdAt": "2026-09-12T00:55:35.356Z"
+    },
+    {
+      "id": "id_mtxoccgi_w0ifb6w",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxobmws_uxs6x55",
+      "action": "Verified Genuine — Pending Tactical Action",
+      "metadata": {
+        "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
+      },
+      "createdAt": "2026-09-12T00:56:08.466Z"
+    },
+    {
+      "id": "id_mtxocnca_esm1yjf",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxobmws_uxs6x55",
+      "action": "Dewatering & Municipal Crew Dispatched",
+      "metadata": {
+        "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions."
+      },
+      "createdAt": "2026-09-12T00:56:22.570Z"
+    },
+    {
+      "id": "id_mtxofb98_51raldu",
+      "actorId": "Emergency Administrator",
+      "actorRole": "ADMIN",
+      "entityType": "report",
+      "entityId": "id_mtxobmws_uxs6x55",
+      "action": "Hazard Resolved",
+      "metadata": {
+        "notes": "Danger subsided, municipal dewatering/relief complete, corridor restored to safety."
+      },
+      "createdAt": "2026-09-12T00:58:26.876Z"
     }
   ],
-  "savedAt": "2026-09-12T00:39:07.481Z"
+  "savedAt": "2026-09-12T00:58:26.880Z"
 }

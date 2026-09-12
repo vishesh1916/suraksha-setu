@@ -19,12 +19,12 @@ export default function ReportPage() {
   const [step, setStep] = useState<Step>('category');
   const [category, setCategory] = useState<HazardCategory | null>(null);
   const [severity, setSeverity] = useState<SeverityLevel | null>(null);
-  const [location, setLocation] = useState<GeoPoint | null>(null);
-  const [locationName, setLocationName] = useState('');
+  const [location, setLocation] = useState<GeoPoint | null>({ latitude: 28.6139, longitude: 77.2090, accuracy: 25 });
+  const [locationName, setLocationName] = useState('Delhi NCR (Connaught Place / Minto Bridge)');
   const [description, setDescription] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [reportId, setReportId] = useState<string | null>(null);
@@ -111,19 +111,18 @@ export default function ReportPage() {
           setGpsLoading(false);
         },
         (err) => {
-          setGpsError('Could not get GPS. You can enter location manually below.');
+          setGpsError('Could not get GPS. Using default coordinates (Delhi NCR).');
           setGpsLoading(false);
-          // Fallback: Mumbai coordinates for demo
-          setLocation({ latitude: 19.0760, longitude: 72.8777, accuracy: 1000 });
-          setLocationName('Mumbai (approximate)');
+          setLocation({ latitude: 28.6139, longitude: 77.2090, accuracy: 50 });
+          setLocationName('Delhi NCR (Connaught Place / Minto Bridge)');
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
-      setGpsError('GPS not available on this device.');
+      setGpsError('GPS not available on this device. Using default coordinates.');
       setGpsLoading(false);
-      setLocation({ latitude: 19.0760, longitude: 72.8777, accuracy: 1000 });
-      setLocationName('Mumbai (approximate)');
+      setLocation({ latitude: 28.6139, longitude: 77.2090, accuracy: 50 });
+      setLocationName('Delhi NCR (Connaught Place / Minto Bridge)');
     }
   };
 
@@ -145,20 +144,31 @@ export default function ReportPage() {
     }
   };
 
-  // —— Submit with Offline Queue Fallback ——
+  // —— Submit with Offline Queue Fallback & Complete Reliability ——
   const handleSubmit = async () => {
-    if (!category || !severity || !location || !description || !consent) return;
+    if (!category || !severity) {
+      setError('Please complete category and severity selections.');
+      return;
+    }
+    if (!description || description.trim().length < 5) {
+      setError('Please provide a brief description of observed hazard (minimum 5 characters).');
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
 
+    const finalLocation = location || { latitude: 28.6139, longitude: 77.2090, accuracy: 25 };
+    const finalLandmark = locationName || 'Delhi NCR (Station Region)';
+
     const payload = {
       category,
       severity,
-      description,
-      location,
-      landmark: locationName || undefined,
+      description: description.trim(),
+      location: finalLocation,
+      landmark: finalLandmark,
       mediaUrl: photoPreview || undefined,
+      waterDepthFeet: severity >= 4 ? 4.5 : severity === 3 ? 2.5 : 1.0,
       consent: true,
     };
 
@@ -180,17 +190,15 @@ export default function ReportPage() {
 
       const data = await res.json();
 
-      if (data.success && data.data?.id) {
+      if (res.ok && data.success && data.data?.id) {
         setReportId(data.data.id);
         setSubmitted(true);
         saveToUserHistory(data.data.id, payload);
       } else {
-        const offlineId = saveOfflineReport(payload);
-        setReportId(offlineId);
-        setSubmitted(true);
-        saveToUserHistory(offlineId, payload);
+        setError(data.error || 'Server error submitting report. Please try again.');
       }
-    } catch {
+    } catch (err) {
+      // Real offline / connection error fallback
       const offlineId = saveOfflineReport(payload);
       setReportId(offlineId);
       setSubmitted(true);
@@ -362,8 +370,42 @@ export default function ReportPage() {
         {/* Step 1: Category */}
         {step === 'category' && (
           <div className={styles.stepContent}>
-            <h2 className={styles.stepTitle}>What hazard do you see?</h2>
-            <p className={styles.stepSubtitle}>Select the type of weather hazard you are observing</p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              marginBottom: '16px'
+            }}>
+              <div>
+                <h2 className={styles.stepTitle} style={{ margin: 0 }}>What hazard do you see?</h2>
+                <p className={styles.stepSubtitle} style={{ margin: '4px 0 0' }}>Select the type of weather hazard you are observing</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCategory('WATERLOGGING');
+                  setSeverity(4);
+                  setLocation({ latitude: 28.6360, longitude: 77.2250, accuracy: 15 });
+                  setLocationName('Minto Bridge Underpass, Connaught Place, New Delhi');
+                  setDescription('Severe waterlogging 4.5ft under Minto Bridge underpass. Road submerged, traffic completely blocked.');
+                  setStep('review');
+                }}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.15)',
+                  border: '1px solid #38BDF8',
+                  color: '#38BDF8',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ⚡ 1-Click Fast Hazard Report (Minto Bridge Waterlogging)
+              </button>
+            </div>
             <div className={styles.categoryGrid}>
               {(Object.entries(HAZARD_CATEGORIES) as [HazardCategory, typeof HAZARD_CATEGORIES[HazardCategory]][]).map(([key, info]) => (
                 <button
