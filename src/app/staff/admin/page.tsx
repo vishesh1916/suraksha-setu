@@ -609,10 +609,8 @@ export default function AdminPage() {
 
     showToast(successMsg);
 
-    // Smooth transition: If in a specific stage tab (e.g. verification), follow card to its new stage tab!
-    if (activeTab !== 'all' && targetTab !== 'all' && activeTab !== targetTab) {
-      setActiveTab(targetTab);
-    }
+    // Stay on the current tab so the report stays visible with its action banner.
+    // The user can manually navigate to the target tab if they want.
 
     try {
       const res = await fetch('/api/reports', {
@@ -628,19 +626,9 @@ export default function AdminPage() {
       if (res.ok) {
         const patchData = await res.json();
         if (patchData.success && patchData.data) {
-          const updatedRep: Report = patchData.data;
-          setReports(prev => prev.map(r => r.id === reportId ? smartMergeReport(r, updatedRep) : r));
-          setIncidents(prev => prev.map(inc => {
-            if (!inc.reports.some(r => r.id === reportId)) return inc;
-            return {
-              ...inc,
-              currentActionCategory: updatedRep.currentActionCategory,
-              verificationStatus: updatedRep.verificationStatus,
-              state: updatedRep.status === 'DISMISSED' ? 'DISMISSED' : updatedRep.status === 'RESOLVED' ? 'RESOLVED' : 'ESCALATED',
-              reports: inc.reports.map(r => r.id === reportId ? updatedRep : r),
-              updatedAt: updatedRep.updatedAt,
-            };
-          }));
+          // Server confirmed — do a full data refresh to get canonical state
+          // but keep recentlyActionedReports so the report stays visible
+          fetchData();
         }
       } else {
         showToast('Failed to record report action on server');
@@ -682,13 +670,15 @@ export default function AdminPage() {
 
   // Clean Workflow Categorization by First Action Taken & Verification Status
   const pendingVerificationReports = reports.filter(r => 
-    (!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
+    recentlyActionedReports[r.id]?.targetTab === 'verification' ||
+    ((!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
     r.status !== 'DISMISSED' &&
     r.status !== 'RESOLVED' &&
-    (!r.currentActionCategory || r.currentActionCategory === 'Pending Verification')
+    (!r.currentActionCategory || r.currentActionCategory === 'Pending Verification'))
   );
 
   const falseAlarmReports = reports.filter(r => 
+    recentlyActionedReports[r.id]?.targetTab === 'false_alarm' ||
     r.verificationStatus === 'FLAGGED_FALSE_REPORT' || 
     r.status === 'DISMISSED' || 
     r.firstActionTaken === 'Flagged False Alarm / Dismissed' ||
@@ -696,38 +686,45 @@ export default function AdminPage() {
   );
 
   const verifiedPendingReports = reports.filter(r => 
-    r.verificationStatus === 'VERIFIED_GENUINE' &&
+    recentlyActionedReports[r.id]?.targetTab === 'verified_pending' ||
+    (r.verificationStatus === 'VERIFIED_GENUINE' &&
     r.status !== 'DISMISSED' &&
     r.status !== 'RESOLVED' &&
-    (!r.currentActionCategory || r.currentActionCategory === 'Verified Genuine — Pending Tactical Action' || r.currentActionCategory === 'Pending Verification')
+    (!r.currentActionCategory || r.currentActionCategory === 'Verified Genuine — Pending Tactical Action' || r.currentActionCategory === 'Pending Verification'))
   );
 
   const evacuationReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Evacuation Ordered' || (r.firstActionTaken === 'Evacuation Ordered' && r.currentActionCategory !== 'Hazard Resolved'))
+    recentlyActionedReports[r.id]?.targetTab === 'evacuation' ||
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Evacuation Ordered' || (r.firstActionTaken === 'Evacuation Ordered' && r.currentActionCategory !== 'Hazard Resolved')))
   );
 
   const dewateringReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Dewatering & Municipal Crew Dispatched' || (r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched' && r.currentActionCategory !== 'Hazard Resolved'))
+    recentlyActionedReports[r.id]?.targetTab === 'dewatering' ||
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Dewatering & Municipal Crew Dispatched' || (r.firstActionTaken === 'Dewatering & Municipal Crew Dispatched' && r.currentActionCategory !== 'Hazard Resolved')))
   );
 
   const capWarningReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Public Warning Issued (CAP 1.2)' || (r.firstActionTaken === 'Public Warning Issued (CAP 1.2)' && r.currentActionCategory !== 'Hazard Resolved'))
+    recentlyActionedReports[r.id]?.targetTab === 'cap_warning' ||
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Public Warning Issued (CAP 1.2)' || (r.firstActionTaken === 'Public Warning Issued (CAP 1.2)' && r.currentActionCategory !== 'Hazard Resolved')))
   );
 
   const sarReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Search & Rescue Deployed' || (r.firstActionTaken === 'Search & Rescue Deployed' && r.currentActionCategory !== 'Hazard Resolved'))
+    recentlyActionedReports[r.id]?.targetTab === 'sar' ||
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Search & Rescue Deployed' || (r.firstActionTaken === 'Search & Rescue Deployed' && r.currentActionCategory !== 'Hazard Resolved')))
   );
 
   const monitoringReports = reports.filter(r => 
-    r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
-    (r.currentActionCategory === 'Meteorological Monitoring' || (r.firstActionTaken === 'Meteorological Monitoring' && r.currentActionCategory !== 'Hazard Resolved'))
+    recentlyActionedReports[r.id]?.targetTab === 'monitoring' ||
+    (r.status !== 'DISMISSED' && r.status !== 'RESOLVED' &&
+    (r.currentActionCategory === 'Meteorological Monitoring' || (r.firstActionTaken === 'Meteorological Monitoring' && r.currentActionCategory !== 'Hazard Resolved')))
   );
 
   const resolvedReports = reports.filter(r => 
+    recentlyActionedReports[r.id]?.targetTab === 'resolved' ||
     r.status === 'RESOLVED' || 
     r.currentActionCategory === 'Hazard Resolved' || 
     r.firstActionTaken === 'Hazard Resolved'
