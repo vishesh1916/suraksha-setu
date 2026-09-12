@@ -8,7 +8,7 @@ import type { Report } from '@/types';
 import { HAZARD_CATEGORIES } from '@/types';
 import styles from './weatherRadarHologram.module.css';
 
-type RadarDisplayMode = 'reflectivity' | 'velocity' | 'triage';
+type RadarDisplayMode = 'reflectivity' | 'velocity' | 'terrain' | 'triage';
 
 interface WeatherRadarHologramProps {
   atmosphere: WeatherAtmosphereType;
@@ -299,6 +299,36 @@ export function WeatherRadarHologram({
           ctx.fillStyle = '#38BDF8';
           ctx.fillText(`C-${idx + 1} (${cell.dbz} dBZ)`, ex + 9, ey + 3);
         });
+      } else if (radarMode === 'terrain') {
+        // ——— 3D TERRAIN TOPOGRAPHY: Digital Elevation Model (DEM) Wireframe Relief ———
+        const rows = 14;
+        const cols = 22;
+        for (let r = 0; r < rows; r++) {
+          ctx.beginPath();
+          const depthAlpha = (r / rows) * 0.75 + 0.25;
+          for (let c = 0; c < cols; c++) {
+            const u = c / cols;
+            const v = r / rows;
+            const valley = -26 * Math.exp(-Math.pow((u - 0.52) * 5, 2));
+            const ridge = Math.sin(u * Math.PI * 2) * 20 * v;
+            const wave = Math.sin(c * 0.5 + sweepAngle) * 3.5;
+            const h = valley + ridge + wave;
+
+            const px = cx + (c - cols / 2) * 16 + (r - rows / 2) * 3.5;
+            const py = cy + (r - rows / 2) * 9 - h * 0.6 + 12;
+
+            if (c === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.strokeStyle = `rgba(52, 211, 153, ${0.45 * depthAlpha})`;
+          ctx.lineWidth = r % 3 === 0 ? 1.4 : 0.8;
+          ctx.stroke();
+        }
+
+        // Elevation contour peaks label
+        ctx.font = '8px monospace';
+        ctx.fillStyle = '#34D399';
+        ctx.fillText('▲ AWADH BASIN 3D DEM TOPOGRAPHY', cx - 70, cy + maxRadarR - 14);
       }
 
       // ========================================================
@@ -547,7 +577,14 @@ export function WeatherRadarHologram({
             className={`${styles.modeBtn} ${radarMode === 'velocity' ? styles.modeBtnActive : ''}`}
             onClick={() => setRadarMode('velocity')}
           >
-            Radial Velocity (m/s)
+            Velocity (m/s)
+          </button>
+          <button
+            type="button"
+            className={`${styles.modeBtn} ${radarMode === 'terrain' ? styles.modeBtnActive : ''}`}
+            onClick={() => setRadarMode('terrain')}
+          >
+            ⛰️ 3D Terrain
           </button>
           <button
             type="button"

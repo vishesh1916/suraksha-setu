@@ -14,15 +14,16 @@
 .radarCard {
   position: relative;
   width: 100%;
-  background: linear-gradient(145deg, rgba(8, 22, 38, 0.94) 0%, rgba(5, 15, 26, 0.97) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.24);
+  background: linear-gradient(145deg, rgba(8, 22, 38, 0.72) 0%, rgba(5, 15, 26, 0.78) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.28);
   border-radius: 14px;
   padding: 18px 20px;
   box-shadow: 
     0 24px 50px -12px rgba(0, 0, 0, 0.65),
-    0 0 30px rgba(56, 189, 248, 0.08),
+    0 0 30px rgba(56, 189, 248, 0.12),
     inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   transform-style: preserve-3d;
   transition: transform 0.15s ease-out, border-color 0.3s ease, box-shadow 0.3s ease;
   overflow: hidden;

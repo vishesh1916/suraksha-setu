@@ -6,6 +6,7 @@ import type { Alert, Report } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { Navbar } from '@/components/Navbar';
 import { WeatherHeroAtmosphere } from '@/components/WeatherHeroAtmosphere';
+import { HeroFuturisticRadar } from '@/components/HeroFuturisticRadar';
 import { WeatherRadarHologram } from '@/components/WeatherRadarHologram';
 import { AlertWorkflowSequence } from '@/components/AlertWorkflowSequence';
 import {
@@ -181,15 +182,24 @@ export default function LandingPage() {
           background: currentAtmosphereConfig.skyGradient,
         }}
       >
-        <div className={styles.heroOverlay} />
-        <div className={styles.heroTelemetryLines} />
+        {/* Layer 1: Futuristic 3D Topographical Terrain & Doppler Radar Sweep */}
+        <HeroFuturisticRadar
+          atmosphere={activeAtmosphere}
+          scrollProgress={scrollProgress}
+          activeHazard={currentHazard}
+          activeHazardsCount={activeHazards.length}
+          className={styles.heroRadarCanvas}
+        />
 
-        {/* Dynamic Weather Simulation Canvas */}
+        {/* Layer 2: Dynamic Atmospheric Weather Simulation Canvas */}
         <WeatherHeroAtmosphere
           atmosphere={activeAtmosphere}
           scrollProgress={scrollProgress}
           className={styles.heroWeatherCanvas}
         />
+
+        <div className={styles.heroOverlay} />
+        <div className={styles.heroTelemetryLines} />
 
         {/* Left Column Content with Staggered Entrance Reveal */}
         <div className={styles.heroContent}>
