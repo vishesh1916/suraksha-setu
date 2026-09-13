@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import { getClientReport, getClientReports, saveClientReport, subscribeToSync, isDemoReport } from '@/lib/clientSync';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import styles from './track.module.css';
@@ -533,25 +534,27 @@ function TrackContent() {
             <div style={{
               marginTop: '20px',
               paddingTop: '16px',
-              borderTop: '1px solid rgba(138, 153, 168, 0.2)'
+              borderTop: '1px solid var(--color-border, #E5E2D9)'
             }}>
               <h4 style={{
                 margin: '0 0 12px',
-                fontSize: '0.85rem',
-                color: '#38BDF8',
+                fontSize: '0.82rem',
+                color: 'var(--color-charcoal, #161816)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em'
+                letterSpacing: '0.05em',
+                fontFamily: 'var(--font-family-mono, monospace)',
+                fontWeight: 700
               }}>
-                📋 Action History & Agency Deployment Log ({tracking.actionHistory.length})
+                Action History & Agency Deployment Log ({tracking.actionHistory.length})
               </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {tracking.actionHistory.map((item) => (
                   <div
                     key={item.id}
                     style={{
-                      background: 'rgba(11, 31, 51, 0.6)',
-                      border: '1px solid rgba(138, 153, 168, 0.25)',
-                      borderRadius: '8px',
+                      background: '#FAF7F2',
+                      border: '1px solid var(--color-border, #E5E2D9)',
+                      borderRadius: '4px',
                       padding: '10px 14px',
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -560,15 +563,15 @@ function TrackContent() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#F7F6F2' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-charcoal, #161816)' }}>
                         {item.action}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: '#94A3B8', marginTop: '2px' }}>
-                        By: <strong style={{ color: '#E2E8F0' }}>{item.actorName}</strong>
-                        {item.notes && <span style={{ marginLeft: 6, color: '#CBD5E1' }}>— {item.notes}</span>}
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary, #474946)', marginTop: '2px' }}>
+                        By: <strong style={{ color: 'var(--color-charcoal, #161816)' }}>{item.actorName}</strong>
+                        {item.notes && <span style={{ marginLeft: 6, color: 'var(--color-text-muted, #737571)' }}>— {item.notes}</span>}
                       </div>
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: '#8A99A8', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #737571)', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
                       {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -589,6 +592,7 @@ export default function TrackReportPage() {
       <Suspense fallback={<div className="spinner spinner-lg" />}>
         <TrackContent />
       </Suspense>
+      <Footer />
     </div>
   );
 }

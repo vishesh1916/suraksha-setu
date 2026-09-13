@@ -1,0 +1,276 @@
+/* ============================================================
+   SURAKSHA SETU — Editorial About Page Styles
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  background: #F7F5F0;
+  color: #161816;
+  font-family: var(--font-family-sans);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 2rem 6rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 2.5rem 1.25rem 4rem;
+  }
+}
+
+.heroSection {
+  margin-bottom: 4rem;
+  border-bottom: 1px solid #E5E2D9;
+  padding-bottom: 3rem;
+}
+
+.kicker {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #D67A20;
+  margin-bottom: 14px;
+}
+
+.headline {
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: #161816;
+  margin-bottom: 18px;
+}
+
+.headlineSub {
+  color: #737571;
+  font-weight: 600;
+}
+
+.leadText {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: #333835;
+  max-width: 820px;
+  font-weight: 400;
+}
+
+@media (max-width: 640px) {
+  .leadText {
+    font-size: 1.1rem;
+  }
+}
+
+/* Story Section */
+.storySection {
+  margin-bottom: 4.5rem;
+}
+
+.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+}
+
+@media (max-width: 840px) {
+  .twoCol {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.sectionHeading {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #161816;
+  margin-bottom: 14px;
+}
+
+.bodyText {
+  font-size: 1rem;
+  line-height: 1.68;
+  color: #737571;
+  margin-bottom: 14px;
+}
+
+/* Pillars Section */
+.pillarsSection {
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 8px;
+  padding: 3rem;
+  margin-bottom: 4.5rem;
+  box-shadow: 0 1px 3px rgba(22, 24, 22, 0.04);
+}
+
+@media (max-width: 768px) {
+  .pillarsSection {
+    padding: 1.75rem;
+  }
+}
+
+.sectionTag {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #D67A20;
+  margin-bottom: 2rem;
+}
+
+.pillarsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .pillarsGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.pillarCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pillarNum {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 14px;
+  font-weight: 800;
+  color: #D67A20;
+}
+
+.pillarTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #161816;
+}
+
+.pillarDesc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #737571;
+  margin: 0;
+}
+
+/* Specs Section */
+.specsSection {
+  margin-bottom: 4.5rem;
+}
+
+.specsTable {
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+  background: #FFFFFF;
+  overflow: hidden;
+  margin-top: 1.25rem;
+}
+
+.specRow {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  padding: 14px 20px;
+  border-bottom: 1px solid #F0EDE6;
+  font-size: 13.5px;
+}
+
+@media (max-width: 640px) {
+  .specRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+.specRow:last-child {
+  border-bottom: none;
+}
+
+.specKey {
+  font-weight: 700;
+  color: #161816;
+}
+
+.specVal {
+  color: #737571;
+}
+
+/* Commitment Banner */
+.commitmentBanner {
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 8px;
+  padding: 2.5rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  box-shadow: 0 2px 8px rgba(22, 24, 22, 0.04);
+}
+
+@media (max-width: 768px) {
+  .commitmentBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 2rem 1.5rem;
+  }
+}
+
+.commitmentContent h3 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #161816;
+  margin-bottom: 6px;
+}
+
+.commitmentContent p {
+  font-size: 0.95rem;
+  color: #737571;
+  margin: 0;
+  max-width: 600px;
+}
+
+.commitmentActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.primaryBtn {
+  background: #161816;
+  color: #FFFFFF;
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.primaryBtn:hover {
+  background: #333835;
+}
+
+.secondaryBtn {
+  background: #FFFFFF;
+  color: #161816;
+  border: 1px solid #E5E2D9;
+  padding: 11px 20px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.secondaryBtn:hover {
+  background: #EFECE6;
+}

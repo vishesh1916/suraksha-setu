@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import type { Alert } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
@@ -99,15 +100,16 @@ export default function AlertsDirectoryPage() {
             </button>
           </div>
 
-          <div style={{ fontSize: 12.5, color: '#8A99A8' }}>
-            Auto-refresh active · Live CAP 1.2 Feed
+          <div className={styles.feedStatus}>
+            <span className={styles.feedDot} />
+            Auto-refresh active · CAP 1.2 Feed
           </div>
         </div>
 
         {loading && (
           <div style={{ textAlign: 'center', padding: '3rem 0' }}>
             <div className="spinner spinner-lg" />
-            <p style={{ marginTop: 16, color: '#8A99A8' }}>Loading verified alerts…</p>
+            <p style={{ marginTop: 16, color: 'var(--color-text-muted, #737571)' }}>Loading verified alerts…</p>
           </div>
         )}
 
@@ -115,19 +117,11 @@ export default function AlertsDirectoryPage() {
         {!loading && (
           <div className={styles.alertsGrid}>
             {filteredAlerts.length === 0 ? (
-              <div
-                style={{
-                  textAlign: 'center',
-                  padding: '3rem',
-                  background: 'rgba(14, 38, 62, 0.4)',
-                  borderRadius: 12,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                }}
-              >
-                <span style={{ fontSize: 36 }}>✅</span>
-                <h3 style={{ color: '#F7F6F2', marginTop: 12 }}>No Active Alerts in this Category</h3>
-                <p style={{ color: '#8A99A8', fontSize: 13 }}>
-                  Atmospheric stability confirmed for this filter. Check the Live Map for local telemetry.
+              <div className={styles.emptyState}>
+                <span style={{ fontSize: 36 }}>🛡️</span>
+                <h3 className={styles.emptyTitle}>No Active Warnings in this Category</h3>
+                <p className={styles.emptyDesc}>
+                  Atmospheric stability confirmed for this filter. No broadcast advisories currently active. Check the Live Map for local station telemetry.
                 </p>
               </div>
             ) : (
@@ -155,7 +149,7 @@ export default function AlertsDirectoryPage() {
                           <span
                             style={{
                               fontSize: 12,
-                              color: '#8A99A8',
+                              color: 'var(--color-text-muted, #737571)',
                               display: 'flex',
                               alignItems: 'center',
                               gap: 4,
@@ -167,7 +161,7 @@ export default function AlertsDirectoryPage() {
                         </div>
                         <h2 className={styles.headline}>{alert.headline}</h2>
                         <div className={styles.metaRow}>
-                          <span>🏛️ Issued by: {alert.source}</span>
+                          <span>🏛️ {alert.source}</span>
                           <span>•</span>
                           <span>
                             ⏳ Valid until:{' '}
@@ -180,12 +174,21 @@ export default function AlertsDirectoryPage() {
                           <span>📍 {alert.areaName || 'Designated Regional Sector'}</span>
                         </div>
                       </div>
+
+                      <div className={styles.mapCellVisual}>
+                        <span className={styles.mapCellBadge}>
+                          GRID CELL #{alert.id.slice(-6).toUpperCase()}
+                        </span>
+                        <span style={{ fontSize: 10, color: 'var(--color-text-muted, #737571)', fontFamily: 'monospace' }}>
+                          CAP 1.2 · LEVEL {alert.severity}
+                        </span>
+                      </div>
                     </div>
 
                     <div className={styles.guidanceBox}>
-                      <strong style={{ color: '#F59E0B', display: 'block', marginBottom: 4 }}>
-                        {t.safetyInstructions}:
-                      </strong>
+                      <span className={styles.guidanceTitle}>
+                        {t.safetyInstructions}
+                      </span>
                       {alert.guidance}
                     </div>
 
@@ -223,6 +226,7 @@ export default function AlertsDirectoryPage() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

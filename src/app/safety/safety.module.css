@@ -1,160 +1,125 @@
 /* ============================================================
-   Safety Guidelines Styles
+   Suraksha Setu — Editorial Safety Guidelines Styles
    ============================================================ */
 
 .page {
   min-height: 100dvh;
-  background: var(--color-bg-primary);
+  background-color: var(--color-bg-primary, #F7F5F0);
+  color: var(--color-charcoal, #161816);
   display: flex;
   flex-direction: column;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: var(--color-bg-secondary);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--color-text-primary);
-}
-
-.logo {
-  font-size: 24px;
-}
-
-.logoText {
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: -0.02em;
-}
-
-.headerNav {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.navLink {
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.navLink:hover {
-  color: var(--color-text-primary);
-}
-
 .container {
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 40px 20px 80px;
+  padding: 3.5rem 1.5rem 5rem;
   width: 100%;
+  flex: 1;
 }
 
 .titleArea {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 3rem;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  margin-bottom: 16px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #FAF7F2;
+  border: 1px solid var(--color-accent, #D67A20);
+  color: var(--color-accent, #D67A20);
+  margin-bottom: 1rem;
 }
 
 .pageTitle {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--color-text-primary);
-  margin-bottom: 12px;
+  font-family: var(--font-family-sans);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--color-charcoal, #161816);
   letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
 }
 
 .pageDesc {
-  font-size: 16px;
-  color: var(--color-text-secondary);
-  max-width: 600px;
+  font-size: 1rem;
+  color: var(--color-text-secondary, #474946);
+  max-width: 620px;
   margin: 0 auto;
   line-height: 1.6;
 }
 
 .hazardSection {
-  margin-bottom: 48px;
+  margin-bottom: 3.5rem;
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border, #E5E2D9);
 }
 
 .sectionIcon {
-  font-size: 28px;
+  font-size: 1.75rem;
 }
 
 .sectionHeading {
-  font-size: 22px;
+  font-size: 1.4rem;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--color-charcoal, #161816);
+  letter-spacing: -0.01em;
+  margin: 0;
 }
 
 .cardsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 20px;
+  gap: 1.25rem;
 }
 
 .guidelineCard {
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 22px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-md, 6px);
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .guidelineCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .cardCategory {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 12px;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: var(--font-family-mono, monospace);
 }
 
-.catBefore { color: #60a5fa; }
-.catDuring { color: #f59e0b; }
-.catAfter { color: #10b981; }
+.catBefore { color: var(--color-eucalyptus, #2E5A44); }
+.catDuring { color: var(--color-accent, #D67A20); }
+.catAfter { color: var(--color-charcoal, #161816); }
 
 .cardHeading {
-  font-size: 16px;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 12px;
+  color: var(--color-charcoal, #161816);
+  margin-bottom: 0.85rem;
 }
 
 .cardList {
@@ -163,12 +128,12 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.75rem;
 }
 
 .cardListItem {
-  font-size: 14px;
-  color: var(--color-text-secondary);
+  font-size: 0.86rem;
+  color: var(--color-text-secondary, #474946);
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -176,31 +141,48 @@
 }
 
 .checkIcon {
-  color: var(--color-accent);
-  font-weight: bold;
+  color: var(--color-accent, #D67A20);
+  font-weight: 700;
+  font-family: var(--font-family-mono, monospace);
 }
 
 .emergencyBanner {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.05));
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: 16px;
-  padding: 28px;
-  margin-top: 40px;
+  background: #FFF7ED;
+  border: 1px solid #FDBA74;
+  border-left: 5px solid var(--color-accent, #D67A20);
+  border-radius: var(--radius-md, 6px);
+  padding: 2rem;
+  margin-top: 2.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 1.5rem;
 }
 
 .bannerText h3 {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--color-severity-critical);
-  margin-bottom: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #7C2D12;
+  margin: 0 0 0.35rem 0;
 }
 
 .bannerText p {
-  font-size: 14px;
-  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  color: #9A3412;
+  margin: 0;
+  max-width: 540px;
+  line-height: 1.5;
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: 2rem 1rem 3.5rem;
+  }
+
+  .emergencyBanner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

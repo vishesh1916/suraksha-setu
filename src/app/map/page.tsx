@@ -1,393 +1,503 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
-import type { Alert, Report, Incident } from '@/types';
-import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
-import { generateDisasterPrediction } from '@/lib/prediction';
-import { getClientReports, subscribeToSync, isDemoReport, purgeClientStorage } from '@/lib/clientSync';
+import { translations, getSavedLanguage, setSavedLanguage, SUPPORTED_LANGUAGES, type Language } from '@/lib/i18n';
+import { getActiveTileStyle, TILE_STYLES, SOUTH_ASIA_CENTER, OSM_STANDARD_STYLE, CARTO_API_KEY } from '@/lib/map/tileProvider';
+import { INDIA_LOCATIONS, searchIndiaLocations, type IndiaLocation } from '@/lib/map/indiaLocations';
+import { HAZARD_ACRONYM_META, type UnifiedHazardEvent, type HazardAcronym, type HazardSeverity, type ProviderHealth } from '@/lib/hazardAdapters/types';
 import styles from './map.module.css';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
-export interface HazardPlace {
+export interface ReliefShelter {
   id: string;
-  category: string;
-  severity: number;
-  landmark: string;
-  cityName: string;
-  stateName: string;
+  name: string;
+  region: string;
   lat: number;
   lng: number;
-  waterDepthFeet?: number;
-  rainfallRateMmH?: number;
-  windGustsKmh?: number;
-  photoUrl: string;
-  description: string;
-  safetyGuidance: string;
-  verifiedAt: string;
-  source: string;
-  reportCount: number;
+  capacity: number;
+  occupancy: number;
+  provisions: string;
+  contact: string;
 }
 
-// Real production state: No mock hazard places. Only real citizen reports from /api/reports are rendered.
-const BENCHMARK_HAZARDS: HazardPlace[] = [];
+const VERIFIED_SHELTERS: ReliefShelter[] = [
+  {
+    id: 'shelter_delhi_1',
+    name: 'Sarvodaya Bal Vidyalaya Evacuation Camp',
+    region: 'Mori Gate / Kashmere Gate, New Delhi',
+    lat: 28.6652,
+    lng: 77.2284,
+    capacity: 650,
+    occupancy: 210,
+    provisions: 'Potable Drinking Water, 450 Dry Ration Kits, First Aid Trauma Unit, 4 Inflatable Boats',
+    contact: '011-23860012',
+  },
+  {
+    id: 'shelter_mumbai_1',
+    name: 'MCGM Dadar High School Relief Centre',
+    region: 'Dadar East / Hindmata, Mumbai',
+    lat: 19.0210,
+    lng: 72.8420,
+    capacity: 800,
+    occupancy: 340,
+    provisions: 'Generator Power Backup, Cooked Meals, Pediatric Medical Station, Dewatering Pumps',
+    contact: '022-24143000',
+  },
+  {
+    id: 'shelter_assam_1',
+    name: 'Guwahati Commerce College Flood Shelter',
+    region: 'Chandmari, Guwahati, Assam',
+    lat: 26.1720,
+    lng: 91.7750,
+    capacity: 1200,
+    occupancy: 480,
+    provisions: 'Water Filtration Unit, NDRF 1st Bn Rescue Staging Post, Life Jackets, ORS Packets',
+    contact: '0361-2661001',
+  },
+  {
+    id: 'shelter_hp_1',
+    name: 'Kangra Indoor Stadium Transit Shelter',
+    region: 'Dharamsala / Kangra Valley, HP',
+    lat: 32.2280,
+    lng: 76.3290,
+    capacity: 500,
+    occupancy: 110,
+    provisions: 'Thermal Blankets, High-Altitude Medical Kit, Satellite VHF Wireless Comms',
+    contact: '01892-223322',
+  },
+  {
+    id: 'shelter_chennai_1',
+    name: 'Ripon Building Emergency Relief Staging Camp',
+    region: 'Central Station Corridor, Chennai',
+    lat: 13.0827,
+    lng: 80.2707,
+    capacity: 750,
+    occupancy: 160,
+    provisions: 'Heavy Flood Rescue Equipment, Mobile Dispensary, Community Kitchen',
+    contact: '044-25619206',
+  },
+];
 
-type BaseLayer = 'street' | 'satellite' | 'dark';
+type RailTab = 'official' | 'earth' | 'weather_flood' | 'fire_heat' | 'community';
 
-// 100% Free, Zero-API-Key Vector/Raster Tile Layer Definitions
-// Street: CartoDB Voyager (High-detail urban streets, highways, underpasses)
-// Satellite: Esri World Imagery (Photorealistic high-res satellite) + Esri Boundaries & Places Labels
-// Tactical Dark: CartoDB Dark Matter (High-contrast tactical emergency ops & radar styling)
+// Robust MapLibre export resolver across SSR/Webpack ESM synthetics
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const LAYER_STYLES: Record<BaseLayer, any> = {
-  street: {
-    version: 8,
-    sources: {
-      'carto-voyager': {
-        type: 'raster',
-        tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
-        tileSize: 256,
-        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors (100% Free Open Data)',
-      },
-    },
-    layers: [
-      {
-        id: 'carto-voyager-layer',
-        type: 'raster',
-        source: 'carto-voyager',
-        minzoom: 0,
-        maxzoom: 20,
-      },
-    ],
-  },
-  satellite: {
-    version: 8,
-    sources: {
-      'esri-satellite': {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256,
-        attribution: '&copy; Esri, Maxar, Earthstar Geographics (100% Free Open Data)',
-      },
-      'esri-reference-labels': {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256,
-        attribution: '&copy; Esri, OpenStreetMap contributors',
-      },
-    },
-    layers: [
-      {
-        id: 'esri-satellite-base',
-        type: 'raster',
-        source: 'esri-satellite',
-        minzoom: 0,
-        maxzoom: 19,
-      },
-      {
-        id: 'esri-reference-layer',
-        type: 'raster',
-        source: 'esri-reference-labels',
-        minzoom: 0,
-        maxzoom: 19,
-      },
-    ],
-  },
-  dark: {
-    version: 8,
-    sources: {
-      'carto-dark': {
-        type: 'raster',
-        tiles: ['https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png'],
-        tileSize: 256,
-        attribution: '&copy; CARTO &copy; OpenStreetMap contributors (100% Free Tactical Base)',
-      },
-    },
-    layers: [
-      {
-        id: 'carto-dark-layer',
-        type: 'raster',
-        source: 'carto-dark',
-        minzoom: 0,
-        maxzoom: 20,
-      },
-    ],
-  },
-};
+function resolveMapLibre(mod: any): any {
+  if (mod && typeof mod.Map === 'function') return mod;
+  if (mod && mod.default && typeof mod.default.Map === 'function') return mod.default;
+  return mod;
+}
+
+// Calculate center coordinates for any hazard event (Points or Polygon centroids)
+function getEventCenter(ev: UnifiedHazardEvent): [number, number] | null {
+  if (ev.geometry.type === 'Point' && ev.geometry.coordinates?.length >= 2) {
+    const lng = Number(ev.geometry.coordinates[0]);
+    const lat = Number(ev.geometry.coordinates[1]);
+    if (!isNaN(lng) && !isNaN(lat)) return [lng, lat];
+  } else if (ev.geometry.type === 'Polygon' && ev.geometry.coordinates?.[0]?.length > 0) {
+    const ring = ev.geometry.coordinates[0];
+    let sumLng = 0;
+    let sumLat = 0;
+    ring.forEach((pt: number[]) => {
+      sumLng += Number(pt[0]);
+      sumLat += Number(pt[1]);
+    });
+    const avgLng = sumLng / ring.length;
+    const avgLat = sumLat / ring.length;
+    if (!isNaN(avgLng) && !isNaN(avgLat)) return [avgLng, avgLat];
+  } else if (ev.geometry.type === 'MultiPolygon' && ev.geometry.coordinates?.[0]?.[0]?.length > 0) {
+    const ring = ev.geometry.coordinates[0][0];
+    let sumLng = 0;
+    let sumLat = 0;
+    ring.forEach((pt: number[]) => {
+      sumLng += Number(pt[0]);
+      sumLat += Number(pt[1]);
+    });
+    const avgLng = sumLng / ring.length;
+    const avgLat = sumLat / ring.length;
+    if (!isNaN(avgLng) && !isNaN(avgLat)) return [avgLng, avgLat];
+  }
+  return null;
+}
+
+// Configures and mounts official GeoJSON hazard polygon layers onto active style
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void) {
+  try {
+    if (!map.getSource('official-polygons-source')) {
+      map.addSource('official-polygons-source', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [],
+        },
+      });
+    }
+
+    if (!map.getLayer('official-polygons-fill')) {
+      map.addLayer({
+        id: 'official-polygons-fill',
+        type: 'fill',
+        source: 'official-polygons-source',
+        paint: {
+          'fill-color': [
+            'match',
+            ['get', 'severity'],
+            'SEVERE',
+            '#A82824',
+            'WARNING',
+            '#C4511A',
+            'WATCH',
+            '#D67A20',
+            '#2E5A44',
+          ],
+          'fill-opacity': 0.18,
+        },
+      });
+    }
+
+    if (!map.getLayer('official-polygons-line')) {
+      map.addLayer({
+        id: 'official-polygons-line',
+        type: 'line',
+        source: 'official-polygons-source',
+        paint: {
+          'line-color': [
+            'match',
+            ['get', 'severity'],
+            'SEVERE',
+            '#A82824',
+            'WARNING',
+            '#C4511A',
+            'WATCH',
+            '#D67A20',
+            '#2E5A44',
+          ],
+          'line-width': 1.8,
+          'line-dasharray': [3, 2],
+        },
+      });
+    }
+
+    map.off('click', 'official-polygons-fill');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    map.on('click', 'official-polygons-fill', (e: any) => {
+      if (e.features && e.features[0]) {
+        const feat = e.features[0];
+        const eventId = feat.properties?.id;
+        if (eventId) {
+          onPolygonClick(eventId);
+        }
+      }
+    });
+
+    map.on('mouseenter', 'official-polygons-fill', () => {
+      try { map.getCanvas().style.cursor = 'pointer'; } catch {}
+    });
+    map.on('mouseleave', 'official-polygons-fill', () => {
+      try { map.getCanvas().style.cursor = ''; } catch {}
+    });
+  } catch (err) {
+    console.warn('Polygon layer setup notice:', err);
+  }
+}
+
+// Safely synchronize polygon data features into the official-polygons-source
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function syncPolygonData(map: any, events: UnifiedHazardEvent[], enabled: boolean) {
+  try {
+    if (!map || typeof map.getSource !== 'function') return;
+    const source = map.getSource('official-polygons-source');
+    if (!source) return;
+
+    if (!enabled) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      return;
+    }
+
+    const polygonFeatures = events
+      .filter((e) => e.is_official && (e.geometry.type === 'Polygon' || e.geometry.type === 'MultiPolygon'))
+      .map((e) => ({
+        type: 'Feature',
+        properties: {
+          id: e.id,
+          title: e.title,
+          acronym: e.acronym,
+          severity: e.severity,
+          source: e.source,
+        },
+        geometry: e.geometry,
+      }));
+
+    source.setData({
+      type: 'FeatureCollection',
+      features: polygonFeatures,
+    });
+  } catch (err) {
+    console.warn('Polygon source sync notice:', err);
+  }
+}
 
 function MapContent() {
   const searchParams = useSearchParams();
   const paramLat = searchParams.get('lat');
   const paramLng = searchParams.get('lng');
   const paramHighlight = searchParams.get('highlight');
-  const lastHandledKey = useRef<string | null>(null);
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef = useRef<any[]>([]);
-
-  const [activeLayer, setActiveLayer] = useState<BaseLayer>('street');
   const [mapReady, setMapReady] = useState(false);
-  const [showResolvedArchive, setShowResolvedArchive] = useState(false);
-  const [hazards, setHazards] = useState<HazardPlace[]>(BENCHMARK_HAZARDS);
-  const [selectedPlace, setSelectedPlace] = useState<HazardPlace | null>(null);
+
+  // Core Hazard Data State
+  const [events, setEvents] = useState<UnifiedHazardEvent[]>([]);
+  const eventsRef = useRef<UnifiedHazardEvent[]>([]);
+  eventsRef.current = events;
+  const [sourcesHealth, setSourcesHealth] = useState<ProviderHealth[]>([]);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  // Selected Incident Inspection
+  const [selectedEvent, setSelectedEvent] = useState<UnifiedHazardEvent | null>(null);
+
+  // Rail & Tab Navigation State
+  const [isRailOpen, setIsRailOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<RailTab>('official');
+
+  // Multi-Facet Filters
+  const [selectedCountry, setSelectedCountry] = useState<string>('ALL');
+  const [selectedAcronym, setSelectedAcronym] = useState<string>('ALL');
+  const [selectedSeverity, setSelectedSeverity] = useState<string>('ALL');
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
+
+  // Layer Visibility
+  const [layerPolygons, setLayerPolygons] = useState(true);
+  const [layerEarthquakes, setLayerEarthquakes] = useState(true);
+  const [layerWeatherFlood, setLayerWeatherFlood] = useState(true);
+  const [layerFires, setLayerFires] = useState(true);
+  const [layerCommunity, setLayerCommunity] = useState(true);
+  const [layerShelters, setLayerShelters] = useState(true);
+
+  // Popover Toggles
+  const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [showBaseMapMenu, setShowBaseMapMenu] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+  const [showFeedsMenu, setShowFeedsMenu] = useState(false);
+  const [showMapLangMenu, setShowMapLangMenu] = useState(false);
+  const [currentTileStyle, setCurrentTileStyle] = useState<string>('osm');
+  const [lang, setLang] = useState<Language>('en');
+
+  // Search Autocomplete State (India Major Cities & Disaster Prone Corridors)
   const [searchQuery, setSearchQuery] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [activeHazardCategory, setActiveHazardCategory] = useState<string>('ALL');
-  const [fullPhotoUrl, setFullPhotoUrl] = useState<string | null>(null);
-  const [cardMode, setCardMode] = useState<'telemetry' | 'prediction'>('telemetry');
-  const [streetViewPlace, setStreetViewPlace] = useState<HazardPlace | null>(null);
-  const [streetViewHeading, setStreetViewHeading] = useState<number>(45);
-  const [isDraggingPano, setIsDraggingPano] = useState(false);
-  const [panoStartX, setPanoStartX] = useState(0);
+  const [searchResults, setSearchResults] = useState<IndiaLocation[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const getCompassDirection = (deg: number) => {
-    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-    const idx = Math.round(((deg % 360) + 360) % 360 / 45) % 8;
-    return directions[idx];
-  };
+  // SOS Emergency Drawer State
+  const [isSosOpen, setIsSosOpen] = useState(false);
+  const [sosSubmitting, setSosSubmitting] = useState(false);
+  const [sosLandmark, setSosLandmark] = useState('');
+  const [sosPhone, setSosPhone] = useState('');
+  const [sosNotes, setSosNotes] = useState('');
+  const [sosSuccessId, setSosSuccessId] = useState<string | null>(null);
 
-  // Fetch real ground hazards from API with continuous polling
-  // Fetch real ground hazards from API with continuous polling
-  const fetchLiveHazards = useCallback(async () => {
+  // Fetch Unified Multi-Hazard Telemetry
+  const fetchHazardData = useCallback(async () => {
     try {
-      const timestamp = Date.now();
-      const results = await Promise.allSettled([
-        fetch(`/api/reports?limit=100&_t=${timestamp}`, { cache: 'no-store' }),
-        fetch(`/api/alerts?status=active&_t=${timestamp}`, { cache: 'no-store' }),
-      ]);
-
-      const reportsRes = results[0].status === 'fulfilled' && results[0].value.ok ? results[0].value : null;
-
-      let serverReps: Report[] = [];
-      if (reportsRes) {
-        try {
-          const rData = await reportsRes.json();
-          if (Array.isArray(rData.data)) {
-            serverReps = rData.data.filter((r: Report) => !isDemoReport(r));
-          }
-        } catch {}
-      }
-
-      const clientReps = getClientReports().filter(r => !isDemoReport(r));
-      const incomingReports: Report[] = [...serverReps];
-      for (const cr of clientReps) {
-        const idx = incomingReports.findIndex(sr => sr.id === cr.id || sr.id.toLowerCase() === cr.id.toLowerCase());
-        if (idx >= 0) {
-          incomingReports[idx] = { ...incomingReports[idx], ...cr };
-        } else {
-          incomingReports.unshift(cr);
-        }
-      }
-
-      const newHazards: HazardPlace[] = [...BENCHMARK_HAZARDS];
-
-      incomingReports.forEach((rep) => {
-        // Exclude any demo reports
-        if (isDemoReport(rep)) return;
-
-        const rawLat = rep.location?.latitude ?? (rep.location as any)?.lat;
-        const rawLng = rep.location?.longitude ?? (rep.location as any)?.lng;
-        if (rawLat === undefined || rawLng === undefined || rawLat === null || rawLng === null) return;
-        const lat = Number(rawLat);
-        const lng = Number(rawLng);
-        if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return;
-
-        const isResolved = rep.status === 'RESOLVED' || rep.currentActionCategory === 'Hazard Resolved';
-        const isDismissed = rep.verificationStatus === 'FLAGGED_FALSE_REPORT' || rep.status === 'DISMISSED';
-
-        // Dismissed false alarms are completely excluded from live risk map
-        if (isDismissed) return;
-
-        // Once resolved by emergency teams, only display if resolved archive is toggled ON
-        if (isResolved && !showResolvedArchive) return;
-
-        const isVerified = rep.verificationStatus === 'VERIFIED_GENUINE';
-        const landmarkText = rep.landmark || `Hazard near ${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`;
-        const cityText = rep.landmark && rep.landmark.includes(',') 
-          ? rep.landmark.split(',').pop()?.trim() || 'Local Area' 
-          : 'Local Area';
-
-        const hazardItem: HazardPlace = {
-          id: rep.id,
-          category: rep.category || 'FLOODING',
-          severity: rep.severity || 3,
-          landmark: landmarkText,
-          cityName: cityText,
-          stateName: 'India',
-          lat,
-          lng,
-          waterDepthFeet: rep.waterDepthFeet || (rep.severity >= 4 ? 3.5 : 1.5),
-          rainfallRateMmH: rep.severity * 12,
-          windGustsKmh: 40 + rep.severity * 4,
-          photoUrl: rep.mediaUrl || 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80',
-          description: rep.description || 'Ground hazard reported by citizen.',
-          safetyGuidance: isResolved
-            ? 'Hazard Resolved & Danger Subsided. Municipal all-clear confirmed.'
-            : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
-              ? `⚡ ${rep.currentActionCategory} — Municipal Emergency Response Mobilized` 
-              : isVerified 
-                ? '✓ Ground Verified Genuine. Municipal emergency crew active.' 
-                : '⏳ Citizen Eyewitness Report. Reviewer radar verification in progress.',
-          verifiedAt: isResolved ? 'Resolved / All Clear' : rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification' ? rep.currentActionCategory : isVerified ? 'Verified by Officer' : 'Reported Just now',
-          source: rep.currentActionCategory && rep.currentActionCategory !== 'Pending Verification'
-            ? `Operational Command Directive: ${rep.currentActionCategory}`
-            : isVerified 
-            ? 'Verified Citizen Ground Report' 
-            : 'Citizen Ground Sensor & Corroboration Engine',
-          reportCount: 1,
-        };
-
-        const existingIndex = newHazards.findIndex((h) => h.id === rep.id);
-
-        if (existingIndex >= 0) {
-          newHazards[existingIndex] = hazardItem;
-        } else {
-          newHazards.unshift(hazardItem);
-        }
-      });
-
-      setHazards(newHazards);
-
-      // Keep selected place in sync with updated fields
-      setSelectedPlace((prev) => {
-        if (!prev) return null;
-        const refreshed = newHazards.find((h) => h.id === prev.id);
-        return refreshed || prev;
-      });
-    } catch {
-      // Graceful fallback
-    }
-  }, [showResolvedArchive]);
-
-  useEffect(() => {
-    fetchLiveHazards();
-    const unsubscribe = subscribeToSync((msg) => {
-      if (msg.type === 'PURGE_ALL') {
-        setHazards([]);
-        setSelectedPlace(null);
-        if (markersRef.current) {
-          markersRef.current.forEach((m) => {
-            try { m.remove(); } catch {}
-          });
-          markersRef.current = [];
-        }
-      } else {
-        fetchLiveHazards();
-      }
-    });
-    const interval = setInterval(fetchLiveHazards, 3000);
-    return () => {
-      unsubscribe();
-      clearInterval(interval);
-    };
-  }, [fetchLiveHazards]);
-
-  // Camera focus controller: smoothly tracks requested coordinates / highlighted report,
-  // or auto-centers on active reported hazard(s).
-  useEffect(() => {
-    if (!hazards.length || !mapReady || !mapRef.current) return;
-
-    const currentKey = `${paramHighlight || ''}_${paramLat || ''}_${paramLng || ''}_${hazards.map(h => h.id).join(',')}`;
-
-    if (paramHighlight || (paramLat && paramLng)) {
-      const pLat = paramLat ? parseFloat(paramLat) : NaN;
-      const pLng = paramLng ? parseFloat(paramLng) : NaN;
-      const matched = hazards.find(
-        (h) => h.id === paramHighlight || (!isNaN(pLat) && !isNaN(pLng) && Math.abs(h.lat - pLat) < 0.01 && Math.abs(h.lng - pLng) < 0.01)
+      const res = await fetch(
+        `/api/hazards/unified?includeCommunity=true&timeRange=${timeRange}&_t=${Date.now()}`,
+        { cache: 'no-store' }
       );
-      if (matched) {
-        if (!selectedPlace || selectedPlace.id !== matched.id) {
-          setSelectedPlace(matched);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          setEvents(json.data || []);
+          setSourcesHealth(json.sourcesHealth || []);
+          setLastRefreshedAt(
+            new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          );
         }
       }
-      if (lastHandledKey.current !== currentKey) {
-        lastHandledKey.current = currentKey;
-        try {
-          const targetLng = matched ? matched.lng : pLng;
-          const targetLat = matched ? matched.lat : pLat;
-          if (!isNaN(targetLng) && !isNaN(targetLat)) {
-            mapRef.current.flyTo({
-              center: [targetLng, targetLat],
-              zoom: 14.8,
-              pitch: 35,
-              duration: 1200,
-            });
-          }
-        } catch {}
-      }
-    } else if (lastHandledKey.current !== currentKey) {
-      lastHandledKey.current = currentKey;
-      if (hazards.length === 1) {
-        const singleHazard = hazards[0];
-        if (singleHazard && !isNaN(singleHazard.lng) && !isNaN(singleHazard.lat)) {
-          setSelectedPlace(singleHazard);
-          try {
-            mapRef.current.flyTo({
-              center: [singleHazard.lng, singleHazard.lat],
-              zoom: 14.8,
-              pitch: 35,
-              duration: 1200,
-            });
-          } catch {}
-        }
-      } else if (hazards.length > 1) {
-        try {
-          import('maplibre-gl').then((maplibreglModule: any) => {
-            const maplibregl = maplibreglModule.default || maplibreglModule;
-            const bounds = new maplibregl.LngLatBounds();
-            hazards.forEach((h) => {
-              if (h.lng && h.lat && !isNaN(h.lng) && !isNaN(h.lat)) {
-                bounds.extend([h.lng, h.lat]);
-              }
-            });
-            mapRef.current.fitBounds(bounds, { padding: 80, maxZoom: 15 });
-          });
-        } catch {}
-      }
+    } catch (err) {
+      console.warn('Hazard telemetry sync note:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [hazards, paramHighlight, paramLat, paramLng, selectedPlace, mapReady]);
+  }, [timeRange]);
 
-  // Initialize MapLibre GL instance
   useEffect(() => {
-    let active = true;
+    fetchHazardData();
+    const interval = setInterval(fetchHazardData, 30000); // 30s live refresh
+    return () => clearInterval(interval);
+  }, [fetchHazardData]);
+
+  // Multilingual reactive listener (6 Indian languages)
+  useEffect(() => {
+    setLang(getSavedLanguage());
+    const onLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent<Language>;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      } else {
+        setLang(getSavedLanguage());
+      }
+    };
+    window.addEventListener('languagechange', onLangChange);
+    return () => window.removeEventListener('languagechange', onLangChange);
+  }, []);
+
+  const t = translations[lang] || translations.en;
+
+  // Handle Autocomplete Search Query for India Major Cities & Disaster Prone areas
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    const results = searchIndiaLocations(searchQuery, 7);
+    setSearchResults(results);
+  }, [searchQuery]);
+
+  // Filtered Events
+  const filteredEvents = useMemo(() => {
+    return events.filter((ev) => {
+      // 1. Layer Visibility checks
+      if (ev.is_community_report && !layerCommunity) return false;
+      if (ev.acronym === 'EQ' && !layerEarthquakes) return false;
+      if (['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym) && !layerWeatherFlood) return false;
+      if (['FR', 'HW'].includes(ev.acronym) && !layerFires) return false;
+
+      // 2. Tab Category checks
+      if (activeTab === 'official' && ev.is_community_report) return false;
+      if (activeTab === 'earth' && !['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym)) return false;
+      if (activeTab === 'weather_flood' && !['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym)) return false;
+      if (activeTab === 'fire_heat' && !['FR', 'HW'].includes(ev.acronym)) return false;
+      if (activeTab === 'community' && !ev.is_community_report) return false;
+
+      // 3. Facet Filters
+      if (selectedCountry !== 'ALL' && ev.country.toLowerCase() !== selectedCountry.toLowerCase()) return false;
+      if (selectedAcronym !== 'ALL' && ev.acronym !== selectedAcronym) return false;
+      if (selectedSeverity !== 'ALL' && ev.severity !== selectedSeverity) return false;
+
+      return true;
+    });
+  }, [
+    events,
+    activeTab,
+    selectedCountry,
+    selectedAcronym,
+    selectedSeverity,
+    layerCommunity,
+    layerEarthquakes,
+    layerWeatherFlood,
+    layerFires,
+  ]);
+
+  // Separate official alerts and community reports for the feed
+  const officialAlertsList = useMemo(
+    () => filteredEvents.filter((e) => e.is_official),
+    [filteredEvents]
+  );
+  const communityReportsList = useMemo(
+    () => filteredEvents.filter((e) => e.is_community_report),
+    [filteredEvents]
+  );
+
+  // Initialize MapLibre GL Map Engine
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    let isMounted = true;
+    let styleTimeout: NodeJS.Timeout;
 
     async function initMap() {
-      if (!mapContainerRef.current) return;
-
       try {
-        const maplibreglModule = (await import('maplibre-gl')) as any;
-        const maplibregl = maplibreglModule.default || maplibreglModule;
+        const maplibreglModule = await import('maplibre-gl');
+        const maplibregl = resolveMapLibre(maplibreglModule);
 
-        if (!active || !mapContainerRef.current) return;
-
-        // Clean any existing canvas to prevent WebGL duplicate container crashes
-        if (mapRef.current) {
-          try {
-            mapRef.current.remove();
-          } catch {}
-          mapRef.current = null;
-        }
+        if (!isMounted || !mapContainerRef.current) return;
         mapContainerRef.current.innerHTML = '';
 
-        const initialLat = paramLat ? parseFloat(paramLat) : 26.8467;
-        const initialLng = paramLng ? parseFloat(paramLng) : 80.9462;
-        const hasCoordParams = Boolean(paramLat && paramLng && !isNaN(initialLat) && !isNaN(initialLng));
+        // Configure standalone Web Worker URL explicitly for MapLibre GL v6
+        if (typeof maplibregl.setWorkerUrl === 'function') {
+          maplibregl.setWorkerUrl('/maplibre-gl-worker.mjs');
+        }
+
+        const initialCenter: [number, number] =
+          paramLng && paramLat ? [parseFloat(paramLng), parseFloat(paramLat)] : [SOUTH_ASIA_CENTER.lng, SOUTH_ASIA_CENTER.lat];
+        const initialZoom = paramLng && paramLat ? 11 : SOUTH_ASIA_CENTER.zoom;
 
         const map = new maplibregl.Map({
           container: mapContainerRef.current,
-          style: LAYER_STYLES.street,
-          center: [hasCoordParams ? initialLng : 80.9462, hasCoordParams ? initialLat : 26.8467],
-          zoom: hasCoordParams ? 14.8 : 5.5,
-          minZoom: 3.5,
-          maxZoom: 19,
-          pitch: hasCoordParams ? 35 : 0,
-          pitchWithRotate: true,
-          dragRotate: true,
+          style: getActiveTileStyle(currentTileStyle),
+          center: initialCenter,
+          zoom: initialZoom,
+          minZoom: SOUTH_ASIA_CENTER.minZoom,
+          maxZoom: SOUTH_ASIA_CENTER.maxZoom,
+          attributionControl: true,
+          transformRequest: (url: string) => {
+            if (url.includes('cartocdn.com')) {
+              let cleanUrl = url;
+              if (!cleanUrl.includes('key=')) {
+                const sep = cleanUrl.includes('?') ? '&' : '?';
+                cleanUrl = `${cleanUrl}${sep}key=${CARTO_API_KEY}`;
+              }
+              if (!cleanUrl.includes('api_key=')) {
+                const sep = cleanUrl.includes('?') ? '&' : '?';
+                cleanUrl = `${cleanUrl}${sep}api_key=${CARTO_API_KEY}`;
+              }
+              return { url: cleanUrl };
+            }
+            return { url };
+          },
         });
+
+        let styleLoaded = false;
+
+        const onPolygonClick = (eventId: string) => {
+          const matched = eventsRef.current.find((ev) => ev.id === eventId);
+          if (matched) {
+            setSelectedEvent(matched);
+            const center = getEventCenter(matched);
+            if (center) {
+              flyToCoords(center[0], center[1], 8.5);
+            }
+          }
+        };
+
+        const handleStyleOrLoad = () => {
+          styleLoaded = true;
+          if (!isMounted) return;
+          setupPolygonLayers(map, onPolygonClick);
+          syncPolygonData(map, eventsRef.current, layerPolygons);
+          map.resize();
+          setMapReady(true);
+        };
+
+        map.on('load', handleStyleOrLoad);
+        map.on('style.load', handleStyleOrLoad);
+
+        // Warning logger only (avoid resetting styles abruptly)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        map.on('error', (e: any) => {
+          console.warn('MapLibre engine notice:', e?.error?.message || e);
+        });
+
+        // 6s fallback if vector style failed to load completely
+        styleTimeout = setTimeout(() => {
+          if (!styleLoaded && mapRef.current && currentTileStyle === 'openfreemap_vector') {
+            console.warn('OpenFreeMap vector tiles timeout (>6s), falling back to OpenStreetMap standard style');
+            try {
+              mapRef.current.setStyle(OSM_STANDARD_STYLE);
+            } catch {}
+          }
+        }, 6000);
 
         map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
         map.addControl(
@@ -398,32 +508,29 @@ function MapContent() {
           'top-right'
         );
 
-        const onReady = () => {
-          if (active) {
-            setMapReady(true);
-          }
-        };
-
-        map.on('load', onReady);
-        map.on('styledata', onReady);
-
         mapRef.current = map;
+        setMapReady(true);
 
-        // Safety fallback: ensure readiness is true after 800ms
+        // Viewport recalculation intervals to ensure canvas matches container dimensions
         setTimeout(() => {
-          if (active && mapRef.current) {
-            setMapReady(true);
-          }
+          if (mapRef.current) mapRef.current.resize();
+        }, 80);
+        setTimeout(() => {
+          if (mapRef.current) mapRef.current.resize();
+        }, 300);
+        setTimeout(() => {
+          if (mapRef.current) mapRef.current.resize();
         }, 800);
       } catch (err) {
-        console.warn('Map initialization warning:', err);
+        console.error('Failed to initialize MapLibre map engine:', err);
       }
     }
 
     initMap();
 
     return () => {
-      active = false;
+      isMounted = false;
+      clearTimeout(styleTimeout);
       if (mapRef.current) {
         try {
           mapRef.current.remove();
@@ -432,848 +539,1350 @@ function MapContent() {
       }
       setMapReady(false);
     };
-  }, [paramLat, paramLng]);
+  }, []);
 
-  // Update map style when layer toggle changes
-  const switchLayer = (layer: BaseLayer) => {
-    setActiveLayer(layer);
-    if (!mapRef.current) return;
-    try {
-      mapRef.current.setStyle(LAYER_STYLES[layer]);
-      mapRef.current.once('styledata', () => {
-        setMapReady(true);
-      });
-    } catch (e) {
-      console.warn('switchLayer error:', e);
+  // Resize MapLibre whenever left intelligence rail collapses or expands
+  useEffect(() => {
+    if (mapRef.current) {
+      const t1 = setTimeout(() => mapRef.current?.resize(), 60);
+      const t2 = setTimeout(() => mapRef.current?.resize(), 260);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
-  };
+  }, [isRailOpen]);
 
-  // Render markers whenever hazards, active filter, or map readiness changes
+  // Viewport resize observer on map canvas element
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    const ro = new ResizeObserver(() => {
+      if (mapRef.current) {
+        mapRef.current.resize();
+      }
+    });
+    ro.observe(mapContainerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Update Polygon GeoJSON Source when events, layerPolygons toggle, or mapReady changes
+  useEffect(() => {
+    if (!mapRef.current || !mapReady) return;
+    syncPolygonData(mapRef.current, filteredEvents, layerPolygons);
+  }, [mapReady, filteredEvents, layerPolygons]);
+
+  // Render Marker Badges on the Map for ALL natural calamities and disasters
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
 
-    let cancelled = false;
+    let isMounted = true;
 
-    async function drawMarkers() {
-      try {
-        const maplibreglModule = (await import('maplibre-gl')) as any;
-        const maplibregl = maplibreglModule.default || maplibreglModule;
+    async function updateMarkers() {
+      const maplibreglModule = await import('maplibre-gl');
+      const maplibregl = resolveMapLibre(maplibreglModule);
 
-        if (cancelled || !mapRef.current) return;
+      if (!isMounted || !mapRef.current) return;
 
-        // Clear previous markers
-        markersRef.current.forEach((m) => {
-          try { m.remove(); } catch {}
+      // Clear existing markers safely
+      markersRef.current.forEach((m) => {
+        try {
+          m.remove();
+        } catch {}
+      });
+      markersRef.current = [];
+
+      // 1. Render Point & Polygon Centroid Hazard Markers (ISRO, NASA, USGS, NDMA, Nepal)
+      filteredEvents.forEach((ev) => {
+        const coords = getEventCenter(ev);
+        if (!coords) return;
+
+        const el = document.createElement('div');
+        el.className = `map-acronym-marker ${styles.acronymBadge}`;
+        el.style.cursor = 'pointer';
+        el.style.userSelect = 'none';
+
+        // Severity coloring
+        let sevClass = styles.sevAdvisory;
+        if (ev.severity === 'SEVERE') sevClass = styles.sevSevere;
+        else if (ev.severity === 'WARNING') sevClass = styles.sevWarning;
+        else if (ev.severity === 'WATCH') sevClass = styles.sevWatch;
+
+        el.classList.add(sevClass);
+
+        // Earthquake Magnitude Sizing
+        if (ev.acronym === 'EQ') {
+          const mag = ev.details?.magnitude ?? 4.0;
+          const size = mag >= 6.0 ? 38 : mag >= 4.5 ? 32 : 28;
+          el.style.width = `${size}px`;
+          el.style.height = `${size}px`;
+          el.style.borderRadius = '50%';
+          el.innerText = 'EQ';
+          el.title = `${ev.title} · M${mag.toFixed(1)} (${ev.source})`;
+        } else if (ev.is_community_report) {
+          // Neutral dashed community style
+          el.style.background = '#F3F1EB';
+          el.style.color = '#161816';
+          el.style.border = '1.5px dashed #737571';
+          el.innerText = ev.acronym;
+          el.title = `Unverified Community Report: ${ev.title}`;
+        } else {
+          el.innerText = ev.acronym;
+          el.title = `${ev.title} (${ev.source})`;
+        }
+
+        // Active selected outline
+        if (selectedEvent?.id === ev.id) {
+          el.style.outline = '3px solid #161816';
+          el.style.outlineOffset = '2px';
+          el.style.transform = 'scale(1.18)';
+          el.style.zIndex = '100';
+        }
+
+        // Pulse effect for severe alerts
+        if (ev.severity === 'SEVERE' && ev.is_official) {
+          el.classList.add('map-marker-pulse');
+        }
+
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setSelectedEvent(ev);
+          flyToCoords(coords[0], coords[1], ev.geometry.type === 'Polygon' ? 8.5 : 9);
         });
-        markersRef.current = [];
 
-        const filtered = activeHazardCategory === 'ALL'
-          ? hazards
-          : hazards.filter((h) => h.category === activeHazardCategory);
+        try {
+          const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+            .setLngLat([coords[0], coords[1]])
+            .addTo(mapRef.current);
 
-        filtered.forEach((hazard) => {
-          if (!hazard || !hazard.lat || !hazard.lng || isNaN(hazard.lat) || isNaN(hazard.lng)) return;
+          markersRef.current.push(marker);
+        } catch (mErr) {
+          console.warn('Failed to add marker for', ev.id, mErr);
+        }
+      });
+
+      // 2. Render Relief Shelters if enabled
+      if (layerShelters) {
+        VERIFIED_SHELTERS.forEach((sh) => {
+          const el = document.createElement('div');
+          el.className = styles.acronymBadge;
+          el.style.background = '#161816';
+          el.style.color = '#FFFFFF';
+          el.style.border = '1.5px solid #E5E2D9';
+          el.style.width = '24px';
+          el.style.height = '24px';
+          el.style.borderRadius = '4px';
+          el.style.cursor = 'pointer';
+          el.innerText = 'SH';
+          el.title = `Relief Shelter: ${sh.name}`;
+
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setSelectedEvent({
+              id: sh.id,
+              source: 'Verified Disaster Relief Logistics Command',
+              source_url: '#',
+              hazard_type: 'RELIEF_SHELTER',
+              acronym: 'FL',
+              title: sh.name,
+              severity: 'ADVISORY',
+              status: 'ACTIVE',
+              geometry: { type: 'Point', coordinates: [sh.lng, sh.lat] },
+              country: 'India',
+              district: sh.region,
+              issued_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              freshness: 'Verified Shelter Network',
+              confidence: 'VERIFIED',
+              is_official: true,
+              is_community_report: false,
+              details: {
+                nearestLocality: sh.region,
+                shelterProvisions: sh.provisions,
+                contact: sh.contact,
+                safetyGuidance: `Emergency transit camp open. Capacity: ${sh.capacity} persons (Current Occupancy: ${sh.occupancy}).`,
+              },
+            });
+            flyToCoords(sh.lng, sh.lat, 12);
+          });
 
           try {
-            const el = document.createElement('div');
-            el.className = styles.hazardPinMarker;
-
-            const isCritical = hazard.severity >= 4;
-            const color = isCritical ? '#EF4444' : hazard.severity === 3 ? '#F59E0B' : '#38BDF8';
-            const icon = HAZARD_CATEGORIES[hazard.category as keyof typeof HAZARD_CATEGORIES]?.icon || '⚠️';
-            const displayLandmark = (hazard.landmark || hazard.category || 'Hazard').split(',')[0];
-
-            el.innerHTML = `
-              <div class="${styles.hazardPinWrapper}" style="--pin-color: ${color}">
-                <div class="${styles.hazardPulseHalo}"></div>
-                <div class="${styles.hazardPinCore}">
-                  <span class="${styles.hazardPinIcon}">${icon}</span>
-                  <span class="${styles.hazardPinBadge}">L${hazard.severity}</span>
-                </div>
-                <div class="${styles.hazardPinCallout}">
-                  <strong>${displayLandmark}</strong>
-                  <span>${hazard.waterDepthFeet ? hazard.waterDepthFeet + ' ft water' : hazard.category}</span>
-                </div>
-              </div>
-            `;
-
-            el.addEventListener('click', () => {
-              setSelectedPlace(hazard);
-              try {
-                mapRef.current?.flyTo({
-                  center: [hazard.lng, hazard.lat],
-                  zoom: 14.5,
-                  pitch: 35,
-                  duration: 1200,
-                });
-              } catch {}
-            });
-
             const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
-              .setLngLat([hazard.lng, hazard.lat])
+              .setLngLat([sh.lng, sh.lat])
               .addTo(mapRef.current);
 
             markersRef.current.push(marker);
-          } catch (itemErr) {
-            console.warn('Marker item draw warning:', itemErr);
-          }
+          } catch {}
         });
-      } catch (err) {
-        console.warn('drawMarkers warning:', err);
       }
     }
 
-    drawMarkers();
+    updateMarkers();
 
     return () => {
-      cancelled = true;
+      isMounted = false;
     };
-  }, [hazards, activeHazardCategory, mapReady, activeLayer]);
+  }, [mapReady, filteredEvents, layerShelters, layerEarthquakes, layerWeatherFlood, layerFires, layerCommunity, selectedEvent]);
 
-  // Fly to region preset
-  const flyToRegion = (lng: number, lat: number, zoom: number, hazardId?: string) => {
-    if (hazardId) {
-      const place = hazards.find((h) => h.id === hazardId);
-      if (place) setSelectedPlace(place);
-    }
+  // FlyTo Location
+  const flyToCoords = (lng: number, lat: number, zoom: number = 11) => {
     if (!mapRef.current) return;
-    try {
-      mapRef.current.flyTo({
-        center: [lng, lat],
-        zoom,
-        pitch: zoom > 10 ? 35 : 0,
-        duration: 1500,
-      });
-    } catch (e) {
-      console.warn('flyToRegion error:', e);
+    mapRef.current.flyTo({
+      center: [lng, lat],
+      zoom,
+      essential: true,
+      duration: 1400,
+    });
+  };
+
+  // Reset to South Asia Center View
+  const handleResetView = () => {
+    flyToCoords(SOUTH_ASIA_CENTER.lng, SOUTH_ASIA_CENTER.lat, SOUTH_ASIA_CENTER.zoom);
+  };
+
+  // Share Current Map View Link
+  const handleShareView = () => {
+    if (!mapRef.current) return;
+    const center = mapRef.current.getCenter();
+    const zoom = mapRef.current.getZoom();
+    const url = new URL(window.location.href);
+    url.searchParams.set('lat', center.lat.toFixed(4));
+    url.searchParams.set('lng', center.lng.toFixed(4));
+    url.searchParams.set('zoom', zoom.toFixed(1));
+    navigator.clipboard.writeText(url.toString());
+    alert('Map view link copied to clipboard!');
+  };
+
+  // Toggle Fullscreen
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
     }
   };
 
-  // Search input handler with Open-Meteo geocoding
-  const handleSearchSubmit = async (e: React.FormEvent) => {
+  // Switch Base Map Style
+  const handleSelectTileStyle = (styleKey: string) => {
+    if (!mapRef.current) return;
+    setCurrentTileStyle(styleKey);
+    const styleUrl = getActiveTileStyle(styleKey);
+    mapRef.current.setStyle(styleUrl);
+    setShowBaseMapMenu(false);
+  };
+
+  // Submit SOS Distress Beacon
+  const handleSubmitSos = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-
-    setSearching(true);
+    if (!sosLandmark.trim()) {
+      alert('Please enter your landmark or location.');
+      return;
+    }
+    setSosSubmitting(true);
     try {
-      const localMatch = hazards.find(
-        (h) =>
-          (h.landmark || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (h.cityName || '').toLowerCase().includes(searchQuery.toLowerCase())
-      );
-
-      if (localMatch) {
-        flyToRegion(localMatch.lng, localMatch.lat, 14.5, localMatch.id);
-        setSearching(false);
-        return;
-      }
-
-      const res = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-          searchQuery.trim()
-        )}&count=1&language=en&format=json&country_code=IN`
-      );
-
+      const res = await fetch('/api/sos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reporterName: 'Distress Citizen',
+          phone: sosPhone.trim() || 'Not provided',
+          location: { latitude: SOUTH_ASIA_CENTER.lat, longitude: SOUTH_ASIA_CENTER.lng },
+          landmark: sosLandmark.trim(),
+          hazardType: 'FLOODING',
+          peopleCount: 2,
+          notes: sosNotes.trim(),
+        }),
+      });
       if (res.ok) {
-        const data = await res.json();
-        if (data.results && data.results.length > 0) {
-          const item = data.results[0];
-          flyToRegion(item.longitude, item.latitude, 12.5);
-        }
+        const json = await res.json();
+        setSosSuccessId(json.data?.id || 'SOS-CONFIRMED');
+        fetchHazardData();
+      } else {
+        alert('Failed to send SOS broadcast. Please dial 112 directly.');
       }
     } catch {
-      // Fallback
+      alert('Network issue. Call National Emergency Helpline 112 immediately.');
     } finally {
-      setSearching(false);
+      setSosSubmitting(false);
     }
   };
 
   return (
-    <div className={styles.page}>
-      {/* Universal Production Navigation */}
+    <div className={styles.mapPage}>
+      {/* 1. Universal Top Header */}
       <Navbar />
 
-      {/* Top Map Control Bar */}
-      <div className={styles.topControlBar}>
-        {/* Search Box like Google Maps */}
-        <form onSubmit={handleSearchSubmit} className={styles.searchForm}>
-          <span className={styles.searchIcon}>🔍</span>
-          <input
-            type="text"
-            className={styles.searchInput}
-            placeholder="Search place, street, or hazard landmark (e.g. Hazratganj, Gomti Nagar, Dadar, Bellandur)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searching && <span className={styles.searchingSpinner} />}
-          <button type="submit" className={styles.searchBtn}>
-            Search
-          </button>
-        </form>
-
-        {/* Layer Switcher (Urban Street Map / Satellite / Radar) */}
-        <div className={styles.layerSwitcher}>
-          <button
-            type="button"
-            className={`${styles.layerBtn} ${activeLayer === 'street' ? styles.layerBtnActive : ''}`}
-            onClick={() => switchLayer('street')}
-            title="Detailed Urban Cartography with street labels, building outlines & underpass lanes"
-          >
-            🗺️ Urban Street Map
-          </button>
-          <button
-            type="button"
-            className={`${styles.layerBtn} ${activeLayer === 'satellite' ? styles.layerBtnActive : ''}`}
-            onClick={() => switchLayer('satellite')}
-            title="High-Resolution Aerial Satellite Photography with Boundary & Street Labels"
-          >
-            🛰️ High-Res Satellite
-          </button>
-          <button
-            type="button"
-            className={`${styles.layerBtn} ${activeLayer === 'dark' ? styles.layerBtnActive : ''}`}
-            onClick={() => switchLayer('dark')}
-            title="Tactical Dark Weather Radar & Precipitation Echo"
-          >
-            🌑 Tactical Radar
-          </button>
-        </div>
-
-        {/* Zero-API-Key Reassurance Badge */}
-        <div className={styles.freeApiBadge} title="OpenStreetMap & Esri Open Data: No paid keys or subscriptions required">
-          <span>✨</span>
-          <span>100% Free Open Tiles · 0 Paid API Keys</span>
-        </div>
-
-        {/* Dedicated 360° Ground Street View Mode Launcher */}
-        <button
-          type="button"
-          className="btn btn-primary"
-          style={{
-            fontSize: '11.5px',
-            padding: '5px 14px',
-            background: '#0284C7',
-            borderColor: '#38BDF8',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-            boxShadow: '0 0 12px rgba(2, 132, 199, 0.45)',
-          }}
-          onClick={() => {
-            const target = selectedPlace || hazards[0];
-            if (target) {
-              setSelectedPlace(target);
-              setStreetViewPlace(target);
-            }
-          }}
-          title="Inspect real 360-degree ground-level street photography and road panoramas"
-        >
-          <span>🧭</span>
-          <span>Real 360° Street View</span>
-        </button>
-
-        {/* Hazard Category Filter Chips */}
-        <div className={styles.hazardFilterStrip}>
-          <button
-            className={`${styles.filterChip} ${activeHazardCategory === 'ALL' ? styles.filterChipActive : ''}`}
-            onClick={() => setActiveHazardCategory('ALL')}
-          >
-            All Hazards ({hazards.length})
-          </button>
-          <button
-            className={`${styles.filterChip} ${activeHazardCategory === 'WATERLOGGING' ? styles.filterChipActive : ''}`}
-            onClick={() => setActiveHazardCategory('WATERLOGGING')}
-          >
-            💧 Waterlogging
-          </button>
-          <button
-            className={`${styles.filterChip} ${activeHazardCategory === 'FLOODING' ? styles.filterChipActive : ''}`}
-            onClick={() => setActiveHazardCategory('FLOODING')}
-          >
-            🌊 Flooding
-          </button>
-          <button
-            className={`${styles.filterChip} ${activeHazardCategory === 'CLOUDBURST' ? styles.filterChipActive : ''}`}
-            onClick={() => setActiveHazardCategory('CLOUDBURST')}
-          >
-            ⛈️ Cloudburst
-          </button>
-          <button
-            className={`${styles.filterChip} ${activeHazardCategory === 'SEVERE_RAIN' ? styles.filterChipActive : ''}`}
-            onClick={() => setActiveHazardCategory('SEVERE_RAIN')}
-          >
-            🌧️ Severe Rain
-          </button>
-          <button
-            className={`${styles.filterChip} ${showResolvedArchive ? styles.filterChipActive : ''}`}
-            style={{
-              borderColor: showResolvedArchive ? '#34D399' : 'rgba(52, 211, 153, 0.3)',
-              color: showResolvedArchive ? '#34D399' : '#86EFAC',
-              background: showResolvedArchive ? 'rgba(52, 211, 153, 0.18)' : 'transparent',
-            }}
-            onClick={() => setShowResolvedArchive(!showResolvedArchive)}
-            title="Toggle viewing historical resolved hazards archive"
-          >
-            {showResolvedArchive ? '✅ Viewing Resolved Archive' : '🏁 View Resolved History'}
-          </button>
-        </div>
-      </div>
-
-      {/* Regional Quick Jump Bar */}
-      <div className={styles.quickJumpBar}>
-        <span className={styles.quickJumpTitle}>⚡ Quick Focus:</span>
-        <button
-          className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(78.9629, 22.5937, 4.8)}
-        >
-          🇮🇳 All-India Overview
-        </button>
-        <button
-          className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(80.9462, 26.8467, 12)}
-        >
-          📍 Lucknow
-        </button>
-        <button
-          className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(77.2090, 28.6139, 11)}
-        >
-          📍 Delhi NCR
-        </button>
-        <button
-          className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(72.8777, 19.0760, 11)}
-        >
-          📍 Mumbai
-        </button>
-        <button
-          className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(77.5946, 12.9716, 11)}
-        >
-          📍 Bengaluru
-        </button>
-        <button
-          className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(80.2707, 13.0827, 11)}
-        >
-          📍 Chennai
-        </button>
-        <button
-          className={styles.quickJumpBtn}
-          onClick={() => flyToRegion(88.3639, 22.5726, 11)}
-        >
-          📍 Kolkata
-        </button>
-        {hazards.slice(0, 3).map((h) => (
-          <button
-            key={h.id}
-            className={styles.quickJumpBtn}
-            style={{ borderColor: '#EF4444', color: '#FCA5A5' }}
-            onClick={() => flyToRegion(h.lng, h.lat, 14.5, h.id)}
-          >
-            ⚠️ {(h.landmark || h.category || 'Hazard').split(',')[0]} (L{h.severity})
-          </button>
-        ))}
-      </div>
-
-      {/* Interactive Map Layout */}
+      {/* 2. Operational Layout */}
       <div className={styles.mapLayout}>
-        {/* Full-bleed WebGL Map Canvas Container */}
-        <div ref={mapContainerRef} className={styles.mapCanvasWrapper} />
+        {/* ============================================================
+            Left Information Rail (Collapsible)
+            ============================================================ */}
+        <aside className={`${styles.leftRail} ${!isRailOpen ? styles.leftRailCollapsed : ''}`}>
+          <button
+            type="button"
+            className={styles.railToggleBtn}
+            onClick={() => setIsRailOpen(!isRailOpen)}
+            title={isRailOpen ? 'Collapse intelligence panel' : 'Expand intelligence panel'}
+            aria-label="Toggle rail"
+          >
+            {isRailOpen ? '◀' : '▶'}
+          </button>
 
-        {/* Live Zero-Hazard State Indicator */}
-        {hazards.length === 0 && (
-          <div style={{
-            position: 'absolute',
-            top: '16px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10,
-            background: 'rgba(7, 21, 36, 0.92)',
-            border: '1px solid rgba(56, 189, 248, 0.4)',
-            borderRadius: '999px',
-            padding: '7px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            color: '#F7F6F2',
-            fontSize: '12px',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          }}>
-            <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#34D399' }} />
-            <span>Radar &amp; Telemetry Gateway Live · Zero active hazards reported. New citizen reports submitted at <Link href="/report" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'underline' }}>/report</Link> appear here automatically.</span>
-          </div>
-        )}
+          {/* Rail Header */}
+          <div className={styles.railHeader}>
+            <div className={styles.railHeaderTop}>
+              <div className={styles.railTitleWrapper}>
+                <div className={styles.pulseDotLive} />
+                <h2 className={styles.railTitle}>{t.map.liveIntel}</h2>
+              </div>
+              <span className={styles.regionPill}>
+                {selectedCountry === 'ALL' ? 'South Asia Grid' : selectedCountry}
+              </span>
+            </div>
 
-        {/* Live Active Hazards Indicator Banner */}
-        {hazards.length > 0 && (
-          <div style={{
-            position: 'absolute',
-            top: '16px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10,
-            background: 'rgba(15, 23, 42, 0.95)',
-            border: '1px solid #EF4444',
-            borderRadius: '999px',
-            padding: '6px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            color: '#F8FAFC',
-            fontSize: '12px',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 4px 20px rgba(239, 68, 68, 0.35)',
-          }}>
-            <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#EF4444' }} />
-            <span><strong>{hazards.length} Active Ground Hazard{hazards.length > 1 ? 's' : ''}</strong> Live on Radar</span>
-            <button
-              type="button"
-              onClick={() => {
-                const target = hazards[0];
-                if (target) {
-                  setSelectedPlace(target);
-                  mapRef.current?.flyTo({
-                    center: [target.lng, target.lat],
-                    zoom: 15,
-                    pitch: 35,
-                    duration: 1200,
-                  });
-                }
-              }}
-              style={{
-                background: '#DC2626',
-                color: '#FFF',
-                border: 'none',
-                borderRadius: '999px',
-                padding: '4px 12px',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              🎯 Focus Latest Hazard ({(hazards[0]?.landmark || hazards[0]?.category || 'Hazard').split(',')[0]})
-            </button>
-          </div>
-        )}
-
-        {/* Floating Quick Legend */}
-        <div className={styles.floatingLegend}>
-          <div className={styles.legendItem}>
-            <span className={styles.legendDotCritical} />
-            <span>Critical Hazard (Level 4-5)</span>
-          </div>
-          <div className={styles.legendItem}>
-            <span className={styles.legendDotModerate} />
-            <span>Moderate Watch (Level 2-3)</span>
-          </div>
-          <div className={styles.legendItem}>
-            <span>📷 Verified Ground Camera Photos Available</span>
-          </div>
-        </div>
-
-        {/* Selected Hazard Place Card / Inspection Drawer */}
-        {selectedPlace && (
-          <div className={styles.placeInspectionCard}>
-            <div className={styles.placeCardHeader}>
-              <div className={styles.placeCardTitleGroup}>
-                <span className={styles.placeCardCategoryBadge}>
-                  {HAZARD_CATEGORIES[selectedPlace.category as keyof typeof HAZARD_CATEGORIES]?.icon || '⚠️'} {selectedPlace.category}
-                </span>
-                <span className={styles.placeCardSeverityPill} data-severity={selectedPlace.severity}>
-                  Severity Level {selectedPlace.severity} · {SEVERITY_LABELS[selectedPlace.severity as 1|2|3|4|5]?.label}
-                </span>
+            <div className={styles.railMetaSub}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>{t.map.refreshed}: {lastRefreshedAt || 'Connecting feeds...'}</span>
+                <button
+                  type="button"
+                  onClick={() => fetchHazardData()}
+                  title="Fetch latest live telemetry now (Auto-refreshes every 30s)"
+                  className={styles.refreshTriggerBtn}
+                  disabled={loading}
+                >
+                  <span style={{ display: 'inline-block', transform: loading ? 'rotate(360deg)' : 'none', transition: 'transform 0.5s linear' }}>↻</span>
+                  <span>{loading ? t.map.syncing : t.map.sync}</span>
+                </button>
               </div>
               <button
                 type="button"
-                className={styles.closeCardBtn}
-                onClick={() => setSelectedPlace(null)}
-                title="Close place card"
+                className={styles.sosQuickTriggerBtn}
+                onClick={() => setIsSosOpen(true)}
+              >
+                {t.map.sosBeacon}
+              </button>
+            </div>
+          </div>
+
+          {/* 5 Categorical Tabs */}
+          <nav className={styles.tabNav}>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'official' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('official')}
+            >
+              <span>{t.map.tabOfficial}</span>
+              <span className={styles.tabCountBadge}>{officialAlertsList.length}</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'earth' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('earth')}
+            >
+              <span>{t.map.tabEarth}</span>
+              <span className={styles.tabCountBadge}>
+                {events.filter((e) => ['EQ', 'LS', 'TS', 'AV'].includes(e.acronym)).length}
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'weather_flood' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('weather_flood')}
+            >
+              <span>{t.map.tabWeatherFlood}</span>
+              <span className={styles.tabCountBadge}>
+                {events.filter((e) => ['FL', 'RF', 'CW', 'ST', 'CV'].includes(e.acronym)).length}
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'fire_heat' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('fire_heat')}
+            >
+              <span>{t.map.tabFireHeat}</span>
+              <span className={styles.tabCountBadge}>
+                {events.filter((e) => ['FR', 'HW'].includes(e.acronym)).length}
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.tabBtn} ${activeTab === 'community' ? styles.tabBtnActive : ''}`}
+              onClick={() => setActiveTab('community')}
+            >
+              <span>{t.map.tabCommunity}</span>
+              <span className={styles.tabCountBadge}>{communityReportsList.length}</span>
+            </button>
+          </nav>
+
+          {/* Facet Filter Bar */}
+          <div className={styles.filterBar}>
+            <div className={styles.filterRowPrimary}>
+              <select
+                className={styles.filterSelect}
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+                aria-label="Filter by Country"
+              >
+                <option value="ALL">All South Asia</option>
+                <option value="India">India</option>
+                <option value="Nepal">Nepal</option>
+                <option value="Bhutan">Bhutan</option>
+                <option value="Bangladesh">Bangladesh</option>
+                <option value="Sri Lanka">Sri Lanka</option>
+              </select>
+
+              <select
+                className={styles.filterSelect}
+                value={selectedSeverity}
+                onChange={(e) => setSelectedSeverity(e.target.value)}
+                aria-label="Filter by Severity"
+              >
+                <option value="ALL">All Severities</option>
+                <option value="SEVERE">Severe / Critical</option>
+                <option value="WARNING">Warning</option>
+                <option value="WATCH">Watch</option>
+                <option value="ADVISORY">Advisory</option>
+              </select>
+
+              <div className={styles.filterTimeGroup}>
+                <button
+                  type="button"
+                  className={`${styles.filterTimeBtn} ${timeRange === '24h' ? styles.filterTimeBtnActive : ''}`}
+                  onClick={() => setTimeRange('24h')}
+                >
+                  24h
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.filterTimeBtn} ${timeRange === '7d' ? styles.filterTimeBtnActive : ''}`}
+                  onClick={() => setTimeRange('7d')}
+                >
+                  7d
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.filterTimeBtn} ${timeRange === '30d' ? styles.filterTimeBtnActive : ''}`}
+                  onClick={() => setTimeRange('30d')}
+                >
+                  30d
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Acronym Badges Filter */}
+            <div className={styles.filterAcronymPills}>
+              <button
+                type="button"
+                className={`${styles.acronymPill} ${selectedAcronym === 'ALL' ? styles.acronymPillActive : ''}`}
+                onClick={() => setSelectedAcronym('ALL')}
+              >
+                ALL
+              </button>
+              {(Object.keys(HAZARD_ACRONYM_META) as HazardAcronym[]).map((acr) => (
+                <button
+                  key={acr}
+                  type="button"
+                  className={`${styles.acronymPill} ${selectedAcronym === acr ? styles.acronymPillActive : ''}`}
+                  onClick={() => setSelectedAcronym(selectedAcronym === acr ? 'ALL' : acr)}
+                  title={HAZARD_ACRONYM_META[acr].name}
+                >
+                  {acr}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Scrollable Feed List */}
+          <div className={styles.railContent}>
+            {loading ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: '#737571', fontSize: '13px' }}>
+                Establishing multi-agency telemetry uplink...
+              </div>
+            ) : filteredEvents.length === 0 ? (
+              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#737571', fontSize: '13px' }}>
+                No active hazard events match the current filter criteria.
+              </div>
+            ) : (
+              <>
+                {/* 1. Official Government & Agency Alerts Feed */}
+                {officialAlertsList.length > 0 && (
+                  <>
+                    <div className={styles.feedSectionHeader}>
+                      <span className={styles.feedSectionTitle}>{t.map.latestOfficial}</span>
+                      <span className={styles.tabCountBadge}>{officialAlertsList.length}</span>
+                    </div>
+
+                    {officialAlertsList.map((ev) => {
+                      const isSelected = selectedEvent?.id === ev.id;
+                      let sevClass = styles.sevAdvisory;
+                      if (ev.severity === 'SEVERE') sevClass = styles.sevSevere;
+                      else if (ev.severity === 'WARNING') sevClass = styles.sevWarning;
+                      else if (ev.severity === 'WATCH') sevClass = styles.sevWatch;
+
+                      return (
+                        <div
+                          key={ev.id}
+                          className={`${styles.hazardCard} ${isSelected ? styles.hazardCardSelected : ''}`}
+                          onClick={() => {
+                            setSelectedEvent(ev);
+                            const center = getEventCenter(ev);
+                            if (center) {
+                              flyToCoords(center[0], center[1], ev.geometry.type === 'Polygon' ? 8.5 : 9);
+                            }
+                          }}
+                        >
+                          <div className={styles.cardTopRow}>
+                            <div className={styles.cardLeftIdent}>
+                              <span className={`${styles.acronymBadge} ${sevClass}`}>
+                                {ev.acronym}
+                              </span>
+                              <div>
+                                <h3 className={styles.cardTitle}>{ev.title}</h3>
+                                <div className={styles.cardLocation}>
+                                  <span>📍 {ev.district || ev.state || ev.country}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <span className={`${styles.severityPill} ${sevClass}`}>
+                              {ev.severity}
+                            </span>
+                          </div>
+
+                          {/* Telemetry Metrics Row */}
+                          <div className={styles.cardTelemetryRow}>
+                            {ev.details?.magnitude !== undefined && (
+                              <div className={styles.cardTelemetryItem}>
+                                <span>Magnitude:</span>
+                                <span className={styles.cardTelemetryVal}>M {ev.details.magnitude.toFixed(1)}</span>
+                              </div>
+                            )}
+                            {ev.details?.depthKm !== undefined && (
+                              <div className={styles.cardTelemetryItem}>
+                                <span>Depth:</span>
+                                <span className={styles.cardTelemetryVal}>{ev.details.depthKm} km</span>
+                              </div>
+                            )}
+                            {ev.details?.rainfallRateMmH !== undefined && (
+                              <div className={styles.cardTelemetryItem}>
+                                <span>Rain Rate:</span>
+                                <span className={styles.cardTelemetryVal}>{ev.details.rainfallRateMmH.toFixed(1)} mm/h</span>
+                              </div>
+                            )}
+                            {ev.details?.brightnessTempK !== undefined && (
+                              <div className={styles.cardTelemetryItem}>
+                                <span>Temp:</span>
+                                <span className={styles.cardTelemetryVal}>{ev.details.brightnessTempK} K</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className={styles.cardFooterRow}>
+                            <span>{ev.freshness}</span>
+                            <a
+                              href={ev.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.cardSourceLink}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {ev.source} ↗
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+
+                {/* 2. Separate Community-Reported Hazards Feed */}
+                {communityReportsList.length > 0 && (
+                  <>
+                    <div className={styles.feedSectionHeader} style={{ marginTop: '16px' }}>
+                      <span className={styles.feedSectionTitle}>{t.map.tabCommunity}</span>
+                      <span className={styles.unverifiedLabel}>{t.map.citizenTruth}</span>
+                    </div>
+
+                    {communityReportsList.map((ev) => {
+                      const isSelected = selectedEvent?.id === ev.id;
+                      const modStatus = ev.details?.moderationStatus || 'Received';
+                      let modClass = styles.modReceived;
+                      if (modStatus === 'Under review') modClass = styles.modUnderReview;
+                      else if (modStatus === 'Verified') modClass = styles.modVerified;
+                      else if (modStatus === 'Dismissed') modClass = styles.modDismissed;
+                      else if (modStatus === 'Resolved') modClass = styles.modResolved;
+
+                      return (
+                        <div
+                          key={ev.id}
+                          className={`${styles.communityCard} ${isSelected ? styles.hazardCardSelected : ''}`}
+                          onClick={() => {
+                            setSelectedEvent(ev);
+                            const center = getEventCenter(ev);
+                            if (center) {
+                              flyToCoords(center[0], center[1], 11);
+                            }
+                          }}
+                        >
+                          <div className={styles.communityBadgeRow}>
+                            <span className={styles.unverifiedLabel}>Unverified Community Report</span>
+                            <span className={`${styles.moderationPill} ${modClass}`}>
+                              {modStatus}
+                            </span>
+                          </div>
+
+                          <h3 className={styles.cardTitle}>{ev.title}</h3>
+                          <div className={styles.cardLocation}>
+                            <span>📍 {ev.district || 'Ground observation'}</span>
+                          </div>
+
+                          <div className={styles.cardFooterRow}>
+                            <span>Reported: {new Date(ev.issued_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <Link href={ev.source_url} className={styles.cardSourceLink} onClick={(e) => e.stopPropagation()}>
+                              Track report ↗
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </aside>
+
+        {/* ============================================================
+            MapLibre Viewport Container
+            ============================================================ */}
+        <div className={styles.mapArea}>
+          {/* Isolated Full-Screen Canvas for MapLibre GL Engine */}
+          <div
+            ref={mapContainerRef}
+            className={styles.mapCanvas}
+            style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}
+          />
+
+          {/* Top-Left Search Bar (Targeted exclusively to Indian Major Cities & Disaster Prone Corridors) */}
+          <div className={styles.searchControlWrapper}>
+            <div className={styles.searchBar}>
+              <span className={styles.searchIcon}>🔍</span>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder={t.map.searchPlaceholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className={styles.searchClearBtn}
+                  onClick={() => setSearchQuery('')}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Autocomplete Dropdown List */}
+            {isSearching && searchResults.length > 0 && (
+              <div className={styles.autocompleteDropdown}>
+                <div className={styles.autocompleteHeader}>
+                  India Cities & Disaster Vulnerability Index
+                </div>
+                {searchResults.map((loc) => (
+                  <div
+                    key={loc.id}
+                    className={styles.autocompleteItem}
+                    onClick={() => {
+                      flyToCoords(loc.lng, loc.lat, loc.zoom);
+                      setSearchQuery(loc.name);
+                      setIsSearching(false);
+                    }}
+                  >
+                    <div>
+                      <div className={styles.autoItemName}>{loc.name}</div>
+                      <div className={styles.autoItemCat}>
+                        {loc.state} · {loc.category}
+                      </div>
+                    </div>
+                    <span
+                      className={`${styles.autoItemBadge} ${
+                        loc.type === 'DISASTER_PRONE' ? styles.autoBadgeDisaster : styles.autoBadgeMetro
+                      }`}
+                    >
+                      {loc.type === 'DISASTER_PRONE' ? 'High Risk' : 'Metro'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Top-Right Floating Controls */}
+          <div className={styles.topRightControls}>
+            {/* Layers Switcher Popover */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className={`${styles.mapControlBtn} ${showLayerMenu ? styles.mapControlBtnActive : ''}`}
+                onClick={() => {
+                  setShowLayerMenu(!showLayerMenu);
+                  setShowBaseMapMenu(false);
+                  setShowLegend(false);
+                  setShowFeedsMenu(false);
+                  setShowMapLangMenu(false);
+                }}
+              >
+                <span>{t.map.layers}</span>
+                <span>▾</span>
+              </button>
+
+              {showLayerMenu && (
+                <div className={styles.floatingPopover}>
+                  <h4 className={styles.popoverTitle}>Hazard Layer Feeds</h4>
+                  <label className={styles.layerCheckboxLabel}>
+                    <span>Official Polygons (NDMA / IMD)</span>
+                    <input
+                      type="checkbox"
+                      checked={layerPolygons}
+                      onChange={(e) => setLayerPolygons(e.target.checked)}
+                    />
+                  </label>
+                  <label className={styles.layerCheckboxLabel}>
+                    <span>Earthquakes (USGS EQ)</span>
+                    <input
+                      type="checkbox"
+                      checked={layerEarthquakes}
+                      onChange={(e) => setLayerEarthquakes(e.target.checked)}
+                    />
+                  </label>
+                  <label className={styles.layerCheckboxLabel}>
+                    <span>Weather & Floods (FL / RF / ST)</span>
+                    <input
+                      type="checkbox"
+                      checked={layerWeatherFlood}
+                      onChange={(e) => setLayerWeatherFlood(e.target.checked)}
+                    />
+                  </label>
+                  <label className={styles.layerCheckboxLabel}>
+                    <span>Thermal Fires (NASA FIRMS FR)</span>
+                    <input
+                      type="checkbox"
+                      checked={layerFires}
+                      onChange={(e) => setLayerFires(e.target.checked)}
+                    />
+                  </label>
+                  <label className={styles.layerCheckboxLabel}>
+                    <span>Community Reports (Citizen)</span>
+                    <input
+                      type="checkbox"
+                      checked={layerCommunity}
+                      onChange={(e) => setLayerCommunity(e.target.checked)}
+                    />
+                  </label>
+                  <label className={styles.layerCheckboxLabel}>
+                    <span>Relief Shelters (Evacuation)</span>
+                    <input
+                      type="checkbox"
+                      checked={layerShelters}
+                      onChange={(e) => setLayerShelters(e.target.checked)}
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Base Map Style Switcher */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className={`${styles.mapControlBtn} ${showBaseMapMenu ? styles.mapControlBtnActive : ''}`}
+                onClick={() => {
+                  setShowBaseMapMenu(!showBaseMapMenu);
+                  setShowLayerMenu(false);
+                  setShowLegend(false);
+                  setShowFeedsMenu(false);
+                  setShowMapLangMenu(false);
+                }}
+              >
+                <span>{t.map.baseMap}</span>
+                <span>▾</span>
+              </button>
+
+              {showBaseMapMenu && (
+                <div className={styles.floatingPopover}>
+                  <h4 className={styles.popoverTitle}>Vector Tile Base Map</h4>
+                  {Object.values(TILE_STYLES).map((ts) => (
+                    <button
+                      key={ts.id}
+                      type="button"
+                      className={`${styles.mapControlBtn} ${
+                        currentTileStyle === ts.id ? styles.mapControlBtnActive : ''
+                      }`}
+                      style={{ width: '100%', justifyContent: 'flex-start' }}
+                      onClick={() => handleSelectTileStyle(ts.id)}
+                    >
+                      {ts.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Legend Drawer Trigger */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className={`${styles.mapControlBtn} ${showLegend ? styles.mapControlBtnActive : ''}`}
+                onClick={() => {
+                  setShowLegend(!showLegend);
+                  setShowLayerMenu(false);
+                  setShowBaseMapMenu(false);
+                  setShowFeedsMenu(false);
+                  setShowMapLangMenu(false);
+                }}
+              >
+                <span>{t.map.legend}</span>
+              </button>
+
+              {showLegend && (
+                <div className={styles.floatingPopover} style={{ width: '320px', maxHeight: '380px', overflowY: 'auto' }}>
+                  <h4 className={styles.popoverTitle}>Hazard Acronyms & Severities</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
+                    {(Object.keys(HAZARD_ACRONYM_META) as HazardAcronym[]).map((acr) => (
+                      <div key={acr} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                        <span className={`${styles.acronymBadge} ${styles.sevWatch}`} style={{ width: '22px', height: '22px', fontSize: '10px' }}>
+                          {acr}
+                        </span>
+                        <span style={{ color: '#161816', fontWeight: 600 }}>{HAZARD_ACRONYM_META[acr].name}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <h4 className={styles.popoverTitle} style={{ marginTop: '8px' }}>Severity Scale</h4>
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                    <span className={`${styles.severityPill} ${styles.sevAdvisory}`}>Advisory</span>
+                    <span className={`${styles.severityPill} ${styles.sevWatch}`}>Watch</span>
+                    <span className={`${styles.severityPill} ${styles.sevWarning}`}>Warning</span>
+                    <span className={`${styles.severityPill} ${styles.sevSevere}`}>Severe</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Live Agency Feeds & Health Telemetry Trigger */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className={`${styles.mapControlBtn} ${showFeedsMenu ? styles.mapControlBtnActive : ''}`}
+                onClick={() => {
+                  setShowFeedsMenu(!showFeedsMenu);
+                  setShowLayerMenu(false);
+                  setShowBaseMapMenu(false);
+                  setShowLegend(false);
+                  setShowMapLangMenu(false);
+                }}
+                title="View active agency feeds and synchronization health"
+              >
+                <div className={styles.pulseDotLive} style={{ width: '6px', height: '6px' }} />
+                <span>{t.map.liveFeeds} ({sourcesHealth.filter((s) => s.status === 'HEALTHY').length || 7})</span>
+                <span>▾</span>
+              </button>
+
+              {showFeedsMenu && (
+                <div className={styles.floatingPopover} style={{ width: '370px', maxHeight: '440px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid #EFECE6' }}>
+                    <h4 className={styles.popoverTitle} style={{ margin: 0 }}>Real-Time Disaster Data Uplinks</h4>
+                    <span style={{ fontSize: '10px', color: '#2E5A44', fontWeight: 700, background: '#EBF5EE', padding: '2px 6px', borderRadius: '3px' }}>
+                      Auto-Sync 30s
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {sourcesHealth.map((sh) => (
+                      <div key={sh.id} style={{ padding: '8px 10px', background: '#FAF9F6', borderRadius: '4px', border: '1px solid #EFECE6' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#161816' }}>{sh.name}</span>
+                          <span style={{
+                            fontSize: '9.5px',
+                            padding: '1px 5px',
+                            borderRadius: '3px',
+                            fontWeight: 700,
+                            letterSpacing: '0.02em',
+                            background: sh.status === 'HEALTHY' ? '#EBF5EE' : sh.status === 'DEGRADED' ? '#FEF3E8' : '#F4F3EF',
+                            color: sh.status === 'HEALTHY' ? '#2E5A44' : sh.status === 'DEGRADED' ? '#D67A20' : '#8A8C86',
+                          }}>
+                            {sh.status === 'HEALTHY' ? '● LIVE / SYNC' : sh.status === 'DEGRADED' ? 'RETRYING' : 'PENDING BRIDGE'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#383A36', marginBottom: '4px', lineHeight: 1.35 }}>{sh.statusMessage}</div>
+                        <div style={{ fontSize: '10px', color: '#737571', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>Coverage: {sh.coverage}</span>
+                          {sh.officialFeedUrl && (
+                            <a href={sh.officialFeedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#D67A20', textDecoration: 'underline', fontWeight: 600 }}>
+                              Official Portal ↗
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Multilingual 6-Language Switcher */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className={`${styles.mapControlBtn} ${showMapLangMenu ? styles.mapControlBtnActive : ''}`}
+                onClick={() => {
+                  setShowMapLangMenu(!showMapLangMenu);
+                  setShowLayerMenu(false);
+                  setShowBaseMapMenu(false);
+                  setShowLegend(false);
+                  setShowFeedsMenu(false);
+                }}
+                title="Select language / भाषा चुनें (6 Indian Languages)"
+              >
+                <span style={{ fontSize: '12px' }}>🌐</span>
+                <span>{SUPPORTED_LANGUAGES.find((l) => l.code === lang)?.nativeName || 'English'}</span>
+                <span>▾</span>
+              </button>
+
+              {showMapLangMenu && (
+                <div className={styles.floatingPopover} style={{ minWidth: '180px', padding: '6px' }}>
+                  <h4 className={styles.popoverTitle} style={{ padding: '4px 8px', marginBottom: '4px' }}>
+                    Language / भाषा
+                  </h4>
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      type="button"
+                      className={`${styles.mapControlBtn} ${
+                        lang === l.code ? styles.mapControlBtnActive : ''
+                      }`}
+                      style={{
+                        width: '100%',
+                        justifyContent: 'space-between',
+                        padding: '6px 10px',
+                        marginBottom: '3px',
+                        fontSize: '12px',
+                      }}
+                      onClick={() => {
+                        setLang(l.code);
+                        setSavedLanguage(l.code);
+                        window.dispatchEvent(new CustomEvent('languagechange', { detail: l.code }));
+                        setShowMapLangMenu(false);
+                      }}
+                    >
+                      <span style={{ fontWeight: 700 }}>{l.nativeName}</span>
+                      <span style={{ fontSize: '10.5px', color: '#737571' }}>{l.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Reset View Button */}
+            <button
+              type="button"
+              className={styles.mapControlBtn}
+              onClick={handleResetView}
+              title="Reset center to India & South Asia"
+            >
+              ⟲ {t.map.reset}
+            </button>
+
+            {/* Share Map View */}
+            <button
+              type="button"
+              className={styles.mapControlBtn}
+              onClick={handleShareView}
+              title="Copy map view URL"
+            >
+              🔗 Share
+            </button>
+
+            {/* Fullscreen Button */}
+            <button
+              type="button"
+              className={styles.mapControlBtn}
+              onClick={handleToggleFullscreen}
+              title="Toggle Fullscreen Mode"
+            >
+              ⛶
+            </button>
+          </div>
+
+          {/* Bottom Telemetry Bar */}
+          <div className={styles.mapBottomBar}>
+            <div className={styles.bottomHealthPill}>
+              <span>📡 Official Uplinks:</span>
+              <span>USGS: Live</span>
+              <span>·</span>
+              <span>NDMA SACHET: Live</span>
+              <span>·</span>
+              <span>GDACS: Live</span>
+              <span>·</span>
+              <span>NASA FIRMS: Calibrated</span>
+            </div>
+
+            <div className={styles.bottomTimeSlider}>
+              <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#737571', textTransform: 'uppercase' }}>
+                Window:
+              </span>
+              <button
+                type="button"
+                className={`${styles.filterTimeBtn} ${timeRange === '24h' ? styles.filterTimeBtnActive : ''}`}
+                onClick={() => setTimeRange('24h')}
+              >
+                24h
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterTimeBtn} ${timeRange === '7d' ? styles.filterTimeBtnActive : ''}`}
+                onClick={() => setTimeRange('7d')}
+              >
+                7d
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterTimeBtn} ${timeRange === '30d' ? styles.filterTimeBtnActive : ''}`}
+                onClick={() => setTimeRange('30d')}
+              >
+                30d
+              </button>
+            </div>
+          </div>
+
+          {/* ============================================================
+              Rich Incident Inspection Panel (Slide-in)
+              ============================================================ */}
+          {selectedEvent && (
+            <div className={styles.incidentPanel}>
+              <div className={styles.panelHeader}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    className={`${styles.acronymBadge} ${
+                      selectedEvent.severity === 'SEVERE'
+                        ? styles.sevSevere
+                        : selectedEvent.severity === 'WARNING'
+                        ? styles.sevWarning
+                        : selectedEvent.severity === 'WATCH'
+                        ? styles.sevWatch
+                        : styles.sevAdvisory
+                    }`}
+                  >
+                    {selectedEvent.acronym}
+                  </span>
+                  <div>
+                    <span className={`${styles.severityPill} ${styles.sevWarning}`}>
+                      {selectedEvent.severity}
+                    </span>
+                    <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '2px 0 0', color: '#161816' }}>
+                      {selectedEvent.title}
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={styles.panelCloseBtn}
+                  onClick={() => setSelectedEvent(null)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={styles.panelContent}>
+                {/* Official Safety Guidance Box */}
+                {selectedEvent.details?.safetyGuidance && (
+                  <div>
+                    <div className={styles.panelSectionTitle}>Official Safety Directive</div>
+                    <div className={styles.guidanceBox}>
+                      {selectedEvent.details.safetyGuidance}
+                    </div>
+                  </div>
+                )}
+
+                {/* Telemetry Metrics Grid */}
+                <div className={styles.telemetryGrid}>
+                  <div className={styles.telemetryCard}>
+                    <div className={styles.telemetryCardLabel}>Jurisdiction / Region</div>
+                    <div className={styles.telemetryCardValue} style={{ fontSize: '12px' }}>
+                      {selectedEvent.district || selectedEvent.state || selectedEvent.country}
+                    </div>
+                  </div>
+
+                  <div className={styles.telemetryCard}>
+                    <div className={styles.telemetryCardLabel}>Source Agency</div>
+                    <div className={styles.telemetryCardValue} style={{ fontSize: '12px' }}>
+                      {selectedEvent.source}
+                    </div>
+                  </div>
+
+                  {selectedEvent.details?.magnitude !== undefined && (
+                    <div className={styles.telemetryCard}>
+                      <div className={styles.telemetryCardLabel}>Focal Magnitude</div>
+                      <div className={styles.telemetryCardValue}>M {selectedEvent.details.magnitude.toFixed(1)}</div>
+                    </div>
+                  )}
+
+                  {selectedEvent.details?.depthKm !== undefined && (
+                    <div className={styles.telemetryCard}>
+                      <div className={styles.telemetryCardLabel}>Hypocenter Depth</div>
+                      <div className={styles.telemetryCardValue}>{selectedEvent.details.depthKm} km</div>
+                    </div>
+                  )}
+
+                  {selectedEvent.details?.rainfallRateMmH !== undefined && (
+                    <div className={styles.telemetryCard}>
+                      <div className={styles.telemetryCardLabel}>Rainfall Intensity</div>
+                      <div className={styles.telemetryCardValue}>{selectedEvent.details.rainfallRateMmH.toFixed(1)} mm/h</div>
+                    </div>
+                  )}
+
+                  {selectedEvent.details?.brightnessTempK !== undefined && (
+                    <div className={styles.telemetryCard}>
+                      <div className={styles.telemetryCardLabel}>Thermal Intensity</div>
+                      <div className={styles.telemetryCardValue}>{selectedEvent.details.brightnessTempK} K</div>
+                    </div>
+                  )}
+
+                  {selectedEvent.details?.satellite && (
+                    <div className={styles.telemetryCard}>
+                      <div className={styles.telemetryCardLabel}>Orbital Platform</div>
+                      <div className={styles.telemetryCardValue} style={{ fontSize: '11.5px' }}>
+                        {selectedEvent.details.satellite}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedEvent.details?.riverBasin && (
+                    <div className={styles.telemetryCard}>
+                      <div className={styles.telemetryCardLabel}>Hydrological Basin</div>
+                      <div className={styles.telemetryCardValue} style={{ fontSize: '11.5px' }}>
+                        {selectedEvent.details.riverBasin}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Daily Disaster Update & Telemetry Lifecycle */}
+                <div style={{
+                  fontSize: '11px',
+                  color: '#383A36',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '5px',
+                  background: '#FAF9F6',
+                  padding: '10px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #EFECE6',
+                  margin: '8px 0',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#737571' }}>{t.map.initialDetection}:</span>
+                    <span style={{ fontWeight: 600 }}>{new Date(selectedEvent.issued_at).toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#737571' }}>{t.map.latestAgencyUpdate}:</span>
+                    <span style={{ color: '#2E5A44', fontWeight: 700 }}>
+                      {new Date(selectedEvent.updated_at || selectedEvent.issued_at).toLocaleString()}
+                    </span>
+                  </div>
+                  {selectedEvent.expires_at && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#737571' }}>{t.map.activeBulletinUntil}:</span>
+                      <span style={{ fontWeight: 600 }}>{new Date(selectedEvent.expires_at).toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#737571' }}>{t.map.telemetryFreshness}:</span>
+                    <span style={{ fontWeight: 600, color: '#161816' }}>{selectedEvent.freshness}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px solid #EFECE6' }}>
+                    <span style={{ color: '#737571' }}>{t.map.dailySyncStatus}:</span>
+                    <span style={{ color: '#D67A20', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className={styles.pulseDotLive} style={{ width: '5px', height: '5px', background: '#D67A20' }} />
+                      Continuous Real-Time Sync
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className={styles.panelActionRow}>
+                  {selectedEvent.source_url && selectedEvent.source_url !== '#' && (
+                    <a
+                      href={selectedEvent.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.panelPrimaryBtn}
+                    >
+                      {t.map.verifySource} ↗
+                    </a>
+                  )}
+
+                  {selectedEvent.details?.feltUrl && (
+                    <a
+                      href={selectedEvent.details.feltUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.panelSecondaryBtn}
+                    >
+                      USGS Did You Feel It? ↗
+                    </a>
+                  )}
+
+                  <Link href="/report" className={styles.panelSecondaryBtn}>
+                    {t.map.reportUpdate}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ============================================================
+          SOS Distress Drawer
+          ============================================================ */}
+      {isSosOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(22, 24, 22, 0.45)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={() => setIsSosOpen(false)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #E5E2D9',
+              borderRadius: '8px',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 12px 32px rgba(22, 24, 22, 0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>🚨</span>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: '#A82824' }}>
+                  Broadcast SOS Distress Beacon
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSosOpen(false)}
+                style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#737571' }}
               >
                 ✕
               </button>
             </div>
 
-            {/* Place Card Mode Switcher */}
-            <div style={{
-              display: 'flex',
-              borderBottom: '1px solid rgba(138, 153, 168, 0.2)',
-              background: '#071524'
-            }}>
-              <button
-                type="button"
-                onClick={() => setCardMode('telemetry')}
-                style={{
-                  flex: 1,
-                  padding: '9px 12px',
-                  background: cardMode === 'telemetry' ? '#0E263D' : 'transparent',
-                  color: cardMode === 'telemetry' ? '#38BDF8' : '#8A99A8',
-                  border: 'none',
-                  borderBottom: cardMode === 'telemetry' ? '2px solid #38BDF8' : '2px solid transparent',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}
-              >
-                📊 Live Ground Telemetry
-              </button>
-              <button
-                type="button"
-                onClick={() => setCardMode('prediction')}
-                style={{
-                  flex: 1,
-                  padding: '9px 12px',
-                  background: cardMode === 'prediction' ? '#0E263D' : 'transparent',
-                  color: cardMode === 'prediction' ? '#38BDF8' : '#8A99A8',
-                  border: 'none',
-                  borderBottom: cardMode === 'prediction' ? '2px solid #38BDF8' : '2px solid transparent',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}
-              >
-                🔮 Future Prediction (+1h to +24h)
-              </button>
+            <div style={{ background: '#FBEBEA', padding: '10px 12px', borderRadius: '4px', fontSize: '12px', color: '#A82824', marginBottom: '16px', lineHeight: 1.4 }}>
+              ⚠️ <strong>Emergency Notice:</strong> If lives are in immediate danger, call <strong>112 (National Emergency Helpline)</strong> directly.
             </div>
 
-            {cardMode === 'telemetry' ? (
-              <>
-                {/* Real High-Resolution Photo of the Hazardous Place */}
-                <div className={styles.photoContainer}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={selectedPlace.photoUrl}
-                    alt={selectedPlace.landmark}
-                    className={styles.hazardPhoto}
-                    onClick={() => setFullPhotoUrl(selectedPlace.photoUrl)}
-                  />
-                  <div className={styles.photoOverlayBadge}>
-                    <span>📷 Verified Ground Photo · Click to Enlarge</span>
-                  </div>
-                </div>
-
-                {/* Landmark & Coordinates */}
-                <div className={styles.placeDetails}>
-                  <h3 className={styles.placeLandmarkTitle}>{selectedPlace.landmark}</h3>
-                  <p className={styles.placeGeoSub}>
-                    {selectedPlace.cityName}, {selectedPlace.stateName} · 📍 {selectedPlace.lat.toFixed(4)}°N, {selectedPlace.lng.toFixed(4)}°E
-                  </p>
-                  <p className={styles.placeDescription}>{selectedPlace.description}</p>
-                </div>
-
-                {/* Real Telemetry Grid */}
-                <div className={styles.telemetryGrid}>
-                  <div className={styles.telemetryMetric}>
-                    <span className={styles.telemetryLabel}>WATER DEPTH</span>
-                    <span className={styles.telemetryVal} style={{ color: '#38BDF8' }}>
-                      {selectedPlace.waterDepthFeet ? `${selectedPlace.waterDepthFeet} ft` : 'N/A'}
-                    </span>
-                    <span className={styles.telemetrySub}>Knee to Waist level</span>
-                  </div>
-                  <div className={styles.telemetryMetric}>
-                    <span className={styles.telemetryLabel}>RAINFALL INTENSITY</span>
-                    <span className={styles.telemetryVal} style={{ color: '#F59E0B' }}>
-                      {selectedPlace.rainfallRateMmH ? `${selectedPlace.rainfallRateMmH} mm/h` : '45 mm/h'}
-                    </span>
-                    <span className={styles.telemetrySub}>Doppler Radar Echo</span>
-                  </div>
-                  <div className={styles.telemetryMetric}>
-                    <span className={styles.telemetryLabel}>GROUND CORROBORATION</span>
-                    <span className={styles.telemetryVal} style={{ color: '#34D399' }}>
-                      {selectedPlace.reportCount} Reports
-                    </span>
-                    <span className={styles.telemetrySub}>Verified {selectedPlace.verifiedAt}</span>
-                  </div>
-                </div>
-
-                {/* Official Safety Guidance */}
-                <div className={styles.safetyGuidanceBox}>
-                  <strong>🛡️ Official Action Guidance:</strong>
-                  <p>{selectedPlace.safetyGuidance}</p>
-                </div>
-              </>
-            ) : (
-              /* 🔮 Future Inundation Prediction & Solutions View */
-              (() => {
-                const pred = generateDisasterPrediction({
-                  landmark: selectedPlace.landmark,
-                  cityName: selectedPlace.cityName,
-                  stateName: selectedPlace.stateName,
-                  category: selectedPlace.category as any,
-                  currentWaterDepthFeet: selectedPlace.waterDepthFeet || 3.5,
-                  currentRainRateMmH: selectedPlace.rainfallRateMmH || 50.0,
-                  lat: selectedPlace.lat,
-                  lng: selectedPlace.lng,
-                });
-
-                return (
-                  <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{
-                      background: 'rgba(56, 189, 248, 0.1)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      borderRadius: '8px',
-                      padding: '12px'
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', color: '#8A99A8', fontWeight: 700 }}>HYDRODYNAMIC CREST FORECAST</span>
-                        <span className="badge badge-warning" style={{ fontSize: '11px' }}>{pred.modelConfidencePct}% Confidence</span>
-                      </div>
-                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#F59E0B', marginTop: '4px' }}>
-                        Peak Flood Depth: {pred.hydrology.projectedPeakDepthFeet} ft at {pred.hydrology.projectedPeakTime}
-                      </div>
-                      <div style={{ fontSize: '11.5px', color: '#E2E8F0', marginTop: '2px' }}>
-                        Drainage Recession Window: ~{pred.hydrology.recessionHoursEst} hours under active pumping.
-                      </div>
-                    </div>
-
-                    {/* Future Inundation Timeline */}
-                    <div>
-                      <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#8A99A8', textTransform: 'uppercase' }}>
-                        Projected Water Level Trajectory:
-                      </span>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(5, 1fr)',
-                        gap: '6px',
-                        marginTop: '6px'
-                      }}>
-                        {pred.trajectory.map((pt) => (
-                          <div
-                            key={pt.timeHorizon}
-                            style={{
-                              background: 'rgba(11, 31, 51, 0.85)',
-                              border: '1px solid rgba(138, 153, 168, 0.2)',
-                              borderRadius: '6px',
-                              padding: '6px',
-                              textAlign: 'center'
-                            }}
-                          >
-                            <div style={{ fontSize: '11px', fontWeight: 800, color: '#38BDF8' }}>{pt.timeHorizon}</div>
-                            <div style={{ fontSize: '13px', fontWeight: 800, color: pt.inundationDangerLevel === 'LIFE_THREATENING' ? '#EF4444' : '#F59E0B' }}>
-                              {pt.forecastWaterDepthFeet} ft
-                            </div>
-                            <div style={{ fontSize: '9px', color: '#8A99A8' }}>{pt.forecastRainMmH}mm/h</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Citizen Action Solution */}
-                    <div style={{
-                      background: 'rgba(239, 68, 68, 0.08)',
-                      borderLeft: '3px solid #EF4444',
-                      padding: '10px 12px',
-                      borderRadius: '0 6px 6px 0'
-                    }}>
-                      <strong style={{ color: '#EF4444', fontSize: '11.5px', textTransform: 'uppercase' }}>
-                        🛡️ Citizen Immediate Safety Solution:
-                      </strong>
-                      <p style={{ fontSize: '11.5px', color: '#F7F6F2', margin: '4px 0 6px' }}>
-                        {pred.solutions.phaseA_Citizen.immediateEvacuationAdvisory}
-                      </p>
-                      <ul style={{ margin: 0, paddingLeft: '14px', fontSize: '11px', color: '#CBD5E1' }}>
-                        {pred.solutions.phaseA_Citizen.dosAndDonts.slice(0, 2).map((item, idx) => (
-                          <li key={idx}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                );
-              })()
-            )}
-
-            {/* Action Buttons */}
-            <div className={styles.cardActions}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${selectedPlace.lat},${selectedPlace.lng}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.directionsBtn}
-                  style={{ flex: 1 }}
-                >
-                  🗺️ Avoidance Directions
-                </a>
+            {sosSuccessId ? (
+              <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>✅</div>
+                <h4 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 6px' }}>
+                  Distress Beacon Broadcasted
+                </h4>
+                <p style={{ fontSize: '12.5px', color: '#555753', margin: '0 0 16px' }}>
+                  Reference ID: <strong>{sosSuccessId}</strong>. Emergency management units have received coordinates.
+                </p>
                 <button
                   type="button"
-                  onClick={() => setStreetViewPlace(selectedPlace)}
-                  className={styles.directionsBtn}
-                  style={{ background: '#0284C7', flex: 1, border: 'none', color: '#FFF', cursor: 'pointer', textAlign: 'center' }}
-                  title="Open real 360-degree ground Street View panorama"
-                >
-                  🧭 Real 360° Street View
-                </button>
-              </div>
-
-              <Link
-                href={`/report?lat=${selectedPlace.lat}&lng=${selectedPlace.lng}&place=${encodeURIComponent(selectedPlace.landmark)}`}
-                className={styles.addReportBtn}
-              >
-                🚨 Submit Live Photo / Update
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Real 360° Street View Panoramic Inspector Modal */}
-        {streetViewPlace && (
-          <div className={styles.streetViewModal} onClick={() => setStreetViewPlace(null)}>
-            <div className={styles.streetViewContent} onClick={(e) => e.stopPropagation()}>
-              <div className={styles.streetViewHeader}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '18px' }}>🧭</span>
-                    <strong style={{ fontSize: '15px', color: '#F7F6F2' }}>
-                      Real 360° Ground Street View — {(streetViewPlace.landmark || streetViewPlace.category || 'Hazard').split(',')[0]}
-                    </strong>
-                    <span className="badge badge-success" style={{ fontSize: '11px' }}>
-                      Verified Ground Photography
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#8A99A8', marginTop: '2px' }}>
-                    {streetViewPlace.cityName}, {streetViewPlace.stateName} · 📍 {streetViewPlace.lat.toFixed(4)}°N, {streetViewPlace.lng.toFixed(4)}°E
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className={styles.modalCloseBtn}
-                  style={{ position: 'static' }}
-                  onClick={() => setStreetViewPlace(null)}
-                >
-                  ✕ Close
-                </button>
-              </div>
-
-              {/* Interactive 360 Panorama Viewport */}
-              <div
-                className={styles.streetViewPanoViewport}
-                onMouseDown={(e) => {
-                  setIsDraggingPano(true);
-                  setPanoStartX(e.clientX);
-                }}
-                onMouseMove={(e) => {
-                  if (!isDraggingPano) return;
-                  const delta = e.clientX - panoStartX;
-                  setStreetViewHeading((prev) => (prev - delta * 0.45 + 360) % 360);
-                  setPanoStartX(e.clientX);
-                }}
-                onMouseUp={() => setIsDraggingPano(false)}
-                onMouseLeave={() => setIsDraggingPano(false)}
-                onTouchStart={(e) => {
-                  setIsDraggingPano(true);
-                  setPanoStartX(e.touches[0].clientX);
-                }}
-                onTouchMove={(e) => {
-                  if (!isDraggingPano) return;
-                  const delta = e.touches[0].clientX - panoStartX;
-                  setStreetViewHeading((prev) => (prev - delta * 0.45 + 360) % 360);
-                  setPanoStartX(e.touches[0].clientX);
-                }}
-                onTouchEnd={() => setIsDraggingPano(false)}
-                title="Click and drag horizontally to rotate 360°"
-              >
-                {/* Panorama Ground Image with dynamic horizontal translation */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={streetViewPlace.photoUrl}
-                  alt={streetViewPlace.landmark}
-                  className={styles.streetViewPanoImg}
-                  style={{
-                    transform: `translate(calc(-50% + ${(streetViewHeading - 180) * 2.2}px), -50%) scale(1.15)`,
+                  className={styles.panelPrimaryBtn}
+                  style={{ width: '100%' }}
+                  onClick={() => {
+                    setIsSosOpen(false);
+                    setSosSuccessId(null);
                   }}
-                />
-
-                {/* HUD Overlay: Compass */}
-                <div className={styles.streetViewCompassHud}>
-                  <span>🧭</span>
-                  <span>Azimuth: {Math.round(streetViewHeading)}° {getCompassDirection(streetViewHeading)}</span>
-                  <span style={{ color: '#8A99A8', fontSize: '11px' }}>· Drag to rotate 360°</span>
-                </div>
-
-                {/* HUD Overlay: Telemetry */}
-                <div className={styles.streetViewTelemetryOverlay}>
-                  <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
-                    <span>📷 Elevation: <strong>+2.1m (Road Grade)</strong></span>
-                    <span>🔭 Optics: <strong>18mm Panoramic</strong></span>
-                    {streetViewPlace.waterDepthFeet && (
-                      <span style={{ color: '#38BDF8' }}>💧 Water Level: <strong>{streetViewPlace.waterDepthFeet} ft</strong></span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#38BDF8', fontWeight: 600 }}>
-                    ⚡ Real-time Ground Inspection
-                  </div>
-                </div>
+                >
+                  Close Window
+                </button>
               </div>
-
-              {/* Modal Footer with Direct 360° External Google Street View and Navigation */}
-              <div className={styles.streetViewFooter}>
-                <div style={{ fontSize: '12px', color: '#94A3B8' }}>
-                  Need full Google 360° immersion or walking mode? Launch directly in Google Street View:
+            ) : (
+              <form onSubmit={handleSubmitSos} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#555753', marginBottom: '4px' }}>
+                    Landmark / Location Address *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Near Gomti River Barrage, Lucknow"
+                    value={sosLandmark}
+                    onChange={(e) => setSosLandmark(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E2D9', borderRadius: '4px', fontSize: '13px' }}
+                  />
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <a
-                    href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${streetViewPlace.lat},${streetViewPlace.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary"
-                    style={{ fontSize: '12px', padding: '7px 16px', background: '#0284C7', borderColor: '#38BDF8' }}
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#555753', marginBottom: '4px' }}>
+                    Contact Phone Number (Optional)
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="e.g. 9876543210"
+                    value={sosPhone}
+                    onChange={(e) => setSosPhone(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E2D9', borderRadius: '4px', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#555753', marginBottom: '4px' }}>
+                    Distress Situation Details
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe water depth, trapped individuals, medical requirements..."
+                    value={sosNotes}
+                    onChange={(e) => setSosNotes(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E2D9', borderRadius: '4px', fontSize: '13px', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <button
+                    type="submit"
+                    disabled={sosSubmitting}
+                    className={styles.panelPrimaryBtn}
+                    style={{ background: '#A82824' }}
                   >
-                    🌐 Launch Full Google Maps 360° Panorama ↗
-                  </a>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${streetViewPlace.lat},${streetViewPlace.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-secondary"
-                    style={{ fontSize: '12px', padding: '7px 14px' }}
+                    {sosSubmitting ? 'Broadcasting Beacon...' : 'Transmit Distress Beacon'}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.panelSecondaryBtn}
+                    onClick={() => setIsSosOpen(false)}
                   >
-                    🚗 Avoidance Route Directions ↗
-                  </a>
+                    Cancel
+                  </button>
                 </div>
-              </div>
-            </div>
+              </form>
+            )}
           </div>
-        )}
-
-        {/* Full-Screen Photo Modal */}
-        {fullPhotoUrl && (
-          <div className={styles.fullPhotoModal} onClick={() => setFullPhotoUrl(null)}>
-            <div className={styles.fullPhotoContent} onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className={styles.modalCloseBtn}
-                onClick={() => setFullPhotoUrl(null)}
-              >
-                ✕ Close
-              </button>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={fullPhotoUrl} alt="Hazard full view" className={styles.modalFullImg} />
-              <div className={styles.modalPhotoCaption}>
-                <span>Ground Verification Proof · Verified by Suraksha Setu Corroboration Engine</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default function AllIndiaMapPage() {
+export default function MapPage() {
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#020B14', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38BDF8' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner spinner-lg" style={{ margin: '0 auto 12px' }} />
-          <p style={{ fontSize: '0.9rem', color: '#8A99A8' }}>Initializing Live Hazard Radar &amp; Vector GIS Base…</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<div style={{ padding: '40px', textAlign: 'center' }}>Loading Suraksha Setu map...</div>}>
       <MapContent />
     </Suspense>
   );

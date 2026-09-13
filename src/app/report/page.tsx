@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import { compressImage } from '@/lib/imageCompression';
 import { saveOfflineReport, flushOfflineQueue } from '@/lib/offlineQueue';
 import { saveClientReport, isDemoReport } from '@/lib/clientSync';
@@ -291,17 +292,17 @@ export default function ReportPage() {
         <Navbar />
         <div className={styles.container}>
           <div className={styles.receiptCard}>
-            <div className={styles.receiptIcon}>✅</div>
-            <h1 className={styles.receiptTitle}>Report Received</h1>
+            <div className={styles.receiptIcon}>🛡️</div>
+            <h1 className={styles.receiptTitle}>Hazard Log Recorded</h1>
             <p className={styles.receiptSubtitle}>
-              Thank you for helping keep your community safe.
+              Thank you for contributing ground truth intelligence. Your report has been submitted to the verification network.
             </p>
 
             <div className={styles.receiptDetails}>
               <div className={styles.receiptRow}>
                 <span>Report ID</span>
                 <span className={styles.receiptValue} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <code style={{ fontSize: '0.92rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38BDF8', padding: '3px 8px', borderRadius: 4, fontFamily: 'monospace', fontWeight: 700 }}>
+                  <code style={{ fontSize: '0.88rem', background: '#FAF7F2', color: 'var(--color-accent, #D67A20)', padding: '3px 8px', borderRadius: 4, fontFamily: 'monospace', fontWeight: 700, border: '1px solid var(--color-accent, #D67A20)' }}>
                     {reportId}
                   </code>
                   <button
@@ -312,16 +313,17 @@ export default function ReportPage() {
                         alert('Report ID copied to clipboard: ' + reportId);
                       }
                     }}
-                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', color: '#E2E8F0', padding: '2px 8px', borderRadius: 4, cursor: 'pointer', fontSize: '0.78rem' }}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.75rem', padding: '3px 8px' }}
                     title="Copy Report ID"
                   >
-                    📋 Copy ID
+                    Copy ID
                   </button>
                 </span>
               </div>
               <div className={styles.receiptRow}>
                 <span>Status</span>
-                <span className="badge badge-info">{reportId?.startsWith('OFFLINE') ? 'Queued (Offline Sync)' : 'Received'}</span>
+                <span className="badge badge-info">{reportId?.startsWith('OFFLINE') ? 'Queued (Offline Sync)' : 'Received & Queued'}</span>
               </div>
               <div className={styles.receiptRow}>
                 <span>Hazard</span>
@@ -333,41 +335,42 @@ export default function ReportPage() {
               </div>
               {photoCompressed && (
                 <div className={styles.receiptRow}>
-                  <span>Photo Status</span>
-                  <span className="badge badge-success">Compressed (&lt;150KB)</span>
+                  <span>Telemetry Photo</span>
+                  <span className="badge badge-success">Optimized (&lt;150KB)</span>
                 </div>
               )}
               <div className={styles.receiptRow}>
-                <span>Time to Report</span>
-                <span>{timeTaken}s</span>
+                <span>Submission Latency</span>
+                <span style={{ fontFamily: 'monospace' }}>{timeTaken}s</span>
               </div>
             </div>
 
             <div className={styles.receiptNotice}>
-              <p><strong>What happens next?</strong></p>
-              <p>Your report will be reviewed by a verified meteorologist. If corroborated by other reports and weather evidence, it may contribute to a public alert.</p>
+              <p><strong>Verification & Routing Protocol</strong></p>
+              <p>Your observation is queued for correlation against Doppler radar reflectivity and local hydrological sensors. Verified hazards appear on the public Live Risk Map.</p>
               <p className={styles.receiptWarning}>
-                ⚠️ This report is <strong>not</strong> an official alert. In life-threatening emergencies, call <strong>112</strong>.
+                ⚠️ In life-threatening emergencies requiring immediate rescue or medical triage, call <strong>112</strong> immediately.
               </p>
             </div>
 
             <div className={styles.receiptActions} style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href={`/track?id=${reportId}`} className="btn btn-primary btn-lg" style={{ flex: 1, textAlign: 'center' }}>
-                🔍 Track Status in Real Time →
+                Track Live Status →
               </Link>
               <Link
                 href={`/map?lat=${(location || { latitude: 26.8467, longitude: 80.9462 }).latitude}&lng=${(location || { latitude: 26.8467, longitude: 80.9462 }).longitude}${reportId ? `&highlight=${reportId}` : ''}`}
                 className="btn btn-secondary btn-lg"
                 style={{ textAlign: 'center' }}
               >
-                🗺️ View on Live Map
+                Inspect on Live Map
               </Link>
               <Link href="/" className="btn btn-secondary btn-lg">
-                ← Back to Home
+                Home
               </Link>
             </div>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -375,25 +378,35 @@ export default function ReportPage() {
   return (
     <div className={styles.page}>
       <Navbar />
-      {/* Header */}
-      <header className={styles.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Link href="/" className={styles.backBtn}>← Home</Link>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18 }}>🛡️</span>
-            <strong style={{ fontSize: 14, color: '#F7F6F2', letterSpacing: '0.06em' }}>SURAKSHA SETU</strong>
-            <span style={{ fontSize: 11, color: '#8A99A8', borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: 8 }}>
-              सुरक्षा सेतु · Ground Truth Reporting
-            </span>
-          </div>
+      {/* Workflow Navigation */}
+      <div className={styles.workflowHeader}>
+        <div className={styles.breadcrumb}>
+          <Link href="/">Home</Link>
+          <span className={styles.breadcrumbSep}>/</span>
+          <span className={styles.breadcrumbCurrent}>Report Hazard</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link href="/map" style={{ color: '#8A99A8', fontSize: 12.5, textDecoration: 'none' }}>
-            Live Map →
-          </Link>
-          <span className={styles.stepIndicator}>Step {currentIndex + 1} of {steps.length}</span>
+        <div className={styles.stepTrack}>
+          {steps.map((s, idx) => {
+            const stepLabels: Record<Step, string> = {
+              category: '1. Hazard',
+              severity: '2. Severity',
+              location: '3. Location',
+              details: '4. Details',
+              review: '5. Review',
+            };
+            const isDone = idx < currentIndex;
+            const isActive = idx === currentIndex;
+            return (
+              <span
+                key={s}
+                className={`${styles.stepPill} ${isActive ? styles.stepPillActive : isDone ? styles.stepPillDone : ''}`}
+              >
+                {isDone ? '✓ ' : ''}{stepLabels[s]}
+              </span>
+            );
+          })}
         </div>
-      </header>
+      </div>
 
       {/* Progress Bar */}
       <div className={styles.progressBar}>
@@ -401,60 +414,47 @@ export default function ReportPage() {
       </div>
 
       <div className={styles.container}>
+        {/* Emergency Life-Safety Notice */}
+        <aside className={styles.emergencyDisclaimer} role="alert">
+          <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>🚨</span>
+          <div>
+            <strong>Immediate Threat to Life?</strong> If you or someone nearby is trapped, in danger of drowning, or requires emergency evacuation, dial <strong>112</strong> immediately. Web submissions are triaged by municipal response teams.
+          </div>
+        </aside>
+
         {/* Active Reported Hazard Banner (Instant Status & Recovery) */}
         {recentReports.length > 0 && (
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(14, 116, 144, 0.25) 0%, rgba(15, 23, 42, 0.7) 100%)',
-            border: '1px solid #38BDF8',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            marginBottom: '24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            flexWrap: 'wrap',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-          }}>
+          <div className={styles.activeReportBanner}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '1.8rem' }}>🛡️</span>
+              <span style={{ fontSize: '1.6rem' }}>🛡️</span>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <strong style={{ color: '#F7F6F2', fontSize: '0.98rem' }}>
+                  <strong style={{ color: 'var(--color-charcoal, #161816)', fontSize: '0.95rem' }}>
                     Active Hazard Reported by You
                   </strong>
-                  <span style={{
-                    background: 'rgba(56, 189, 248, 0.2)',
-                    color: '#38BDF8',
-                    border: '1px solid #38BDF8',
-                    padding: '2px 8px',
-                    borderRadius: '999px',
-                    fontSize: '11px',
-                    fontFamily: 'monospace',
-                    fontWeight: 700
-                  }}>
+                  <span className={styles.activeReportBadge}>
                     ID: {recentReports[0].id}
                   </span>
                 </div>
-                <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
+                <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: 'var(--color-text-secondary, #474946)' }}>
                   {recentReports[0].landmark} · {HAZARD_CATEGORIES[recentReports[0].category as HazardCategory]?.icon || '⚠️'} {recentReports[0].category} · Severity {recentReports[0].severity}/5
                 </p>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <Link
                 href={`/track?id=${encodeURIComponent(recentReports[0].id)}`}
-                className="btn btn-primary"
-                style={{ fontSize: '0.85rem', padding: '8px 16px', textDecoration: 'none', fontWeight: 700 }}
+                className="btn btn-primary btn-sm"
+                style={{ textDecoration: 'none' }}
               >
-                🔍 Track Real-Time Status →
+                Track Live Status →
               </Link>
               <Link
-                href="/staff/admin"
-                className="btn btn-secondary"
-                style={{ fontSize: '0.85rem', padding: '8px 14px', textDecoration: 'none' }}
+                href="/map"
+                className="btn btn-secondary btn-sm"
+                style={{ textDecoration: 'none' }}
               >
-                ⚙️ Admin Console
+                Inspect Map
               </Link>
             </div>
           </div>
@@ -555,7 +555,7 @@ export default function ReportPage() {
                 <span>or select Indian metropolitan hub</span>
               </div>
 
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+              <div className={styles.hubList}>
                 {[
                   { name: 'Lucknow', lat: 26.8467, lng: 80.9462 },
                   { name: 'Delhi NCR', lat: 28.6139, lng: 77.2090 },
@@ -569,26 +569,23 @@ export default function ReportPage() {
                   { name: 'Jaipur', lat: 26.9124, lng: 75.7873 },
                   { name: 'Guwahati', lat: 26.1445, lng: 91.7362 },
                   { name: 'Shimla', lat: 31.1048, lng: 77.1734 },
-                ].map((c) => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    style={{
-                      fontSize: 11,
-                      padding: '5px 9px',
-                      background: location && Math.abs(location.latitude - c.lat) < 0.05 && Math.abs(location.longitude - c.lng) < 0.05 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.06)',
-                      borderColor: location && Math.abs(location.latitude - c.lat) < 0.05 && Math.abs(location.longitude - c.lng) < 0.05 ? '#38BDF8' : 'rgba(255,255,255,0.15)',
-                    }}
-                    onClick={() => {
-                      setLocation({ latitude: c.lat, longitude: c.lng, accuracy: 25 });
-                      setLocationName(`${c.name} (Station Region)`);
-                      setGeocodeSuggestions([]);
-                    }}
-                  >
-                    📍 {c.name}
-                  </button>
-                ))}
+                ].map((c) => {
+                  const isMatch = location && Math.abs(location.latitude - c.lat) < 0.05 && Math.abs(location.longitude - c.lng) < 0.05;
+                  return (
+                    <button
+                      key={c.name}
+                      type="button"
+                      className={`${styles.hubBtn} ${isMatch ? styles.hubBtnActive : ''}`}
+                      onClick={() => {
+                        setLocation({ latitude: c.lat, longitude: c.lng, accuracy: 25 });
+                        setLocationName(`${c.name} (Station Region)`);
+                        setGeocodeSuggestions([]);
+                      }}
+                    >
+                      📍 {c.name}
+                    </button>
+                  );
+                })}
               </div>
 
               <div style={{ position: 'relative', width: '100%' }}>
@@ -811,6 +808,7 @@ export default function ReportPage() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

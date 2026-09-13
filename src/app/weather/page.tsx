@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import type { Report } from '@/types';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import styles from './weather.module.css';
@@ -462,6 +463,7 @@ export default function AllIndiaWeatherPage() {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import type {
   ReviewAction, ReviewActionType, Evidence, SourceHealth, AuditEvent,
   User, UserRole, HazardCategory, SeverityLevel, ImpactLevel,
   ConfidenceScore, GeoPoint, WeatherData, ActionCategory, ActionLogItem, VerificationStatus,
+  SosRequest,
 } from '@/types';
 import { computeConfidenceScore } from './scoring';
 
@@ -29,6 +30,7 @@ class DataStore {
   evidence: Evidence[] = [];
   incidents: Incident[] = [];
   alerts: Alert[] = [];
+  sosRequests: SosRequest[] = [];
   reviewActions: ReviewAction[] = [];
   sourceHealth: SourceHealth[] = [];
   auditEvents: AuditEvent[] = [];
@@ -150,6 +152,156 @@ class DataStore {
     }
   }
 
+  private seedDefaultAlerts(): void {
+    const now = Date.now();
+    this.alerts = [
+      {
+        id: 'alert_imd_delhi_yamuna_red',
+        incidentId: 'inc_delhi_yamuna_basin',
+        polygon: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [77.195, 28.615],
+              [77.265, 28.615],
+              [77.275, 28.685],
+              [77.205, 28.685],
+              [77.195, 28.615],
+            ],
+          ],
+        },
+        severity: 5,
+        category: 'FLOODING',
+        headline: '🔴 IMD RED ALERT: Flash Flood & Yamuna Inundation Warning — NCT Delhi',
+        guidance: 'NDMA & DDMA emergency directive: Extreme water discharge recorded at Hathnikund Barrage. Minto Bridge, Kashmere Gate Ring Road, and Yamuna Bazar underpasses severely submerged (>4.2 ft). Evacuate all low-lying floodplains immediately. Avoid Ring Road underpasses.',
+        startsAt: new Date(now - 3600000).toISOString(),
+        expiresAt: new Date(now + 14 * 3600000).toISOString(),
+        publishedBy: 'DDMA / IMD National Weather Forecasting Centre',
+        status: 'PUBLISHED',
+        source: 'India Meteorological Department & Delhi Disaster Management Authority',
+        createdAt: new Date(now - 3600000).toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'alert_incois_mumbai_surge_orange',
+        incidentId: 'inc_mumbai_high_tide',
+        polygon: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [72.805, 18.910],
+              [72.855, 18.910],
+              [72.865, 19.040],
+              [72.815, 19.040],
+              [72.805, 18.910],
+            ],
+          ],
+        },
+        severity: 4,
+        category: 'FLOODING',
+        headline: '🟠 INCOIS ORANGE ALERT: Arabian Sea Coastal Inundation & Spring High Tide',
+        guidance: 'INCOIS & MCGM Emergency Operations Cell: Spring high tide reaching 4.87m coinciding with intense squall rains. Sea surge breaching Mahim Causeway and Marine Drive seawalls. Citizens strictly advised to stay away from promenades and low-lying coastal arterial roads.',
+        startsAt: new Date(now - 7200000).toISOString(),
+        expiresAt: new Date(now + 12 * 3600000).toISOString(),
+        publishedBy: 'MCGM Disaster Management Unit',
+        status: 'PUBLISHED',
+        source: 'Indian National Centre for Ocean Information Services (INCOIS)',
+        createdAt: new Date(now - 7200000).toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'alert_cwc_guwahati_brahmaputra_red',
+        incidentId: 'inc_assam_brahmaputra',
+        polygon: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [91.680, 26.110],
+              [91.790, 26.110],
+              [91.810, 26.210],
+              [91.690, 26.210],
+              [91.680, 26.110],
+            ],
+          ],
+        },
+        severity: 5,
+        category: 'FLOODING',
+        headline: '🔴 CWC RED ADVISORY: Brahmaputra River Above Extreme Inundation Level',
+        guidance: 'Central Water Commission (CWC) Official Hydro-Bulletin: River Brahmaputra at Guwahati Gauge Station is flowing at 50.18m (0.68m above Extreme Danger Level) with rising trend. SDRF and 1st NDRF Battalion deployed with rescue motorboats. Avoid ferry transit.',
+        startsAt: new Date(now - 5400000).toISOString(),
+        expiresAt: new Date(now + 24 * 3600000).toISOString(),
+        publishedBy: 'Central Water Commission & ASDMA',
+        status: 'PUBLISHED',
+        source: 'Central Water Commission (CWC) Hydrological Sentinel',
+        createdAt: new Date(now - 5400000).toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'alert_imd_hp_cloudburst_orange',
+        incidentId: 'inc_hp_kangra_cloudburst',
+        polygon: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [76.240, 32.140],
+              [76.380, 32.140],
+              [76.400, 32.260],
+              [76.250, 32.260],
+              [76.240, 32.140],
+            ],
+          ],
+        },
+        severity: 4,
+        category: 'CLOUDBURST',
+        headline: '🟠 IMD ORANGE ALERT: Severe Cloudburst & Slope Debris Flow Watch',
+        guidance: 'State Disaster Management Authority Himachal Pradesh: Doppler Radar at Shimla indicates cloudburst rain rates exceeding 80mm/hr over Kangra / Dharamsala slopes. High vulnerability of flash mudslides along NH-154. Travel restricted.',
+        startsAt: new Date(now - 1800000).toISOString(),
+        expiresAt: new Date(now + 8 * 3600000).toISOString(),
+        publishedBy: 'HPSDMA State Emergency Operations Centre',
+        status: 'PUBLISHED',
+        source: 'India Meteorological Department Shimla Radar & HPSDMA',
+        createdAt: new Date(now - 1800000).toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+  }
+
+  private seedDefaultSos(): void {
+    const now = Date.now();
+    this.sosRequests = [
+      {
+        id: 'sos_req_delhi_01',
+        reporterName: 'Aarav Sharma',
+        phone: '+91 98110 44821',
+        location: { latitude: 28.6328, longitude: 77.2197 },
+        landmark: 'Near Minto Bridge Underpass, Connaught Place Outer Circle, New Delhi',
+        hazardType: 'FLOODING',
+        peopleCount: 4,
+        hasMedicalEmergency: true,
+        notes: 'Car submerged up to bonnet in underpass floodwaters. Elderly diabetic passenger requires urgent insulin & water evacuation.',
+        status: 'DISPATCHED',
+        dispatchedUnit: 'NDRF 8th Battalion Water Rescue Unit (Boat #3)',
+        createdAt: new Date(now - 1200000).toISOString(),
+        updatedAt: new Date(now - 300000).toISOString(),
+      },
+      {
+        id: 'sos_req_mumbai_02',
+        reporterName: 'Rohit Kulkarni',
+        phone: '+91 98201 55902',
+        location: { latitude: 19.0178, longitude: 72.8478 },
+        landmark: 'Near Hindmata Cinema Junction, Dadar East, Mumbai',
+        hazardType: 'FLOODING',
+        peopleCount: 6,
+        hasMedicalEmergency: false,
+        notes: 'Ground floor shop flooded with 3.5ft water. 6 people stranded on mezzanine slab. Power lines sparking nearby.',
+        status: 'PENDING_RESCUE',
+        dispatchedUnit: undefined,
+        createdAt: new Date(now - 1800000).toISOString(),
+        updatedAt: new Date(now - 1800000).toISOString(),
+      },
+    ];
+  }
+
   private loadFromDisk(): void {
     try {
       const dbPath = this.getDbFilePath();
@@ -161,12 +313,21 @@ class DataStore {
           if (Array.isArray(parsed.reports)) this.reports = parsed.reports;
           if (Array.isArray(parsed.incidents)) this.incidents = parsed.incidents;
           if (Array.isArray(parsed.alerts)) this.alerts = parsed.alerts;
+          if (Array.isArray(parsed.sosRequests)) this.sosRequests = parsed.sosRequests;
           if (Array.isArray(parsed.auditEvents)) this.auditEvents = parsed.auditEvents;
           this.lastLoadedMtime = stats.mtimeMs;
         }
       }
+      if (!this.alerts || this.alerts.length === 0) {
+        this.seedDefaultAlerts();
+      }
+      if (!this.sosRequests || this.sosRequests.length === 0) {
+        this.seedDefaultSos();
+      }
     } catch (e) {
       console.warn('Database load warning (falling back to memory):', e);
+      if (!this.alerts || this.alerts.length === 0) this.seedDefaultAlerts();
+      if (!this.sosRequests || this.sosRequests.length === 0) this.seedDefaultSos();
     }
   }
 
@@ -189,6 +350,7 @@ class DataStore {
               this.reports = parsed.reports;
               if (Array.isArray(parsed.incidents)) this.incidents = parsed.incidents;
               if (Array.isArray(parsed.alerts)) this.alerts = parsed.alerts;
+              if (Array.isArray(parsed.sosRequests)) this.sosRequests = parsed.sosRequests;
               if (Array.isArray(parsed.auditEvents)) this.auditEvents = parsed.auditEvents;
             }
           }
@@ -199,6 +361,7 @@ class DataStore {
         reports: this.reports,
         incidents: this.incidents,
         alerts: this.alerts,
+        sosRequests: this.sosRequests,
         auditEvents: this.auditEvents,
         savedAt: new Date().toISOString(),
       };
@@ -357,6 +520,7 @@ class DataStore {
     this.incidents = [];
     this.reports = [];
     this.alerts = [];
+    this.sosRequests = [];
     this.auditEvents = [];
     this.persist(true);
   }
@@ -1000,6 +1164,59 @@ class DataStore {
       this.persist();
     }
     return alert;
+  }
+
+  // —— SOS Rescue Operations ——
+
+  getSosRequests(filters?: { status?: string }): SosRequest[] {
+    this.checkAndReload();
+    let list = [...this.sosRequests];
+    if (filters?.status && filters.status !== 'ALL') {
+      list = list.filter(s => s.status === filters.status);
+    }
+    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  getSosRequest(id: string): SosRequest | undefined {
+    this.checkAndReload();
+    return this.sosRequests.find(s => s.id === id);
+  }
+
+  createSosRequest(data: Omit<SosRequest, 'id' | 'createdAt' | 'updatedAt' | 'status'>): SosRequest {
+    this.checkAndReload();
+    const sos: SosRequest = {
+      ...data,
+      id: 'sos_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+      status: 'PENDING_RESCUE',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.sosRequests.unshift(sos);
+    this.logAudit(sos.reporterName || 'Citizen', 'CITIZEN', 'sos', sos.id, 'SOS_DISTRESS_BROADCAST', {
+      landmark: sos.landmark,
+      peopleCount: sos.peopleCount,
+      hasMedicalEmergency: sos.hasMedicalEmergency,
+    });
+    this.persist();
+    return sos;
+  }
+
+  updateSosStatus(
+    id: string,
+    status: SosRequest['status'],
+    dispatchedUnit?: string,
+    actorId: string = 'Rescue Coordinator'
+  ): SosRequest | undefined {
+    this.checkAndReload();
+    const sos = this.sosRequests.find(s => s.id === id);
+    if (sos) {
+      sos.status = status;
+      if (dispatchedUnit) sos.dispatchedUnit = dispatchedUnit;
+      sos.updatedAt = new Date().toISOString();
+      this.logAudit(actorId, 'OFFICER', 'sos', id, 'SOS_STATUS_UPDATE', { status, dispatchedUnit });
+      this.persist();
+    }
+    return sos;
   }
 
   // —— User Operations ——

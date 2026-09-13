@@ -1,23 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { translations, getSavedLanguage, setSavedLanguage, type Language } from '@/lib/i18n';
+import { translations, getSavedLanguage, setSavedLanguage, SUPPORTED_LANGUAGES, type Language } from '@/lib/i18n';
 import styles from './navbar.module.css';
 
 export function Navbar() {
   const pathname = usePathname();
   const [lang, setLang] = useState<Language>('en');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLang(getSavedLanguage());
   }, []);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (langWrapperRef.current && !langWrapperRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    }
+    if (langDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [langDropdownOpen]);
+
   // Close mobile drawer on route change
   useEffect(() => {
     setMobileMenuOpen(false);
+    setLangDropdownOpen(false);
   }, [pathname]);
 
   // Prevent background scroll when mobile menu is open
@@ -32,16 +50,16 @@ export function Navbar() {
     };
   }, [mobileMenuOpen]);
 
-  const toggleLanguage = () => {
-    const nextLang: Language = lang === 'en' ? 'hi' : 'en';
+  const handleSelectLanguage = (nextLang: Language) => {
     setLang(nextLang);
     setSavedLanguage(nextLang);
+    setLangDropdownOpen(false);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('languagechange', { detail: nextLang }));
     }
   };
 
-  const t = translations[lang];
+  const t = translations[lang] || translations.en;
 
   return (
     <>
@@ -78,44 +96,52 @@ export function Navbar() {
             {t.nav.alerts}
           </Link>
           <Link
-            href="/weather"
-            className={`${styles.navLink} ${pathname === '/weather' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.weather}
-          </Link>
-          <Link
-            href="/track"
-            className={`${styles.navLink} ${pathname === '/track' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.track}
-          </Link>
-          <Link
-            href="/safety"
-            className={`${styles.navLink} ${pathname === '/safety' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.safety}
-          </Link>
-          <Link
-            href="/login"
-            className={`${styles.navLink} ${pathname.startsWith('/staff') ? styles.navLinkActive : ''}`}
+            href="/authorities"
+            className={`${styles.navLink} ${pathname.startsWith('/authorities') || pathname.startsWith('/staff') ? styles.navLinkActive : ''}`}
           >
             {t.nav.authorities}
+          </Link>
+          <Link
+            href="/about"
+            className={`${styles.navLink} ${pathname === '/about' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.about}
           </Link>
         </nav>
 
         {/* Desktop Actions */}
         <div className={styles.navActions}>
-          {/* Language Switcher */}
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className={styles.langBtn}
-            title="Switch language (English / हिन्दी)"
-            id="language-toggle-btn"
-          >
-            <span>🌐</span>
-            <span>{lang === 'en' ? 'हिन्दी' : 'English'}</span>
-          </button>
+          {/* 6-Language Multilingual Dropdown */}
+          <div className={styles.langDropdownWrapper} ref={langWrapperRef}>
+            <button
+              type="button"
+              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+              className={styles.langBtn}
+              title="Choose Language (6 Prominent Languages of India)"
+              id="language-toggle-btn"
+              aria-expanded={langDropdownOpen}
+            >
+              <span>🌐</span>
+              <span>{SUPPORTED_LANGUAGES.find((l) => l.code === lang)?.nativeName || 'English'}</span>
+              <span style={{ fontSize: '10px', opacity: 0.7 }}>▾</span>
+            </button>
+
+            {langDropdownOpen && (
+              <div className={styles.langDropdown}>
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <button
+                    key={l.code}
+                    type="button"
+                    className={`${styles.langDropdownItem} ${lang === l.code ? styles.langDropdownItemActive : ''}`}
+                    onClick={() => handleSelectLanguage(l.code)}
+                  >
+                    <span className={styles.langNativeName}>{l.nativeName}</span>
+                    <span className={styles.langEnglishName}>{l.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <Link href="/login" className={styles.signInLink}>
             {t.nav.signIn}
@@ -226,20 +252,41 @@ export function Navbar() {
                 <span>{t.nav.safety}</span>
               </Link>
               <Link
-                href="/login"
-                className={`${styles.mobileNavLink} ${pathname.startsWith('/staff') ? styles.mobileNavLinkActive : ''}`}
+                href="/authorities"
+                className={`${styles.mobileNavLink} ${pathname.startsWith('/authorities') || pathname.startsWith('/staff') ? styles.mobileNavLinkActive : ''}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <span className={styles.mobileNavIcon}>🏛️</span>
                 <span>{t.nav.authorities}</span>
               </Link>
+              <Link
+                href="/about"
+                className={`${styles.mobileNavLink} ${pathname === '/about' ? styles.mobileNavLinkActive : ''}`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className={styles.mobileNavIcon}>ℹ️</span>
+                <span>{t.nav.about}</span>
+              </Link>
             </nav>
 
-            {/* Mobile Footer with Language Switch & Helpline */}
+            {/* Mobile Footer with 6-Language Grid & Helpline */}
             <div className={styles.mobileDrawerFooter}>
-              <button type="button" onClick={toggleLanguage} className={styles.mobileLangBtn}>
-                <span>🌐 {lang === 'en' ? 'Switch to हिन्दी' : 'Switch to English'}</span>
-              </button>
+              <div>
+                <div className={styles.mobileLangSectionTitle}>Choose Language / भाषा चुनें</div>
+                <div className={styles.mobileLangGrid}>
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      type="button"
+                      className={`${styles.mobileLangGridBtn} ${lang === l.code ? styles.mobileLangGridBtnActive : ''}`}
+                      onClick={() => handleSelectLanguage(l.code)}
+                    >
+                      <span>{l.nativeName}</span>
+                      <span className={styles.langSub}>{l.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className={styles.mobileHelpline}>
                 <span>National Emergency: </span>
                 <a href="tel:112"><strong>112</strong></a>

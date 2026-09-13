@@ -5,19 +5,14 @@ import Link from 'next/link';
 import type { Alert, Report } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { Navbar } from '@/components/Navbar';
-import { WeatherHeroAtmosphere } from '@/components/WeatherHeroAtmosphere';
-import { HeroFuturisticRadar } from '@/components/HeroFuturisticRadar';
-import { WeatherRadarHologram } from '@/components/WeatherRadarHologram';
+import { Footer } from '@/components/Footer';
+import { TechnicalWeatherVisual } from '@/components/TechnicalWeatherVisual';
 import { AlertWorkflowSequence } from '@/components/AlertWorkflowSequence';
-import {
-  type WeatherAtmosphereType,
-  ATMOSPHERE_CONFIGS,
-  classifyWeatherAtmosphere,
-  formatWeatherConditionLabel,
-} from '@/lib/weatherAtmosphere';
+import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import styles from './page.module.css';
 
 export default function LandingPage() {
+  const [lang, setLang] = useState<Language>('en');
   const [tickerIndex, setTickerIndex] = useState(0);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -26,8 +21,24 @@ export default function LandingPage() {
   const [scrollY, setScrollY] = useState(0);
   const [selectedHazardIndex, setSelectedHazardIndex] = useState(0);
 
-  // Dynamic Lucknow Weather Atmosphere State
-  const [activeAtmosphere, setActiveAtmosphere] = useState<WeatherAtmosphereType>('cloudy');
+  // Multilingual reactive listener (6 Indian languages)
+  useEffect(() => {
+    setLang(getSavedLanguage());
+    const onLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent<Language>;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      } else {
+        setLang(getSavedLanguage());
+      }
+    };
+    window.addEventListener('languagechange', onLangChange);
+    return () => window.removeEventListener('languagechange', onLangChange);
+  }, []);
+
+  const t = translations[lang] || translations.en;
+
+  // Real-time Lucknow Telemetry for Doppler radar context
   const [liveLucknowData, setLiveLucknowData] = useState<{
     temperature?: number;
     weatherCondition?: string;
@@ -38,7 +49,6 @@ export default function LandingPage() {
     weatherCode?: number;
     updatedAt?: string;
   } | null>(null);
-  const [isManualOverride, setIsManualOverride] = useState(false);
 
   // Active ground hazards currently reported and unaddressed
   const activeHazards = reports.filter(
@@ -67,29 +77,17 @@ export default function LandingPage() {
           const json = await res.json();
           if (json.success && json.data) {
             setLiveLucknowData(json.data);
-            if (!isManualOverride) {
-              const detected = classifyWeatherAtmosphere({
-                temperature: json.data.temperature,
-                precipitation: json.data.precipitation,
-                rain: json.data.rain,
-                weatherCode: json.data.weatherCode,
-                cloudCover: json.data.cloudCover,
-                windSpeed: json.data.windSpeed,
-                relativeHumidity: json.data.relativeHumidity,
-              });
-              setActiveAtmosphere(detected);
-            }
           }
         }
       } catch (err) {
-        console.warn('Lucknow weather atmospheric sync note:', err);
+        console.warn('Lucknow weather telemetry sync note:', err);
       }
     }
 
     fetchLucknowWeather();
     const interval = setInterval(fetchLucknowWeather, 120000); // 2-minute refresh
     return () => clearInterval(interval);
-  }, [isManualOverride]);
+  }, []);
 
   // Real-time live status strip derived dynamically from live website ground data
   const liveTickerItems = activeHazards.length > 0
@@ -163,154 +161,64 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const currentAtmosphereConfig = ATMOSPHERE_CONFIGS[activeAtmosphere] || ATMOSPHERE_CONFIGS.clear;
-
-  // Editorial weather label string
-  const weatherLabel = liveLucknowData
-    ? formatWeatherConditionLabel(liveLucknowData)
-    : 'Lucknow · Doppler Radar Synchronized · Awadh Basin';
-
   return (
     <div className={styles.page}>
       {/* 1. Universal Production Header */}
       <Navbar />
 
-      {/* 2. Full-Screen Cinematic Weather-Aware Hero */}
-      <section
-        className={styles.hero}
-        style={{
-          background: currentAtmosphereConfig.skyGradient,
-        }}
-      >
-        {/* Layer 1: Futuristic 3D Topographical Terrain & Doppler Radar Sweep */}
-        <HeroFuturisticRadar
-          atmosphere={activeAtmosphere}
-          scrollProgress={scrollProgress}
-          activeHazard={currentHazard}
-          activeHazardsCount={activeHazards.length}
-          className={styles.heroRadarCanvas}
-        />
+      {/* 2. Asymmetric Editorial Hero */}
+      <section className={styles.hero}>
+        {/* Asymmetric Hero Grid Container */}
+        <div className={styles.heroGrid}>
+          {/* Left Column: Crisp Editorial Typography & Directives */}
+          <div className={styles.heroContent}>
+            {/* Small Live Status Label */}
+            <div className={styles.weatherConditionPill}>
+              <span className={styles.weatherPillDot} />
+              <span className={styles.weatherPillText}>
+                {liveLucknowData ? `Lucknow Doppler Radar · ${liveLucknowData.weatherCondition || 'Operational'} · ${liveLucknowData.temperature ?? 28}°C` : 'National Doppler Network · Real-Time Telemetry'}
+              </span>
+            </div>
 
-        {/* Layer 2: Dynamic Atmospheric Weather Simulation Canvas */}
-        <WeatherHeroAtmosphere
-          atmosphere={activeAtmosphere}
-          scrollProgress={scrollProgress}
-          className={styles.heroWeatherCanvas}
-        />
+            {/* Authoritative, Crisp Editorial Headline */}
+            <h1 className={styles.headline}>
+              {t.hero.headlineLine1}<br />
+              <span className={styles.headlineAccent}>{t.hero.headlineLine2}</span>
+            </h1>
 
-        <div className={styles.heroOverlay} />
-        <div className={styles.heroTelemetryLines} />
+            {/* Restrained Supporting Text */}
+            <p className={styles.supportingText}>
+              {t.hero.supportingText}
+            </p>
 
-        {/* Left Column Content with Staggered Entrance Reveal */}
-        <div className={styles.heroContent}>
-          {/* Dynamic Real-Time Live Status Strip */}
-          <div className={styles.statusStrip}>
-            <span
-              className={styles.statusDot}
-              style={{
-                background: activeHazards.length > 0 ? '#EF4444' : '#10B981',
-                boxShadow: activeHazards.length > 0 ? '0 0 8px #EF4444' : '0 0 8px #10B981',
-              }}
+            {/* Dual Primary / Secondary Action Directives */}
+            <div className={styles.ctaGroup}>
+              <Link href="/map" className={styles.primaryCta} id="hero-primary-cta">
+                <span>{t.hero.viewRisk}</span>
+                <span className={styles.ctaArrow}>→</span>
+              </Link>
+              <Link href="/report" className={styles.secondaryCta} id="hero-report-cta">
+                <span>{t.hero.reportHazard}</span>
+                <span className={styles.ctaArrow}>+</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Right Column: Original Technical Weather Visual */}
+          <div className={styles.heroVisualWrapper}>
+            <TechnicalWeatherVisual
+              activeHazardsCount={activeHazards.length}
+              locationLabel={liveLucknowData ? `LUCKNOW RADAR // AWADH BASIN · ${liveLucknowData.temperature ?? 28}°C` : 'LUCKNOW RADAR // AWADH BASIN · 26.85°N 80.95°E'}
             />
-            <span className={styles.statusText}>
-              {liveTickerItems[tickerIndex % liveTickerItems.length]}
-            </span>
-          </div>
-
-          {/* Editorial Weather Atmosphere Label Pill */}
-          <div className={styles.weatherConditionPill}>
-            <span className={styles.weatherPillDot} style={{ background: currentAtmosphereConfig.accentColor }} />
-            <span className={styles.weatherPillText}>{weatherLabel}</span>
-            <span className={styles.weatherAtmosphereTag}>{currentAtmosphereConfig.badge}</span>
-          </div>
-
-          {/* Authoritative, Grounded Headline */}
-          <h1 className={styles.headline}>
-            National Hyperlocal Disaster Intelligence &amp; Early Warning Network
-          </h1>
-
-          {/* Supporting Public-Safety Mission Description */}
-          <p className={styles.supportingText}>
-            Suraksha Setu bridges street-level citizen observations with dual-polarization Doppler radar telemetry.
-            Empowering disaster response authorities to verify urban waterlogging, cloudbursts, and flash floods before they escalate.
-          </p>
-
-          {/* Primary & Secondary Action Directives */}
-          <div className={styles.ctaGroup}>
-            <Link href="/map" className={styles.primaryCta} id="hero-primary-cta">
-              <span>Explore Live Risk Map</span>
-              <span className={styles.ctaArrow}>→</span>
-            </Link>
-            <Link href="/report" className={styles.secondaryCta} id="hero-report-cta">
-              <span>Submit Ground Report</span>
-              <span className={styles.ctaArrow}>→</span>
-            </Link>
-          </div>
-
-          {/* Subtle Atmosphere Preview Switcher for Presentation & Demonstration */}
-          <div className={styles.atmosphereSwitcherBar}>
-            <span className={styles.switcherLabel}>Atmosphere Mood:</span>
-            <button
-              type="button"
-              className={`${styles.switcherBtn} ${!isManualOverride ? styles.switcherBtnActive : ''}`}
-              onClick={() => {
-                setIsManualOverride(false);
-                if (liveLucknowData) {
-                  setActiveAtmosphere(
-                    classifyWeatherAtmosphere({
-                      temperature: liveLucknowData.temperature,
-                      precipitation: liveLucknowData.precipitation,
-                      rain: liveLucknowData.precipitation,
-                      weatherCode: liveLucknowData.weatherCode,
-                      cloudCover: liveLucknowData.cloudCover,
-                      windSpeed: liveLucknowData.windSpeed,
-                      relativeHumidity: liveLucknowData.relativeHumidity,
-                    })
-                  );
-                }
-              }}
-              title="Return to real-time auto-detected Lucknow weather"
-            >
-              ⚡ Live Lucknow
-            </button>
-            {(['clear', 'cloudy', 'rain', 'thunderstorm', 'fog', 'heatwave'] as WeatherAtmosphereType[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                className={`${styles.switcherBtn} ${isManualOverride && activeAtmosphere === mode ? styles.switcherBtnActive : ''}`}
-                onClick={() => {
-                  setIsManualOverride(true);
-                  setActiveAtmosphere(mode);
-                }}
-              >
-                {ATMOSPHERE_CONFIGS[mode].badge}
-              </button>
-            ))}
           </div>
         </div>
 
-        {/* ============================================================
-            3. Tactical 3D Weather Radar Hologram & Telemetry Hub
-            Dual-pol Doppler Radar, Wind Vector, H3 Hex Risk, Interactive Parallax
-            ============================================================ */}
-        <div className={styles.heroRadarWrapper}>
-          <WeatherRadarHologram
-            atmosphere={activeAtmosphere}
-            liveWeather={liveLucknowData}
-            activeHazard={currentHazard}
-            activeHazardsCount={activeHazards.length}
-            onCycleHazard={() =>
-              setSelectedHazardIndex((prev) => (prev + 1) % Math.max(1, activeHazards.length))
-            }
-          />
-        </div>
-
-        {/* Scroll Weather Indicator */}
+        {/* Scroll Indicator */}
         <div className={styles.scrollWeatherIndicator} style={{ opacity: scrollY > 160 ? 0 : 1 }}>
           <div className={styles.scrollPulseIcon}>
             <div className={styles.scrollPulseDot} />
           </div>
-          <span>Scroll to explore verified alert workflow</span>
+          <span>{t.hero.scrollHint}</span>
         </div>
       </section>
 
@@ -323,14 +231,14 @@ export default function LandingPage() {
             <span className={styles.metricIcon}>🚨</span>
             <div>
               <span className={styles.metricValue}>{stats.activeAlerts ?? alerts.length}</span>
-              <span className={styles.metricLabel}>Active Official Warnings</span>
+              <span className={styles.metricLabel}>{t.metrics.activeAlerts}</span>
             </div>
           </div>
           <div className={styles.metricCard}>
             <span className={styles.metricIcon}>📝</span>
             <div>
               <span className={styles.metricValue}>{stats.totalReports ?? reports.length}</span>
-              <span className={styles.metricLabel}>Ground Observations Today</span>
+              <span className={styles.metricLabel}>{t.metrics.reportsToday}</span>
             </div>
           </div>
           <div className={styles.metricCard}>
@@ -339,14 +247,14 @@ export default function LandingPage() {
               <span className={styles.metricValue}>
                 {stats.pendingReview ?? activeHazards.filter(h => !h.verificationStatus || h.verificationStatus === 'PENDING_VERIFICATION').length}
               </span>
-              <span className={styles.metricLabel}>Incidents Under Triage</span>
+              <span className={styles.metricLabel}>{t.metrics.underReview}</span>
             </div>
           </div>
           <div className={styles.metricCard}>
             <span className={styles.metricIcon}>📡</span>
             <div>
               <span className={styles.metricValue}>45 / 45</span>
-              <span className={styles.metricLabel}>Doppler Radars Online</span>
+              <span className={styles.metricLabel}>{t.metrics.stationsOnline}</span>
             </div>
           </div>
         </div>
@@ -571,49 +479,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================================
-          8. Calm Institutional Footer
-          ============================================================ */}
-      <footer className={styles.footer}>
-        <div className={styles.footerContainer}>
-          <div className={styles.footerTop}>
-            <div className={styles.footerBrand}>
-              <div className={styles.footerWordmark}>
-                🛡️ SURAKSHA SETU (सुरक्षा सेतु)
-              </div>
-              <p className={styles.footerDesc}>
-                National Hyperlocal Disaster Intelligence &amp; Early Warning System. A public-service initiative engineered for Smart India Hackathon.
-              </p>
-            </div>
-
-            <div className={styles.emergencyHotlines}>
-              <div className={styles.hotlineItem}>
-                <span className={styles.hotlineLabel}>National Emergency</span>
-                <a href="tel:112" className={styles.hotlineNumber}>112</a>
-              </div>
-              <div className={styles.hotlineItem}>
-                <span className={styles.hotlineLabel}>Disaster Control Room</span>
-                <a href="tel:1077" className={styles.hotlineNumber}>1077</a>
-              </div>
-              <div className={styles.hotlineItem}>
-                <span className={styles.hotlineLabel}>Ambulance &amp; Trauma</span>
-                <a href="tel:108" className={styles.hotlineNumber}>108</a>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.footerBottom}>
-            <span>© 2026 Suraksha Setu Platform. In life-threatening emergencies, dial 112 immediately.</span>
-            <div className={styles.footerLinks}>
-              <Link href="/map" className={styles.footerLink}>Pan-India Map</Link>
-              <Link href="/report" className={styles.footerLink}>Submit Report</Link>
-              <Link href="/safety" className={styles.footerLink}>Safety Protocols</Link>
-              <Link href="/staff/alerts" className={styles.footerLink}>Alert Dispatch</Link>
-              <Link href="/staff/admin" className={styles.footerLink}>Registry &amp; Audit</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* 8. Universal Editorial Footer */}
+      <Footer />
     </div>
   );
 }

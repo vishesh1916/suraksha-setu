@@ -2,6 +2,8 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import type { Alert } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import styles from './alert.module.css';
@@ -94,22 +96,7 @@ export default function AlertDetailPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.headerLeft}>
-          <span className={styles.logo}>🛡️</span>
-          <span className={styles.logoText}>SURAKSHA SETU</span>
-          <span style={{ fontSize: 11, color: '#8A99A8', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: 10, marginLeft: 6 }}>
-            सुरक्षा सेतु
-          </span>
-        </Link>
-        <nav className={styles.headerNav}>
-          <Link href="/" className={styles.navLink}>Home</Link>
-          <Link href="/map" className={styles.navLink}>Live Map</Link>
-          <Link href="/report" className={styles.navLink}>Report Hazard</Link>
-          <Link href="/safety" className={styles.navLink}>Safety</Link>
-          <Link href="/login" className={styles.navLink}>For Authorities</Link>
-        </nav>
-      </header>
+      <Navbar />
 
       <div className={styles.container}>
         <Link href="/map" className={styles.backLink}>
@@ -247,6 +234,7 @@ export default function AlertDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         </section>
       </div>
+      <Footer />
     </div>
   );
 }

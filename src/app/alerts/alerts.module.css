@@ -1,24 +1,25 @@
 /* ============================================================
-   Suraksha Setu — Public Official Alerts Directory Styles
+   Suraksha Setu — Editorial Public Official Alerts Directory
    ============================================================ */
 
 .page {
   min-height: 100vh;
-  background-color: var(--color-bg-primary, #0B1F33);
-  color: var(--color-text-primary, #F7F6F2);
+  background-color: var(--color-bg-primary, #F7F5F0);
+  color: var(--color-charcoal, #161816);
   display: flex;
   flex-direction: column;
 }
 
 .container {
-  max-width: 1180px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 3rem 1.5rem 5rem;
   width: 100%;
+  flex: 1;
 }
 
 .headerSection {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .badge {
@@ -27,25 +28,26 @@
   gap: 6px;
   padding: 4px 12px;
   border-radius: 999px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #EF4444;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #DC2626;
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .title {
-  font-family: var(--font-heading);
+  font-family: var(--font-family-sans);
   font-size: 2.25rem;
-  font-weight: 800;
-  color: #F7F6F2;
+  font-weight: 700;
+  color: var(--color-charcoal, #161816);
+  letter-spacing: -0.02em;
   margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
   font-size: 1rem;
-  color: #8A99A8;
+  color: var(--color-text-secondary, #474946);
   max-width: 680px;
   line-height: 1.5;
   margin: 0;
@@ -58,11 +60,12 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  background: rgba(14, 38, 62, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-md, 6px);
   padding: 12px 16px;
   margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .filterPills {
@@ -72,53 +75,100 @@
 }
 
 .pillBtn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
   border-radius: 999px;
   padding: 6px 14px;
   font-size: 12.5px;
   font-weight: 500;
-  color: #CBD5E1;
+  color: var(--color-text-secondary, #474946);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .pillBtn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #FFFFFF;
+  border-color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #161816);
 }
 
 .pillActive {
-  background: rgba(217, 119, 6, 0.2);
-  border-color: #D97706;
-  color: #F59E0B;
+  background: var(--color-charcoal, #161816);
+  border-color: var(--color-charcoal, #161816);
+  color: #FFFFFF;
   font-weight: 600;
+}
+
+.feedStatus {
+  font-size: 12px;
+  color: var(--color-text-muted, #737571);
+  font-family: var(--font-family-mono, monospace);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.feedDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  display: inline-block;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+/* Empty State */
+.emptyState {
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-md, 6px);
+  padding: 3.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.emptyTitle {
+  color: var(--color-charcoal, #161816);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 12px 0 6px;
+}
+
+.emptyDesc {
+  color: var(--color-text-secondary, #474946);
+  font-size: 0.9rem;
+  max-width: 460px;
+  margin: 0 auto;
 }
 
 /* Alert Cards Grid */
 .alertsGrid {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .alertCard {
-  background: rgba(14, 38, 62, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-md, 6px);
   padding: 1.75rem 2rem;
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.alertCard:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  border-color: #D1CEC5;
 }
 
 .alertCardCritical {
-  border-left: 6px solid #EF4444;
+  border-left: 5px solid #DC2626;
 }
 
 .alertCardHigh {
-  border-left: 6px solid #F59E0B;
+  border-left: 5px solid var(--color-accent, #D67A20);
 }
 
 .cardTop {
@@ -130,29 +180,60 @@
 }
 
 .headline {
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  color: #F7F6F2;
+  color: var(--color-charcoal, #161816);
   margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
 }
 
 .metaRow {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   font-size: 12.5px;
-  color: #8A99A8;
+  color: var(--color-text-muted, #737571);
+  flex-wrap: wrap;
+}
+
+.mapCellVisual {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mapCellBadge {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm, 3px);
+  background: var(--color-bg-primary, #F7F5F0);
+  border: 1px solid var(--color-border, #E5E2D9);
+  color: var(--color-text-secondary, #474946);
+  font-weight: 600;
 }
 
 .guidanceBox {
-  background: rgba(11, 31, 51, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  background: #FAF7F2;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-sm, 3px);
   padding: 1rem 1.25rem;
   margin: 1.25rem 0;
   font-size: 13.5px;
-  color: #E2E8F0;
-  line-height: 1.5;
+  color: var(--color-charcoal, #161816);
+  line-height: 1.55;
+}
+
+.guidanceTitle {
+  color: var(--color-accent, #D67A20);
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .cardFooter {
@@ -162,22 +243,22 @@
   flex-wrap: wrap;
   gap: 12px;
   padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--color-border, #E5E2D9);
 }
 
 .capBtnGroup {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .capBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-sm, 3px);
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
-  color: #38BDF8;
+  color: var(--color-charcoal, #161816);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -186,15 +267,15 @@
 }
 
 .capBtn:hover {
-  background: rgba(56, 189, 248, 0.15);
-  border-color: #38BDF8;
+  background: #FAF7F2;
+  border-color: var(--color-charcoal, #161816);
 }
 
 .inspectBtn {
-  background: var(--color-accent, #D97706);
+  background: var(--color-charcoal, #161816);
   color: #FFFFFF;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm, 3px);
   padding: 7px 16px;
   font-size: 12.5px;
   font-weight: 600;
@@ -206,5 +287,24 @@
 }
 
 .inspectBtn:hover {
-  background: #B45309;
+  background: #000000;
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: 2rem 1rem 3.5rem;
+  }
+
+  .alertCard {
+    padding: 1.25rem 1rem;
+  }
+
+  .cardTop {
+    flex-direction: column;
+  }
+
+  .mapCellVisual {
+    align-items: flex-start;
+  }
+}
+

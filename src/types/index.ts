@@ -540,3 +540,49 @@ export interface DisasterPredictionResult {
   };
 }
 
+// —— SOS Emergency Assistance ——
+
+export interface SosRequest {
+  id: string;
+  reporterName?: string;
+  phone?: string;
+  location: GeoPoint;
+  landmark: string;
+  hazardType: string;
+  peopleCount: number;
+  hasMedicalEmergency: boolean;
+  notes?: string;
+  status: 'PENDING_RESCUE' | 'DISPATCHED' | 'RESCUE_IN_PROGRESS' | 'RESOLVED_SAFE';
+  dispatchedUnit?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// —— Satellite & Space Observation (ISRO / NASA) ——
+
+export interface SatelliteObservation {
+  id: string;
+  agency: 'ISRO' | 'NASA';
+  satellite: string;
+  sensor: string;
+  productName: string;
+  timestamp: string;
+  coverageRegion: string;
+  coordinates: GeoPoint;
+  spectralBand: string;
+  resolutionMeters: number;
+  parameters: {
+    cloudTopTempC?: number;
+    cloudTopHeightKm?: number;
+    rainRateEstimateMmH?: number;
+    reflectivityDbz?: number;
+    convectiveIndex?: string;
+    thermalAnomalyPowerMw?: number;
+    soilSaturationPct?: number;
+  };
+  summary: string;
+  directTelemetryLink: string;
+  status: 'REALTIME' | 'RAPID_SCAN' | 'CALIBRATED';
+}
+
+

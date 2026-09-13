@@ -1,0 +1,176 @@
+/* ============================================================
+   SURAKSHA SETU — Editorial Universal Footer Styles
+   ============================================================ */
+
+.footer {
+  background: #F7F5F0;
+  border-top: 1px solid #E5E2D9;
+  padding-top: 4rem;
+  font-family: var(--font-family-sans);
+  color: #161816;
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: 1.4fr 2fr;
+  gap: 4rem;
+}
+
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.brandCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #161816;
+}
+
+.brandIcon {
+  font-size: 1.35rem;
+}
+
+.tagline {
+  font-size: 0.875rem;
+  color: #737571;
+  line-height: 1.6;
+  max-width: 360px;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #2E5A44;
+  width: fit-content;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2E5A44;
+}
+
+.emergencyHelpline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #737571;
+  margin-top: 0.5rem;
+}
+
+.helplineBadge {
+  background: rgba(197, 48, 48, 0.08);
+  color: #C53030;
+  border: 1px solid rgba(197, 48, 48, 0.25);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.8rem;
+}
+
+.linksGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+@media (max-width: 640px) {
+  .linksGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.linkCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.colTitle {
+  font-size: 0.775rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #161816;
+  margin-bottom: 0.25rem;
+}
+
+.linkList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0;
+  margin: 0;
+}
+
+.linkList a {
+  color: #737571;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.linkList a:hover {
+  color: #161816;
+}
+
+.linkList span {
+  color: #9B9D98;
+  font-size: 0.82rem;
+}
+
+.bottomBar {
+  margin-top: 3.5rem;
+  border-top: 1px solid #E5E2D9;
+  padding: 1.5rem 0;
+  background: #FFFFFF;
+}
+
+.bottomContainer {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #737571;
+  flex-wrap: wrap;
+}
+
+.bottomMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #9B9D98;
+}

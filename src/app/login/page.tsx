@@ -130,12 +130,12 @@ function LoginForm() {
               setPassword('Suraksha@Setu2026!');
             }}
             style={{
-              background: 'rgba(56, 189, 248, 0.1)',
-              border: '1px dashed rgba(56, 189, 248, 0.4)',
-              color: '#38BDF8',
+              background: '#FAF7F2',
+              border: '1px dashed var(--color-border, #E5E2D9)',
+              color: 'var(--color-charcoal, #161816)',
               fontSize: '12px',
-              padding: '7px 12px',
-              borderRadius: '6px',
+              padding: '8px 12px',
+              borderRadius: '4px',
               cursor: 'pointer',
               width: '100%',
               display: 'flex',
@@ -146,7 +146,7 @@ function LoginForm() {
             }}
           >
             <span>⚡</span>
-            <span>Auto-fill Official Duty Credentials (admin / Suraksha@Setu2026!)</span>
+            <span>Auto-fill Duty Credentials (admin / Suraksha@Setu2026!)</span>
           </button>
         </div>
       </form>

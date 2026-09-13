@@ -1,0 +1,458 @@
+/* ============================================================
+   SURAKSHA SETU — Authorities Portal Editorial Styles
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  background: #F7F5F0;
+  color: #161816;
+  font-family: var(--font-family-sans);
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 2rem 1.25rem 4rem;
+  }
+}
+
+.header {
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid #E5E2D9;
+  padding-bottom: 2rem;
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.kicker {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #D67A20;
+}
+
+.protocolBadge {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: #161816;
+}
+
+.stationBadge {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(46, 90, 68, 0.08);
+  border: 1px solid rgba(46, 90, 68, 0.22);
+  color: #2E5A44;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.title {
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #161816;
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: #737571;
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+/* Stats Cards */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (max-width: 900px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.statCard {
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 3px rgba(22, 24, 22, 0.04);
+}
+
+.statLabel {
+  display: block;
+  font-family: var(--font-family-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #9B9D98;
+  margin-bottom: 6px;
+}
+
+.statValue {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #161816;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.statMeta {
+  display: block;
+  font-size: 11.5px;
+  color: #737571;
+}
+
+/* Main Split Grid */
+.operationalGrid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 2.5rem;
+}
+
+@media (max-width: 960px) {
+  .operationalGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left: Incidents */
+.incidentsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid #E5E2D9;
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #161816;
+}
+
+.sectionSubtitle {
+  display: block;
+  font-size: 12.5px;
+  color: #737571;
+  margin-top: 2px;
+}
+
+.sectionActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.primaryActionBtn {
+  background: #161816;
+  color: #FFFFFF;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.primaryActionBtn:hover {
+  background: #333835;
+}
+
+.secondaryActionBtn {
+  background: #FFFFFF;
+  color: #161816;
+  border: 1px solid #E5E2D9;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.secondaryActionBtn:hover {
+  background: #EFECE6;
+}
+
+.incidentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loadingPlaceholder {
+  padding: 3rem;
+  text-align: center;
+  color: #737571;
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+}
+
+.emptyCard {
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+  padding: 2rem;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.emptyCard strong {
+  display: block;
+  font-size: 14px;
+  color: #161816;
+  margin-bottom: 4px;
+}
+
+.emptyCard p {
+  font-size: 12.5px;
+  color: #737571;
+  margin: 0;
+}
+
+.incidentRow {
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.15s ease;
+}
+
+.incidentRow:hover {
+  border-color: #DDD8CD;
+  box-shadow: 0 2px 8px rgba(22, 24, 22, 0.04);
+}
+
+.incidentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hazardMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hazardCategory {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #161816;
+}
+
+.hazardSeverity {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(214, 122, 32, 0.08);
+  color: #D67A20;
+  border: 1px solid rgba(214, 122, 32, 0.25);
+}
+
+.hazardCoords {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 11px;
+  color: #9B9D98;
+}
+
+.statusChip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.statusVerified {
+  background: rgba(46, 90, 68, 0.08);
+  color: #2E5A44;
+  border: 1px solid rgba(46, 90, 68, 0.25);
+}
+
+.statusDismissed {
+  background: #F0EDE6;
+  color: #737571;
+  border: 1px solid #E5E2D9;
+}
+
+.statusPending {
+  background: rgba(214, 122, 32, 0.08);
+  color: #D67A20;
+  border: 1px solid rgba(214, 122, 32, 0.25);
+}
+
+.incidentDesc {
+  font-size: 13px;
+  color: #4A4D4A;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.incidentFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #F0EDE6;
+  padding-top: 10px;
+  font-size: 12px;
+}
+
+.incidentLandmark {
+  color: #737571;
+  font-weight: 500;
+}
+
+.incidentActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inspectMapLink {
+  color: #161816;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.inspectMapLink:hover {
+  text-decoration: underline;
+}
+
+.takeActionLink {
+  color: #D67A20;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.takeActionLink:hover {
+  color: #B35E10;
+}
+
+/* Right Sidebar: Telemetry & Standards */
+.sidebarSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.cardPanel {
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+  padding: 22px;
+  box-shadow: 0 1px 3px rgba(22, 24, 22, 0.04);
+}
+
+.panelTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #161816;
+  border-bottom: 1px solid #E5E2D9;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.telemetryList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.telemetryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.telemetryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.telemetryName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #161816;
+}
+
+.telemetryStatusNominal {
+  font-size: 11px;
+  font-weight: 700;
+  color: #2E5A44;
+  background: rgba(46, 90, 68, 0.08);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.telemetrySub {
+  font-size: 11.5px;
+  color: #737571;
+  line-height: 1.4;
+}
+
+.protocolList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 12.5px;
+  color: #737571;
+  line-height: 1.55;
+}
+
+.protocolList strong {
+  color: #161816;
+  display: block;
+  margin-bottom: 2px;
+}

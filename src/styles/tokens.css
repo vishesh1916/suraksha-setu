@@ -1,81 +1,92 @@
 /* ============================================================
-   SIH Weather Platform — Design Tokens
-   Dark-mode-first, disaster-intelligence aesthetic
+   SURAKSHA SETU — Design System Tokens
+   High-end editorial aesthetic: soft off-white canvas, crisp charcoal
+   typography, warm gray, muted eucalyptus, signal amber/burnt orange.
    ============================================================ */
 
 :root {
-  /* —— Suraksha Setu Editorial Palette —— */
-  --color-navy-midnight: #0B1F33;
-  --color-storm-blue: #152A42;
-  --color-storm-surface: #19314C;
-  --color-storm-elevated: #1E3B5C;
-  --color-cloud-gray: #8A99A8;
-  --color-cloud-muted: #627282;
-  --color-off-white: #F7F6F2;
-  --color-off-white-card: #FFFFFF;
-  --color-off-white-border: #E5E2D9;
-  --color-off-white-text: #1C2833;
-  --color-off-white-muted: #64748B;
+  /* —— Editorial Brand Palette —— */
+  --color-canvas-base: #F7F5F0;
+  --color-canvas-card: #FFFFFF;
+  --color-canvas-subtle: #EFECE6;
+  --color-canvas-muted: #E8E5DD;
+  
+  --color-charcoal-primary: #161816;
+  --color-charcoal-secondary: #333835;
+  --color-warm-gray: #737571;
+  --color-warm-gray-light: #9B9D98;
+  
+  --color-border-hairline: #E5E2D9;
+  --color-border-subtle: #DDD8CD;
+  --color-border-strong: #C4BFB2;
 
-  /* Safety Amber — Strictly for Warnings Only */
-  --color-safety-amber: #D97706;
-  --color-safety-amber-light: #F59E0B;
-  --color-safety-amber-bg: rgba(217, 119, 6, 0.12);
-  --color-safety-amber-border: rgba(217, 119, 6, 0.35);
+  /* Muted Eucalyptus Green — Verified / Normal / Trust */
+  --color-eucalyptus: #2E5A44;
+  --color-eucalyptus-dark: #1E3D2E;
+  --color-eucalyptus-light: #3D755A;
+  --color-eucalyptus-bg: rgba(46, 90, 68, 0.08);
+  --color-eucalyptus-border: rgba(46, 90, 68, 0.22);
+
+  /* Signal Amber / Burnt Orange — Strictly for Weather Warnings & Active States */
+  --color-safety-amber: #D67A20;
+  --color-safety-amber-light: #E88A2F;
+  --color-safety-amber-dark: #B35E10;
+  --color-safety-amber-bg: rgba(214, 122, 32, 0.08);
+  --color-safety-amber-border: rgba(214, 122, 32, 0.28);
 
   /* —— Platform Core Tokens —— */
-  --color-bg-primary: #0B1F33;
-  --color-bg-secondary: #0F263D;
-  --color-bg-card: #142E49;
-  --color-bg-elevated: #1A3959;
-  --color-bg-glass: rgba(11, 31, 51, 0.85);
-  --color-bg-overlay: rgba(7, 19, 31, 0.7);
+  --color-bg-primary: #F7F5F0;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-elevated: #EFECE6;
+  --color-bg-glass: rgba(247, 245, 240, 0.92);
+  --color-bg-overlay: rgba(22, 24, 22, 0.45);
 
-  --color-surface-hover: rgba(247, 246, 242, 0.06);
-  --color-surface-active: rgba(247, 246, 242, 0.1);
+  --color-surface-hover: rgba(22, 24, 22, 0.04);
+  --color-surface-active: rgba(22, 24, 22, 0.08);
 
-  --color-text-primary: #F7F6F2;
-  --color-text-secondary: #8A99A8;
-  --color-text-muted: #5A6977;
-  --color-text-inverse: #0B1F33;
+  --color-text-primary: #161816;
+  --color-text-secondary: #737571;
+  --color-text-muted: #9B9D98;
+  --color-text-inverse: #F7F5F0;
 
-  /* Accent — Weather Slate / Storm */
-  --color-accent: #38BDF8;
-  --color-accent-hover: #7DD3FC;
-  --color-accent-subtle: rgba(56, 189, 248, 0.12);
-  --color-accent-glow: rgba(56, 189, 248, 0.25);
+  /* Accent — Burnt Orange for Active Weather / Warning States */
+  --color-accent: #D67A20;
+  --color-accent-hover: #B35E10;
+  --color-accent-subtle: rgba(214, 122, 32, 0.08);
+  --color-accent-glow: rgba(214, 122, 32, 0.2);
 
   /* Severity — Alert Colors */
-  --color-severity-critical: #EF4444;
-  --color-severity-critical-bg: rgba(239, 68, 68, 0.12);
-  --color-severity-high: #D97706;
-  --color-severity-high-bg: rgba(217, 119, 6, 0.12);
-  --color-severity-moderate: #F59E0B;
-  --color-severity-moderate-bg: rgba(245, 158, 11, 0.12);
-  --color-severity-low: #38BDF8;
-  --color-severity-low-bg: rgba(56, 189, 248, 0.12);
-  --color-severity-info: #94A3B8;
-  --color-severity-info-bg: rgba(148, 163, 184, 0.12);
+  --color-severity-critical: #C53030;
+  --color-severity-critical-bg: rgba(197, 48, 48, 0.08);
+  --color-severity-high: #D67A20;
+  --color-severity-high-bg: rgba(214, 122, 32, 0.08);
+  --color-severity-moderate: #D9822B;
+  --color-severity-moderate-bg: rgba(217, 130, 43, 0.08);
+  --color-severity-low: #3E6B5C;
+  --color-severity-low-bg: rgba(62, 107, 92, 0.08);
+  --color-severity-info: #5A626A;
+  --color-severity-info-bg: rgba(90, 98, 106, 0.08);
 
   /* Status Colors */
-  --color-success: #10B981;
-  --color-success-bg: rgba(16, 185, 129, 0.12);
-  --color-warning: #F59E0B;
-  --color-warning-bg: rgba(245, 158, 11, 0.12);
-  --color-error: #EF4444;
-  --color-error-bg: rgba(239, 68, 68, 0.12);
-  --color-info: #38BDF8;
-  --color-info-bg: rgba(56, 189, 248, 0.12);
+  --color-success: #2E5A44;
+  --color-success-bg: rgba(46, 90, 68, 0.08);
+  --color-warning: #D67A20;
+  --color-warning-bg: rgba(214, 122, 32, 0.08);
+  --color-error: #C53030;
+  --color-error-bg: rgba(197, 48, 48, 0.08);
+  --color-info: #2E5A44;
+  --color-info-bg: rgba(46, 90, 68, 0.08);
 
-  /* Confidence Score Gradient */
-  --color-confidence-high: #10B981;
-  --color-confidence-medium: #F59E0B;
-  --color-confidence-low: #EF4444;
+  /* Confidence Score */
+  --color-confidence-high: #2E5A44;
+  --color-confidence-medium: #D67A20;
+  --color-confidence-low: #C53030;
 
   /* Borders */
-  --color-border: rgba(138, 153, 168, 0.18);
-  --color-border-hover: rgba(138, 153, 168, 0.35);
-  --color-border-focus: var(--color-accent);
+  --color-border: #E5E2D9;
+  --color-border-hover: #DDD8CD;
+  --color-border-focus: #161816;
 
   /* —— Typography —— */
   --font-family-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -122,20 +133,20 @@
   --space-24: 6rem;     /* 96px */
 
   /* —— Border Radius —— */
-  --radius-sm: 0.375rem;   /* 6px */
-  --radius-md: 0.5rem;     /* 8px */
-  --radius-lg: 0.75rem;    /* 12px */
-  --radius-xl: 1rem;       /* 16px */
-  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
   --radius-full: 9999px;
 
   /* —— Shadows —— */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-  --shadow-glow-accent: 0 0 20px var(--color-accent-glow);
-  --shadow-glow-danger: 0 0 20px rgba(255, 59, 92, 0.3);
+  --shadow-sm: 0 1px 2px rgba(22, 24, 22, 0.05);
+  --shadow-md: 0 4px 12px rgba(22, 24, 22, 0.06), 0 1px 3px rgba(22, 24, 22, 0.04);
+  --shadow-lg: 0 10px 24px rgba(22, 24, 22, 0.08), 0 2px 6px rgba(22, 24, 22, 0.04);
+  --shadow-xl: 0 20px 32px rgba(22, 24, 22, 0.1), 0 4px 12px rgba(22, 24, 22, 0.05);
+  --shadow-glow-accent: 0 0 16px var(--color-accent-glow);
+  --shadow-glow-danger: 0 0 16px rgba(197, 48, 48, 0.2);
 
   /* —— Transitions —— */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);

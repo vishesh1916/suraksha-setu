@@ -1,20 +1,21 @@
 /* ============================================================
-   Suraksha Setu — Citizen Report Tracking Styles
+   Suraksha Setu — Editorial Citizen Report Tracking Styles
    ============================================================ */
 
 .page {
   min-height: 100vh;
-  background-color: var(--color-bg-primary, #0B1F33);
-  color: var(--color-text-primary, #F7F6F2);
+  background-color: var(--color-bg-primary, #F7F5F0);
+  color: var(--color-charcoal, #161816);
   display: flex;
   flex-direction: column;
 }
 
 .container {
-  max-width: 800px;
+  max-width: 840px;
   margin: 0 auto;
   padding: 3rem 1.5rem 5rem;
   width: 100%;
+  flex: 1;
 }
 
 .titleArea {
@@ -28,25 +29,26 @@
   gap: 6px;
   padding: 4px 12px;
   border-radius: 999px;
-  background: rgba(217, 119, 6, 0.15);
-  border: 1px solid rgba(217, 119, 6, 0.35);
-  color: #F59E0B;
+  background: #FAF7F2;
+  border: 1px solid var(--color-accent, #D67A20);
+  color: var(--color-accent, #D67A20);
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 1rem;
 }
 
 .title {
-  font-family: var(--font-heading);
+  font-family: var(--font-family-sans);
   font-size: 2.25rem;
-  font-weight: 800;
-  color: #F7F6F2;
+  font-weight: 700;
+  color: var(--color-charcoal, #161816);
+  letter-spacing: -0.02em;
   margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
   font-size: 0.95rem;
-  color: #8A99A8;
+  color: var(--color-text-secondary, #474946);
   max-width: 580px;
   margin: 0 auto;
   line-height: 1.5;
@@ -56,31 +58,32 @@
 .searchBox {
   display: flex;
   gap: 10px;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .input {
   flex: 1;
-  background: rgba(14, 38, 62, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-sm, 3px);
   padding: 0.85rem 1.25rem;
-  color: #F7F6F2;
+  color: var(--color-charcoal, #161816);
   font-size: 0.95rem;
   outline: none;
-  font-family: monospace;
+  font-family: var(--font-family-mono, monospace);
+  transition: border-color 0.15s ease;
 }
 
 .input:focus {
-  border-color: var(--color-accent, #D97706);
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+  border-color: var(--color-accent, #D67A20);
+  box-shadow: 0 0 0 3px rgba(214, 122, 32, 0.12);
 }
 
 .submitBtn {
-  background: var(--color-accent, #D97706);
+  background: var(--color-charcoal, #161816);
   color: #FFFFFF;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 3px);
   padding: 0 1.5rem;
   font-weight: 600;
   font-size: 0.95rem;
@@ -89,36 +92,38 @@
 }
 
 .submitBtn:hover {
-  background: #B45309;
+  background: #000000;
 }
 
 /* Tracking Card */
 .trackingCard {
-  background: rgba(14, 38, 62, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-md, 6px);
   padding: 2rem;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-border, #E5E2D9);
   padding-bottom: 1.25rem;
   margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .reportIdTag {
-  font-family: monospace;
-  font-size: 14px;
-  color: #38BDF8;
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  font-family: var(--font-family-mono, monospace);
+  font-size: 13px;
+  color: var(--color-accent, #D67A20);
+  background: #FAF7F2;
+  border: 1px solid var(--color-accent, #D67A20);
   padding: 4px 10px;
-  border-radius: 6px;
+  border-radius: 999px;
+  font-weight: 700;
 }
 
 /* Timeline Stages */
@@ -137,7 +142,7 @@
   left: 30px;
   right: 30px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--color-border, #E5E2D9);
   z-index: 1;
 }
 
@@ -154,38 +159,44 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #0B1F33;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: #FFFFFF;
+  border: 2px solid var(--color-border, #E5E2D9);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: #8A99A8;
+  color: var(--color-text-muted, #737571);
+  transition: all 0.2s ease;
 }
 
 .nodeCompleted .nodeCircle {
-  background: #10B981;
-  border-color: #10B981;
+  background: var(--color-eucalyptus, #2E5A44);
+  border-color: var(--color-eucalyptus, #2E5A44);
   color: #FFFFFF;
 }
 
 .nodeActive .nodeCircle {
-  background: #F59E0B;
-  border-color: #F59E0B;
-  color: #0B1F33;
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+  background: var(--color-accent, #D67A20);
+  border-color: var(--color-accent, #D67A20);
+  color: #FFFFFF;
+  box-shadow: 0 0 0 4px rgba(214, 122, 32, 0.15);
 }
 
 .nodeLabel {
   font-size: 12px;
-  font-weight: 600;
-  color: #8A99A8;
+  font-weight: 500;
+  color: var(--color-text-muted, #737571);
 }
 
-.nodeCompleted .nodeLabel,
+.nodeCompleted .nodeLabel {
+  color: var(--color-eucalyptus, #2E5A44);
+  font-weight: 600;
+}
+
 .nodeActive .nodeLabel {
-  color: #F7F6F2;
+  color: var(--color-accent, #D67A20);
+  font-weight: 700;
 }
 
 /* Details Grid */
@@ -193,9 +204,9 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  background: rgba(11, 31, 51, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
+  background: var(--color-bg-primary, #F7F5F0);
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-radius: var(--radius-sm, 3px);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
 }
@@ -207,23 +218,42 @@
 }
 
 .detailLabel {
-  font-size: 11.5px;
-  color: #8A99A8;
+  font-size: 11px;
+  color: var(--color-text-muted, #737571);
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--font-family-mono, monospace);
+  font-weight: 600;
 }
 
 .detailValue {
   font-size: 14px;
   font-weight: 600;
-  color: #F7F6F2;
+  color: var(--color-charcoal, #161816);
 }
 
 .reviewNote {
-  background: rgba(217, 119, 6, 0.08);
-  border: 1px solid rgba(217, 119, 6, 0.25);
-  border-radius: 8px;
+  background: #FAF7F2;
+  border: 1px solid var(--color-border, #E5E2D9);
+  border-left: 4px solid var(--color-accent, #D67A20);
+  border-radius: var(--radius-sm, 3px);
   padding: 1rem 1.25rem;
   font-size: 13px;
-  color: #FEF3C7;
+  color: var(--color-charcoal, #161816);
   line-height: 1.5;
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: 2rem 1rem 3.5rem;
+  }
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline {
+    padding: 0;
+  }
+}
+
