@@ -84,13 +84,12 @@ export async function GET(request: NextRequest) {
     let stageStatusDesc = 'Report submitted and queued for meteorologist Doppler radar verification.';
 
     const isResolved = report.status === 'RESOLVED' || report.currentActionCategory === 'Hazard Resolved';
-    const isActionTaken = report.currentActionCategory && [
-      'Evacuation Ordered',
-      'Dewatering & Municipal Crew Dispatched',
-      'Public Warning Issued (CAP 1.2)',
-      'Search & Rescue Deployed',
-      'Meteorological Monitoring',
-    ].includes(report.currentActionCategory);
+    const isActionTaken = Boolean(
+      report.currentActionCategory &&
+      report.currentActionCategory !== 'Pending Verification' &&
+      report.currentActionCategory !== 'Verified Genuine — Pending Tactical Action' &&
+      report.currentActionCategory !== 'Flagged False Alarm / Dismissed'
+    );
 
     const isVerified = report.verificationStatus === 'VERIFIED_GENUINE' || report.status === 'REVIEWED';
     const isDismissed = report.verificationStatus === 'FLAGGED_FALSE_REPORT' || report.status === 'DISMISSED';

@@ -331,7 +331,7 @@ function MapContent() {
 
   useEffect(() => {
     fetchHazardData();
-    const interval = setInterval(fetchHazardData, 30000); // 30s live refresh
+    const interval = setInterval(fetchHazardData, 5000); // 5s fast live refresh for cross-device updates
     return () => clearInterval(interval);
   }, [fetchHazardData]);
 
@@ -364,7 +364,35 @@ function MapContent() {
     setSearchResults(results);
   }, [searchQuery]);
 
-  // Filtered Events
+  // Map Markers: Governed by map layer visibility toggles, NOT the sidebar activeTab
+  // This ensures citizen community hazard reports are always rendered on the map canvas!
+  const mapMarkersList = useMemo(() => {
+    return events.filter((ev) => {
+      // 1. Layer Visibility checks
+      if (ev.is_community_report && !layerCommunity) return false;
+      if (ev.acronym === 'EQ' && !layerEarthquakes) return false;
+      if (['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym) && !layerWeatherFlood) return false;
+      if (['FR', 'HW'].includes(ev.acronym) && !layerFires) return false;
+
+      // 2. Facet Filters
+      if (selectedCountry !== 'ALL' && ev.country.toLowerCase() !== selectedCountry.toLowerCase()) return false;
+      if (selectedAcronym !== 'ALL' && ev.acronym !== selectedAcronym) return false;
+      if (selectedSeverity !== 'ALL' && ev.severity !== selectedSeverity) return false;
+
+      return true;
+    });
+  }, [
+    events,
+    selectedCountry,
+    selectedAcronym,
+    selectedSeverity,
+    layerCommunity,
+    layerEarthquakes,
+    layerWeatherFlood,
+    layerFires,
+  ]);
+
+  // Filtered Events for the Sidebar Feed List
   const filteredEvents = useMemo(() => {
     return events.filter((ev) => {
       // 1. Layer Visibility checks
@@ -399,15 +427,41 @@ function MapContent() {
     layerFires,
   ]);
 
-  // Separate official alerts and community reports for the feed
+  // Global counts for tabs (unaffected by sidebar active tab)
   const officialAlertsList = useMemo(
-    () => filteredEvents.filter((e) => e.is_official),
-    [filteredEvents]
+    () => events.filter((e) => e.is_official),
+    [events]
   );
   const communityReportsList = useMemo(
-    () => filteredEvents.filter((e) => e.is_community_report),
-    [filteredEvents]
+    () => events.filter((e) => e.is_community_report),
+    [events]
   );
+
+  // Auto-focus and highlight event if passed in URL query param (?highlight=reportId)
+  useEffect(() => {
+    if (!paramHighlight || events.length === 0) return;
+    const clean = paramHighlight.trim().toLowerCase();
+    const matched = events.find((ev) => {
+      const eid = ev.id.toLowerCase();
+      return (
+        eid === clean ||
+        eid.includes(clean) ||
+        clean.includes(eid) ||
+        (eid.startsWith('community_') && eid.replace('community_', '') === clean)
+      );
+    });
+    if (matched) {
+      setSelectedEvent(matched);
+      setIsRailOpen(true);
+      if (matched.is_community_report) {
+        setActiveTab('community');
+      }
+      const center = getEventCenter(matched);
+      if (center) {
+        flyToCoords(center[0], center[1], 12);
+      }
+    }
+  }, [paramHighlight, events]);
 
   // Initialize MapLibre GL Map Engine
   useEffect(() => {
@@ -568,8 +622,8 @@ function MapContent() {
   // Update Polygon GeoJSON Source when events, layerPolygons toggle, or mapReady changes
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
-    syncPolygonData(mapRef.current, filteredEvents, layerPolygons);
-  }, [mapReady, filteredEvents, layerPolygons]);
+    syncPolygonData(mapRef.current, mapMarkersList, layerPolygons);
+  }, [mapReady, mapMarkersList, layerPolygons]);
 
   // Render Marker Badges on the Map for ALL natural calamities and disasters
   useEffect(() => {
@@ -591,8 +645,8 @@ function MapContent() {
       });
       markersRef.current = [];
 
-      // 1. Render Point & Polygon Centroid Hazard Markers (ISRO, NASA, USGS, NDMA, Nepal)
-      filteredEvents.forEach((ev) => {
+      // 1. Render Point & Polygon Centroid Hazard Markers (ISRO, NASA, USGS, NDMA, Nepal, and Citizen Reports)
+      mapMarkersList.forEach((ev) => {
         const coords = getEventCenter(ev);
         if (!coords) return;
 
@@ -721,7 +775,7 @@ function MapContent() {
     return () => {
       isMounted = false;
     };
-  }, [mapReady, filteredEvents, layerShelters, layerEarthquakes, layerWeatherFlood, layerFires, layerCommunity, selectedEvent]);
+  }, [mapReady, mapMarkersList, layerShelters, layerEarthquakes, layerWeatherFlood, layerFires, layerCommunity, selectedEvent]);
 
   // FlyTo Location
   const flyToCoords = (lng: number, lat: number, zoom: number = 11) => {
@@ -1710,7 +1764,15 @@ function MapContent() {
 
                 {/* Action Buttons */}
                 <div className={styles.panelActionRow}>
-                  {selectedEvent.source_url && selectedEvent.source_url !== '#' && (
+                  {selectedEvent.is_community_report ? (
+                    <Link
+                      href={selectedEvent.source_url || `/track?id=${selectedEvent.id.replace('community_', '')}`}
+                      className={styles.panelPrimaryBtn}
+                      style={{ textDecoration: 'none', textAlign: 'center' }}
+                    >
+                      🔍 Track Report Status →
+                    </Link>
+                  ) : selectedEvent.source_url && selectedEvent.source_url !== '#' ? (
                     <a
                       href={selectedEvent.source_url}
                       target="_blank"
@@ -1719,7 +1781,7 @@ function MapContent() {
                     >
                       {t.map.verifySource} ↗
                     </a>
-                  )}
+                  ) : null}
 
                   {selectedEvent.details?.feltUrl && (
                     <a

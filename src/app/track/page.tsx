@@ -63,6 +63,15 @@ function TrackContent() {
   const [tracking, setTracking] = useState<TrackingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(Boolean(initialId));
+  const [publicRecentReports, setPublicRecentReports] = useState<Array<{
+    id: string;
+    category: string;
+    severity: number;
+    landmark?: string;
+    description?: string;
+    createdAt: string;
+    currentActionCategory?: string;
+  }>>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -78,6 +87,29 @@ function TrackContent() {
         }
       } catch {}
     }
+
+    // Always fetch recent public reports from server for cross-device discovery
+    async function fetchPublicReports() {
+      try {
+        const res = await fetch(`/api/reports?limit=8&_t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            const list = json.data.filter((r: any) => !isDemoReport(r));
+            setPublicRecentReports(list);
+            // If device has no local report and no initialId, default to tracking the latest active report
+            if (!initialId && list.length > 0) {
+              const hasLocal = typeof window !== 'undefined' && localStorage.getItem('suraksha_last_report_id');
+              if (!hasLocal) {
+                setReportIdInput(list[0].id);
+                setActiveTrackId(list[0].id);
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+    fetchPublicReports();
   }, [initialId]);
 
   useEffect(() => {
@@ -371,7 +403,7 @@ function TrackContent() {
         </button>
       </form>
 
-      {/* Your Reported Hazards Quick Selector */}
+      {/* Your Reported Hazards Quick Selector (Local Device) */}
       {myReports.length > 0 && (
         <div style={{
           display: 'flex',
@@ -379,9 +411,9 @@ function TrackContent() {
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: '20px'
+          marginBottom: '12px'
         }}>
-          <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>Your Submitted Hazards:</span>
+          <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>Your Device Reports:</span>
           {myReports.map((r) => (
             <button
               key={r.id}
@@ -407,6 +439,48 @@ function TrackContent() {
             >
               <span>{activeTrackId === r.id ? '📍' : '📄'}</span>
               <span>{r.category}: {r.landmark ? r.landmark.slice(0, 22) : r.id.slice(0, 10)}…</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Community Hazard Reports (Available on Any Device) */}
+      {publicRecentReports.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '24px'
+        }}>
+          <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>Recent Community Hazards:</span>
+          {publicRecentReports.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => {
+                setReportIdInput(r.id);
+                setActiveTrackId(r.id);
+                performTracking(r.id);
+              }}
+              style={{
+                background: activeTrackId === r.id ? 'rgba(56, 189, 248, 0.25)' : 'rgba(11, 31, 51, 0.5)',
+                border: activeTrackId === r.id ? '1px solid #38BDF8' : '1px solid rgba(138, 153, 168, 0.25)',
+                color: activeTrackId === r.id ? '#38BDF8' : '#94A3B8',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                fontSize: '0.76rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontWeight: activeTrackId === r.id ? 700 : 400
+              }}
+            >
+              <span>{activeTrackId === r.id ? '🛡️' : '⚠️'}</span>
+              <span>{r.landmark ? r.landmark.split(',')[0].slice(0, 20) : r.category}</span>
+              <code style={{ fontSize: '0.7rem', opacity: 0.8 }}>({r.id.slice(0, 8)})</code>
             </button>
           ))}
         </div>

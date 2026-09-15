@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import type { Alert, Report } from '@/types';
+import type { Alert, Report, HazardCategory } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -154,6 +154,94 @@ export default function LandingPage() {
       setLoading(false);
     }
   }, []);
+
+  // Tracking state for dedicated landing page tracker
+  const [trackInput, setTrackInput] = useState('');
+  const [activeTrackedId, setActiveTrackedId] = useState<string | null>(null);
+  const [trackingData, setTrackingData] = useState<{
+    id: string;
+    status: string;
+    verificationStatus?: string;
+    verificationRationale?: string;
+    firstActionTaken?: string;
+    currentActionCategory?: string;
+    actionHistory?: Array<{
+      id: string;
+      action: string;
+      actorName: string;
+      notes?: string;
+      timestamp: string;
+    }>;
+    stage: number;
+    stages: Array<{
+      name: string;
+      completed: boolean;
+      timestamp?: string;
+    }>;
+    category: string;
+    severity: number;
+    description?: string;
+    landmark?: string;
+    waterDepthFeet?: number;
+    location?: { latitude: number; longitude: number; accuracy?: number };
+    mediaUrl?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    corroborationCount: number;
+    weatherSignal: string;
+    reviewNote: string;
+  } | null>(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingSearched, setTrackingSearched] = useState(false);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
+
+  const performTrack = useCallback(async (id: string, silent = false) => {
+    const clean = id.trim();
+    if (!clean) return;
+    if (!silent) {
+      setTrackingLoading(true);
+      setTrackingError(null);
+    }
+    setTrackingSearched(true);
+    try {
+      const res = await fetch(`/api/reports/track?id=${encodeURIComponent(clean)}&_t=${Date.now()}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setTrackingData(json.data);
+        setActiveTrackedId(json.data.id || clean);
+        setTrackingError(null);
+      } else {
+        if (!silent) {
+          setTrackingData(null);
+          setTrackingError(json.error || `No active record found for "${clean}". Please verify your Report ID.`);
+        }
+      }
+    } catch {
+      if (!silent) {
+        setTrackingError('Failed to connect to tracking network. Please check network connection.');
+      }
+    } finally {
+      if (!silent) setTrackingLoading(false);
+    }
+  }, []);
+
+  // Auto-track the newest report when reports arrive if user hasn't typed anything
+  useEffect(() => {
+    if (!activeTrackedId && reports.length > 0) {
+      const first = reports[0];
+      setTrackInput(first.id);
+      performTrack(first.id, true);
+    }
+  }, [reports, activeTrackedId, performTrack]);
+
+  // Live polling every 3 seconds for the currently tracked report (instant cross-device sync)
+  useEffect(() => {
+    if (!activeTrackedId) return;
+    const interval = setInterval(() => {
+      performTrack(activeTrackedId, true);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [activeTrackedId, performTrack]);
 
   useEffect(() => {
     fetchData();
@@ -352,24 +440,78 @@ export default function LandingPage() {
               ) : (
                 reports.slice(0, 4).map((report) => {
                   const hazard = HAZARD_CATEGORIES[report.category];
+                  const isVerified = report.verificationStatus === 'VERIFIED_GENUINE';
+                  const hasAction = Boolean(
+                    report.currentActionCategory &&
+                    report.currentActionCategory !== 'Pending Verification' &&
+                    report.currentActionCategory !== 'Verified Genuine — Pending Tactical Action'
+                  );
                   return (
                     <div key={report.id} className={styles.reportStreamCard}>
                       <div className={styles.reportStreamHeader}>
                         <span className={styles.reportCategoryTag}>
                           {hazard?.icon} {hazard?.label || report.category}
                         </span>
-                        <span className={`badge badge-${report.severity >= 4 ? 'high' : report.severity >= 3 ? 'moderate' : 'low'}`}>
-                          Level {report.severity}
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <span className={`badge badge-${report.severity >= 4 ? 'high' : report.severity >= 3 ? 'moderate' : 'low'}`}>
+                            Level {report.severity}
+                          </span>
+                          <span style={{
+                            fontFamily: 'monospace',
+                            fontSize: '11px',
+                            background: '#FAF7F2',
+                            border: '1px solid #D1CDC4',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            color: '#D67A20',
+                            fontWeight: 700
+                          }}>
+                            {report.id.slice(0, 12)}
+                          </span>
+                        </div>
+                      </div>
+                      <p className={styles.reportStreamDesc} style={{ margin: '4px 0 2px' }}>
+                        {report.description}
+                      </p>
+                      {report.landmark && (
+                        <div style={{ fontSize: '11.5px', color: '#555753', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span>📍</span>
+                          <span>{report.landmark}</span>
+                        </div>
+                      )}
+                      <div className={styles.reportStreamMeta} style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #F0EDE6' }}>
+                        <span style={{ fontSize: '11px', color: '#737571' }}>
+                          👤 {report.reporterPseudonym}
+                        </span>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: hasAction ? '#0284C7' : isVerified ? '#2E5A44' : '#D67A20'
+                        }}>
+                          {hasAction ? `🚨 ${report.currentActionCategory}` : isVerified ? '✓ Verified Genuine' : '⏱ Queued for Radar Triage'}
                         </span>
                       </div>
-                      <p className={styles.reportStreamDesc}>{report.description}</p>
-                      <div className={styles.reportStreamMeta}>
-                        <span>👤 {report.reporterPseudonym}</span>
-                        <span>
-                          {report.verificationStatus === 'VERIFIED_GENUINE'
-                            ? '✓ Verified Genuine'
-                            : '⏱ Just now · GPS Confirmed'}
-                        </span>
+                      <div style={{ display: 'flex', gap: 8, marginTop: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTrackInput(report.id);
+                            performTrack(report.id);
+                            const el = document.getElementById('track-status');
+                            el?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="btn btn-primary btn-sm"
+                          style={{ fontSize: '11.5px', padding: '4px 10px', flex: 1, textAlign: 'center', cursor: 'pointer' }}
+                        >
+                          🔍 Track Live Status →
+                        </button>
+                        <Link
+                          href={`/map?lat=${report.location.latitude}&lng=${report.location.longitude}&highlight=${report.id}`}
+                          className="btn btn-secondary btn-sm"
+                          style={{ fontSize: '11.5px', padding: '4px 10px', textDecoration: 'none' }}
+                        >
+                          🗺️ Map
+                        </Link>
                       </div>
                     </div>
                   );
@@ -381,7 +523,286 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================================
-          7. Institutional Mandate & Architecture Pillars
+          7. Dedicated Interactive Section: Track Your Report Status
+          ============================================================ */}
+      <section className={styles.trackStatusSection} id="track-status">
+        <div className={styles.trackContainer}>
+          <div className={styles.trackHeaderArea}>
+            <div className={styles.trackBadge}>
+              <span>🔍</span> Citizen Transparency Pipeline · Real-Time 3s Sync
+            </div>
+            <h2 className={styles.trackTitle}>Track Your Hazard Report Status</h2>
+            <p className={styles.trackSubtitle}>
+              Enter your Report ID or select any community ground observation below to inspect real-time Doppler radar validation, meteorologist triage, and emergency response directives across all personal devices.
+            </p>
+          </div>
+
+          {/* Live Search Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              performTrack(trackInput);
+            }}
+            className={styles.trackSearchForm}
+          >
+            <input
+              type="text"
+              className={styles.trackInput}
+              placeholder="Enter Report ID (e.g. id_...) or search by area/pseudonym..."
+              value={trackInput}
+              onChange={(e) => setTrackInput(e.target.value)}
+              id="landing-track-input"
+            />
+            <button
+              type="submit"
+              className={styles.trackSubmitBtn}
+              disabled={trackingLoading || !trackInput.trim()}
+              id="landing-track-btn"
+            >
+              {trackingLoading ? 'Searching…' : 'Track Status →'}
+            </button>
+          </form>
+
+          {/* Quick Selectors for Community Hazard Reports */}
+          {reports.length > 0 && (
+            <div className={styles.trackPillsArea}>
+              <span className={styles.trackPillsLabel}>Active Community Reports:</span>
+              {reports.slice(0, 6).map((r) => {
+                const isActive = activeTrackedId === r.id;
+                const cat = HAZARD_CATEGORIES[r.category]?.icon || '⚠️';
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    className={`${styles.trackPill} ${isActive ? styles.trackPillActive : ''}`}
+                    onClick={() => {
+                      setTrackInput(r.id);
+                      performTrack(r.id);
+                    }}
+                  >
+                    <span>{cat}</span>
+                    <span>{r.landmark ? r.landmark.split(',')[0].slice(0, 20) : r.category}</span>
+                    <code style={{ fontSize: '0.7rem', opacity: 0.8 }}>({r.id.slice(0, 8)})</code>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Tracking Result View */}
+          {trackingLoading && (
+            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+              <div className="spinner spinner-lg" />
+              <p style={{ marginTop: 12, color: '#737571', fontSize: '0.9rem' }}>
+                Querying live national disaster response registry…
+              </p>
+            </div>
+          )}
+
+          {!trackingLoading && trackingError && (
+            <div className="alert alert-warning" style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
+              <span>⚠️</span> {trackingError}
+            </div>
+          )}
+
+          {!trackingLoading && trackingData && (
+            <div className={styles.trackCard}>
+              {/* Dynamic Emergency Action Directive Banner */}
+              {trackingData.currentActionCategory && trackingData.currentActionCategory !== 'Pending Verification' && (
+                <div style={{
+                  background: trackingData.currentActionCategory.includes('Evacuation') ? 'rgba(239, 68, 68, 0.12)' :
+                              trackingData.currentActionCategory.includes('Dewatering') ? 'rgba(56, 189, 248, 0.15)' :
+                              trackingData.currentActionCategory.includes('Resolved') ? 'rgba(46, 90, 68, 0.12)' : 'rgba(214, 122, 32, 0.12)',
+                  border: `1.5px solid ${
+                    trackingData.currentActionCategory.includes('Evacuation') ? '#EF4444' :
+                    trackingData.currentActionCategory.includes('Dewatering') ? '#0284C7' :
+                    trackingData.currentActionCategory.includes('Resolved') ? '#2E5A44' : '#D67A20'
+                  }`,
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                }}>
+                  <span style={{ fontSize: '1.8rem' }}>
+                    {trackingData.currentActionCategory.includes('Evacuation') ? '🚨' :
+                     trackingData.currentActionCategory.includes('Dewatering') ? '🚒' :
+                     trackingData.currentActionCategory.includes('Resolved') ? '✅' : '📢'}
+                  </span>
+                  <div>
+                    <strong style={{
+                      color: trackingData.currentActionCategory.includes('Evacuation') ? '#B91C1C' :
+                             trackingData.currentActionCategory.includes('Dewatering') ? '#0369A1' :
+                             trackingData.currentActionCategory.includes('Resolved') ? '#2E5A44' : '#C4511A',
+                      fontSize: '0.95rem',
+                      display: 'block'
+                    }}>
+                      Active Tactical Directive: {trackingData.currentActionCategory}
+                    </strong>
+                    <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#474946' }}>
+                      {trackingData.reviewNote || 'Emergency responders and meteorologists are managing this sector.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Card Header */}
+              <div className={styles.trackCardHeader}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      background: 'rgba(22, 24, 22, 0.06)',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      color: '#161816'
+                    }}>
+                      {HAZARD_CATEGORIES[trackingData.category as HazardCategory]?.icon || '⚠️'} {HAZARD_CATEGORIES[trackingData.category as HazardCategory]?.label || trackingData.category}
+                    </span>
+                    <span className={`badge badge-${trackingData.severity >= 4 ? 'critical' : trackingData.severity >= 3 ? 'high' : 'moderate'}`}>
+                      Severity {trackingData.severity}/5
+                    </span>
+                    <span style={{
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      color: trackingData.verificationStatus === 'VERIFIED_GENUINE' ? '#2E5A44' : '#D67A20',
+                      background: trackingData.verificationStatus === 'VERIFIED_GENUINE' ? '#EBF5EE' : '#FEF3E8',
+                      padding: '3px 8px',
+                      borderRadius: '4px'
+                    }}>
+                      {trackingData.verificationStatus === 'VERIFIED_GENUINE' ? '✓ Verified Genuine Hazard' : '⏱ Queued for Radar Triage'}
+                    </span>
+                  </div>
+                  <h3 className={styles.trackCardTitle}>
+                    {trackingData.landmark || `Hazard near ${trackingData.location?.latitude?.toFixed(4) || ''}°N, ${trackingData.location?.longitude?.toFixed(4) || ''}°E`}
+                  </h3>
+                  {trackingData.description && (
+                    <p style={{ margin: '6px 0 0', fontSize: '0.88rem', color: '#555753', lineHeight: 1.45 }}>
+                      &ldquo;{trackingData.description}&rdquo;
+                    </p>
+                  )}
+                </div>
+                <div className={styles.trackCardIdTag}>
+                  <span>ID: {trackingData.id}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(trackingData.id);
+                      alert('Copied Report ID to clipboard: ' + trackingData.id);
+                    }}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#D67A20',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      padding: 0,
+                      fontWeight: 700
+                    }}
+                    title="Copy Report ID"
+                  >
+                    📋
+                  </button>
+                </div>
+              </div>
+
+              {/* 4-Stage Timeline */}
+              <div className={styles.trackTimeline}>
+                {trackingData.stages.map((st, idx) => (
+                  <div
+                    key={idx}
+                    className={`${styles.trackTimelineStep} ${
+                      st.completed ? styles.trackTimelineStepCompleted : idx + 1 === trackingData.stage ? styles.trackTimelineStepActive : ''
+                    }`}
+                  >
+                    <div className={styles.trackStepNum}>
+                      {st.completed ? '✓' : idx + 1}
+                    </div>
+                    <span className={styles.trackStepName}>{st.name}</span>
+                    <span style={{ fontSize: '0.72rem', color: '#737571', display: 'block', marginTop: '4px' }}>
+                      {st.completed ? 'Completed' : idx + 1 === trackingData.stage ? 'In Progress' : 'Queued'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Telemetry Metrics Grid */}
+              <div className={styles.trackGrid}>
+                <div className={styles.trackGridItem}>
+                  <span className={styles.trackGridLabel}>Doppler Radar Correlation</span>
+                  <span className={styles.trackGridValue}>{trackingData.weatherSignal || 'Active AWS radar reflectivity match'}</span>
+                </div>
+                <div className={styles.trackGridItem}>
+                  <span className={styles.trackGridLabel}>Spatial Corroboration</span>
+                  <span className={styles.trackGridValue}>{trackingData.corroborationCount} eyewitness corroborating reports</span>
+                </div>
+                <div className={styles.trackGridItem}>
+                  <span className={styles.trackGridLabel}>GPS Coordinates</span>
+                  <span className={styles.trackGridValue} style={{ fontFamily: 'monospace' }}>
+                    {trackingData.location ? `${trackingData.location.latitude.toFixed(4)}°N, ${trackingData.location.longitude.toFixed(4)}°E (±${Math.round(trackingData.location.accuracy || 20)}m)` : 'Confirmed Area'}
+                  </span>
+                </div>
+                <div className={styles.trackGridItem}>
+                  <span className={styles.trackGridLabel}>Last Updated</span>
+                  <span className={styles.trackGridValue}>
+                    {trackingData.updatedAt ? new Date(trackingData.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'} · Live Sync
+                  </span>
+                </div>
+              </div>
+
+              {/* Action History / Audit Log */}
+              {trackingData.actionHistory && trackingData.actionHistory.length > 0 && (
+                <div className={styles.trackActionHistoryArea}>
+                  <h4 className={styles.trackActionHistoryTitle}>
+                    Agency Action History & Audit Log ({trackingData.actionHistory.length})
+                  </h4>
+                  <div className={styles.trackActionHistoryList}>
+                    {trackingData.actionHistory.map((item) => (
+                      <div key={item.id} className={styles.trackActionItem}>
+                        <div>
+                          <strong style={{ fontSize: '0.88rem', color: '#161816', display: 'block' }}>
+                            {item.action}
+                          </strong>
+                          <span style={{ fontSize: '0.78rem', color: '#555753' }}>
+                            By: <strong>{item.actorName}</strong>
+                            {item.notes && <span style={{ marginLeft: 6, color: '#737571' }}>— {item.notes}</span>}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.72rem', color: '#737571', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
+                          {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className={styles.trackActionsRow}>
+                <Link
+                  href={`/map?lat=${trackingData.location?.latitude || 26.8467}&lng=${trackingData.location?.longitude || 80.9462}&highlight=${trackingData.id}`}
+                  className={styles.trackBtnPrimary}
+                >
+                  <span>🗺️ Inspect on Live Map</span>
+                  <span>→</span>
+                </Link>
+                <Link
+                  href={`/track?id=${encodeURIComponent(trackingData.id)}`}
+                  className={styles.trackBtnSecondary}
+                >
+                  <span>🔍 Open Full Dedicated Tracking Page</span>
+                  <span>↗</span>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ============================================================
+          8. Institutional Mandate & Architecture Pillars
           ============================================================ */}
       <section className={styles.institutionalSection} id="about">
         <div className={styles.institutionalContainer}>

@@ -96,6 +96,12 @@ export function Navbar() {
             {t.nav.alerts}
           </Link>
           <Link
+            href="/track"
+            className={`${styles.navLink} ${pathname === '/track' ? styles.navLinkActive : ''}`}
+          >
+            {t.nav.track}
+          </Link>
+          <Link
             href="/authorities"
             className={`${styles.navLink} ${pathname.startsWith('/authorities') || pathname.startsWith('/staff') ? styles.navLinkActive : ''}`}
           >
