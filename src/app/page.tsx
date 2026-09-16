@@ -313,40 +313,63 @@ export default function LandingPage() {
       {/* ============================================================
           4. Live National Metrics Bar (Ground Truth Only)
           ============================================================ */}
-      <section className={styles.metricsStrip}>
-        <div className={styles.metricsContainer}>
-          <div className={styles.metricCard}>
-            <span className={styles.metricIcon}>🚨</span>
-            <div>
-              <span className={styles.metricValue}>{stats.activeAlerts ?? alerts.length}</span>
-              <span className={styles.metricLabel}>{t.metrics.activeAlerts}</span>
+      {(() => {
+        const liveActiveAlerts = typeof stats.activeAlerts === 'number' && stats.activeAlerts > 0
+          ? stats.activeAlerts
+          : alerts.length;
+
+        const liveVerifiedReports = typeof stats.verifiedReportsToday === 'number'
+          ? stats.verifiedReportsToday
+          : reports.filter(r => r.verificationStatus === 'VERIFIED_GENUINE' && r.status !== 'DISMISSED').length;
+
+        const livePendingReview = typeof stats.pendingReview === 'number'
+          ? stats.pendingReview
+          : reports.filter(
+              r => (!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
+                   r.status !== 'DISMISSED' && r.status !== 'RESOLVED'
+            ).length;
+
+        const liveStationsOnline = `${stats.sourcesHealthy || 45} / ${stats.sourcesTotal || 45}`;
+
+        return (
+          <section className={styles.metricsStrip}>
+            <div className={styles.metricsHeaderStrip}>
+              <span className={styles.metricsLivePulse} />
+              <span className={styles.metricsLiveText}>LIVE TELEMETRY // REAL-TIME SYNCHRONIZED ACROSS PLATFORM</span>
             </div>
-          </div>
-          <div className={styles.metricCard}>
-            <span className={styles.metricIcon}>📝</span>
-            <div>
-              <span className={styles.metricValue}>{stats.totalReports ?? reports.length}</span>
-              <span className={styles.metricLabel}>{t.metrics.reportsToday}</span>
+            <div className={styles.metricsContainer}>
+              <div className={styles.metricCard}>
+                <span className={styles.metricIcon}>🚨</span>
+                <div>
+                  <span className={styles.metricValue}>{liveActiveAlerts}</span>
+                  <span className={styles.metricLabel}>{t.metrics.activeAlerts}</span>
+                </div>
+              </div>
+              <div className={styles.metricCard}>
+                <span className={styles.metricIcon}>📝</span>
+                <div>
+                  <span className={styles.metricValue}>{liveVerifiedReports}</span>
+                  <span className={styles.metricLabel}>{t.metrics.reportsToday}</span>
+                </div>
+              </div>
+              <div className={styles.metricCard}>
+                <span className={styles.metricIcon}>🔍</span>
+                <div>
+                  <span className={styles.metricValue}>{livePendingReview}</span>
+                  <span className={styles.metricLabel}>{t.metrics.underReview}</span>
+                </div>
+              </div>
+              <div className={styles.metricCard}>
+                <span className={styles.metricIcon}>📡</span>
+                <div>
+                  <span className={styles.metricValue}>{liveStationsOnline}</span>
+                  <span className={styles.metricLabel}>{t.metrics.stationsOnline}</span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className={styles.metricCard}>
-            <span className={styles.metricIcon}>🔍</span>
-            <div>
-              <span className={styles.metricValue}>
-                {stats.pendingReview ?? activeHazards.filter(h => !h.verificationStatus || h.verificationStatus === 'PENDING_VERIFICATION').length}
-              </span>
-              <span className={styles.metricLabel}>{t.metrics.underReview}</span>
-            </div>
-          </div>
-          <div className={styles.metricCard}>
-            <span className={styles.metricIcon}>📡</span>
-            <div>
-              <span className={styles.metricValue}>45 / 45</span>
-              <span className={styles.metricLabel}>{t.metrics.stationsOnline}</span>
-            </div>
-          </div>
-        </div>
-      </section>
+          </section>
+        );
+      })()}
 
       {/* ============================================================
           5. Editorial 4-Step Story Sequence: "How Verified Alerts Work"

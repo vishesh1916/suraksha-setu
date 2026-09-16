@@ -269,9 +269,40 @@
   background: #FFFFFF;
   border-top: 1px solid #E5E2D9;
   border-bottom: 1px solid #E5E2D9;
-  padding: 1.75rem 2rem;
+  padding: 1.5rem 2rem;
   position: relative;
   z-index: 20;
+}
+
+.metricsHeaderStrip {
+  max-width: 1280px;
+  margin: 0 auto 1.25rem auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metricsLivePulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2E5A44;
+  box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.2);
+  animation: metricsPulse 2s infinite ease-in-out;
+}
+
+@keyframes metricsPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.7; }
+}
+
+.metricsLiveText {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #737571;
+  text-transform: uppercase;
 }
 
 .metricsContainer {
