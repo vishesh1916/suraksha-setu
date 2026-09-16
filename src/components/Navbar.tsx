@@ -65,20 +65,18 @@ export function Navbar() {
     <>
       <header className={styles.navbar}>
         <div className={styles.navbarInner}>
+          {/* 1. Official Brand Identity */}
           <div className={styles.brandGroup}>
             <Link href="/" className={styles.wordmark} id="brand-wordmark">
               <span className={styles.brandIcon}>🛡️</span>
-              <span className={styles.brandTitle}>{t.appName}</span>
+              <div className={styles.brandTitleWrap}>
+                <span className={styles.brandTitle}>{t.appName}</span>
+                <span className={styles.brandBadge}>NATIONAL NETWORK</span>
+              </div>
             </Link>
-            <div className={styles.subBrand}>
-              <span className={styles.subBrandDot} />
-              <span className={styles.subBrandText}>
-                {lang === 'en' ? 'National Radar & Early Warning Network' : t.subTitle}
-              </span>
-            </div>
           </div>
 
-          {/* Desktop Navigation Links */}
+          {/* 2. Sleek Segmented Executive Navigation Pill */}
           <nav className={styles.navLinks}>
             <Link
               href="/map"
@@ -118,7 +116,7 @@ export function Navbar() {
             </Link>
           </nav>
 
-          {/* Desktop Actions */}
+          {/* 3. Refined Utilities & Tactical Actions */}
           <div className={styles.navActions}>
             {/* 6-Language Multilingual Dropdown */}
             <div className={styles.langDropdownWrapper} ref={langWrapperRef}>
@@ -130,9 +128,11 @@ export function Navbar() {
                 id="language-toggle-btn"
                 aria-expanded={langDropdownOpen}
               >
-                <span>🌐</span>
-                <span>{SUPPORTED_LANGUAGES.find((l) => l.code === lang)?.nativeName || 'English'}</span>
-                <span style={{ fontSize: '10px', opacity: 0.7 }}>▾</span>
+                <span className={styles.langIcon}>🌐</span>
+                <span className={styles.langLabel}>
+                  {SUPPORTED_LANGUAGES.find((l) => l.code === lang)?.nativeName || 'English'}
+                </span>
+                <span className={styles.langCaret}>▾</span>
               </button>
 
               {langDropdownOpen && (
@@ -151,6 +151,8 @@ export function Navbar() {
                 </div>
               )}
             </div>
+
+            <div className={styles.navDivider} />
 
             <Link href="/login" className={styles.signInLink}>
               {t.nav.signIn}

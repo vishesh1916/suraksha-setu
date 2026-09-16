@@ -13,7 +13,7 @@
   justify-content: center;
   padding: 0 clamp(12px, 2vw, 24px);
   height: 62px;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid #EAE6DC;
@@ -30,83 +30,85 @@
 
 .navbarInner {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1380px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(8px, 1.2vw, 18px);
+  gap: 1.25rem;
   box-sizing: border-box;
 }
 
+/* 1. Official Brand Identity */
 .brandGroup {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
 .wordmark {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   text-decoration: none;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .brandIcon {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   line-height: 1;
   display: flex;
   align-items: center;
+  filter: drop-shadow(0 1px 2px rgba(22, 24, 22, 0.1));
+}
+
+.brandTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .brandTitle {
   font-family: var(--font-family-sans);
   font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #161816;
   white-space: nowrap;
 }
 
-.subBrand {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border-left: 1px solid #E5E2D9;
-  padding-left: 12px;
-  font-size: 0.75rem;
+.brandBadge {
+  font-family: var(--font-family-mono, monospace);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: #737571;
-  letter-spacing: 0.02em;
-  font-weight: 500;
+  background: #F3EFE8;
+  border: 1px solid #E5E2D9;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-.subBrandDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #2E5A44;
-  display: inline-block;
-}
-
-.subBrandText {
-  white-space: nowrap;
-}
-
-@media (max-width: 1400px) {
-  .subBrand {
+@media (max-width: 1240px) {
+  .brandBadge {
     display: none;
   }
 }
 
+/* 2. Sleek Segmented Executive Navigation Pill */
 .navLinks {
   display: flex;
   align-items: center;
-  gap: clamp(4px, 0.8vw, 14px);
-  flex-shrink: 1;
-  min-width: 0;
+  gap: 2px;
+  background: #F4F1EB;
+  border: 1px solid #E5E2D9;
+  border-radius: 8px;
+  padding: 3px;
+  box-shadow: inset 0 1px 2px rgba(22, 24, 22, 0.03);
+  flex-shrink: 0;
 }
 
 @media (max-width: 1080px) {
@@ -116,33 +118,34 @@
 }
 
 .navLink {
-  color: #4A4D4A;
+  color: #5C5E5A;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
   text-decoration: none;
   white-space: nowrap;
-  padding: 5px 8px;
+  padding: 5px 12px;
   border-radius: 6px;
-  transition: all 0.15s ease;
-  position: relative;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .navLink:hover {
   color: #161816;
-  background: rgba(22, 24, 22, 0.04);
+  background: rgba(255, 255, 255, 0.65);
 }
 
 .navLinkActive {
-  color: #D67A20;
+  color: #161816;
   font-weight: 600;
-  background: rgba(214, 122, 32, 0.08);
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(22, 24, 22, 0.08);
 }
 
+/* 3. Refined Utilities & Tactical Actions */
 .navActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -153,26 +156,39 @@
 }
 
 .langBtn {
-  background: #FAF8F5;
-  border: 1px solid #E5E2D9;
+  background: #FFFFFF;
+  border: 1px solid #E2DDD5;
   border-radius: 6px;
-  padding: 0 8px;
-  height: 32px;
+  padding: 0 10px;
+  height: 34px;
   font-size: 12px;
   font-weight: 600;
   color: #161816;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   transition: all 0.15s ease;
   box-shadow: 0 1px 2px rgba(22, 24, 22, 0.03);
   white-space: nowrap;
 }
 
 .langBtn:hover {
-  background: #EFECE6;
+  background: #FAF8F5;
   border-color: #DDD8CD;
+}
+
+.langIcon {
+  font-size: 13px;
+}
+
+.langLabel {
+  font-size: 12px;
+}
+
+.langCaret {
+  font-size: 10px;
+  opacity: 0.7;
 }
 
 .langDropdown {
@@ -226,14 +242,27 @@
   color: #737571;
 }
 
+.navDivider {
+  width: 1px;
+  height: 18px;
+  background: #E5E2D9;
+  margin: 0 2px;
+}
+
+@media (max-width: 768px) {
+  .navDivider {
+    display: none;
+  }
+}
+
 .signInLink {
-  color: #5C5E5A;
-  font-size: 12.5px;
+  color: #4A4D4A;
+  font-size: 13px;
   font-weight: 600;
   text-decoration: none;
   transition: all 0.15s ease;
-  padding: 0 8px;
-  height: 32px;
+  padding: 0 10px;
+  height: 34px;
   display: flex;
   align-items: center;
   border-radius: 6px;
@@ -253,16 +282,16 @@
 
 .openPlatformBtn {
   color: #FFFFFF;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 0 12px;
-  height: 32px;
+  padding: 0 14px;
+  height: 34px;
   border: 1px solid #161816;
   border-radius: 6px;
   text-decoration: none;
   background: #161816;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   justify-content: center;
