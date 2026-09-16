@@ -16,6 +16,11 @@ export function TechnicalWeatherVisual({
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [activeTab, setActiveTab] = useState<'reflectivity' | 'velocity' | 'hexRisk'>('reflectivity');
+  const activeTabRef = useRef(activeTab);
+
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,29 +31,54 @@ export function TechnicalWeatherVisual({
     let animId: number;
     let angle = 0;
 
-    // Fixed synthetic raindrops / echoes within radar coverage
-    const echoes = Array.from({ length: 42 }, () => {
-      const dist = 40 + Math.random() * 220;
-      const th = Math.PI + Math.random() * Math.PI; // Semi-circle (bottom half / top hemisphere)
+    // Fixed synthetic raindrops / echoes within radar coverage for Reflectivity mode
+    const echoes = Array.from({ length: 48 }, () => {
+      const dist = 35 + Math.random() * 225;
+      const th = Math.PI + Math.random() * Math.PI; // Semi-circle
       return {
         r: dist,
         theta: th,
         intensity: Math.random(),
-        size: 2 + Math.random() * 4,
+        size: 2.5 + Math.random() * 4.5,
+      };
+    });
+
+    // Doppler radial velocity points (inflow vs outflow)
+    const velocityVectors = Array.from({ length: 50 }, () => {
+      const dist = 40 + Math.random() * 215;
+      const th = Math.PI + Math.random() * Math.PI;
+      // Radially split: angles closer to PI (west) vs PI*2 (east)
+      const isInflow = th < Math.PI * 1.55;
+      return {
+        r: dist,
+        theta: th,
+        speed: 14 + Math.random() * 22, // m/s
+        isInflow,
+        length: 8 + Math.random() * 10,
+        flowOffset: Math.random() * Math.PI * 2,
       };
     });
 
     // Hexagon cells for H3 representation
     const hexes = [
-      { x: -60, y: -80, size: 28, risk: 'warning' },
-      { x: 20, y: -120, size: 32, risk: 'alert' },
-      { x: 90, y: -60, size: 26, risk: 'nominal' },
-      { x: -130, y: -50, size: 30, risk: 'nominal' },
-      { x: -30, y: -160, size: 30, risk: 'warning' },
-      { x: 70, y: -180, size: 28, risk: 'nominal' },
+      { x: -70, y: -85, size: 32, risk: 'warning', label: '8860a...', tag: '1.4ft Water' },
+      { x: 15, y: -125, size: 36, risk: 'alert', label: '8860b...', tag: '3.8ft Flooded' },
+      { x: 95, y: -65, size: 28, risk: 'nominal', label: '8860c...', tag: 'Nominal' },
+      { x: -140, y: -55, size: 30, risk: 'nominal', label: '8860d...', tag: 'Nominal' },
+      { x: -35, y: -165, size: 34, risk: 'warning', label: '8860e...', tag: 'Clogged Drain' },
+      { x: 75, y: -175, size: 30, risk: 'nominal', label: '8860f...', tag: 'Clear' },
+      { x: -95, y: -135, size: 30, risk: 'alert', label: '8860g...', tag: 'Road Block' },
     ];
 
-    const drawHex = (cx: number, cy: number, size: number, strokeColor: string, fillColor: string) => {
+    const drawHex = (
+      cx: number,
+      cy: number,
+      size: number,
+      strokeColor: string,
+      fillColor: string,
+      label?: string,
+      tag?: string
+    ) => {
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
         const a = (Math.PI / 3) * i - Math.PI / 6;
@@ -61,11 +91,22 @@ export function TechnicalWeatherVisual({
       ctx.fillStyle = fillColor;
       ctx.fill();
       ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1.5;
       ctx.stroke();
+
+      if (label && tag) {
+        ctx.font = '8px "JetBrains Mono", monospace';
+        ctx.fillStyle = strokeColor;
+        ctx.textAlign = 'center';
+        ctx.fillText(label, cx, cy - 3);
+        ctx.font = 'bold 7.5px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(tag, cx, cy + 8);
+        ctx.textAlign = 'left';
+      }
     };
 
     const render = () => {
+      const mode = activeTabRef.current;
       const width = canvas.width;
       const height = canvas.height;
       ctx.clearRect(0, 0, width, height);
@@ -80,7 +121,7 @@ export function TechnicalWeatherVisual({
       ctx.beginPath();
       ctx.arc(cx, cy, maxRadius, Math.PI, 2 * Math.PI, false);
       ctx.closePath();
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = mode === 'velocity' ? '#FCFBFA' : '#FFFFFF';
       ctx.fill();
       ctx.strokeStyle = '#E5E2D9';
       ctx.lineWidth = 1.5;
@@ -88,7 +129,7 @@ export function TechnicalWeatherVisual({
       ctx.clip();
 
       // 2. Subtle coordinate grid lines
-      ctx.strokeStyle = '#F0EDE6';
+      ctx.strokeStyle = '#F3EFE8';
       ctx.lineWidth = 1;
       for (let x = 0; x <= width; x += 40) {
         ctx.beginPath();
@@ -141,7 +182,7 @@ export function TechnicalWeatherVisual({
       });
 
       // 5. Isobar / Topographical contour lines
-      ctx.strokeStyle = '#E2DDD2';
+      ctx.strokeStyle = '#EAE4D8';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(cx - maxRadius * 0.8, cy - 30);
@@ -149,73 +190,163 @@ export function TechnicalWeatherVisual({
       ctx.bezierCurveTo(cx + 170, cy - 200, cx + 200, cy - 100, cx + maxRadius * 0.9, cy - 60);
       ctx.stroke();
 
-      ctx.beginPath();
-      ctx.moveTo(cx - maxRadius * 0.7, cy - 70);
-      ctx.bezierCurveTo(cx - 80, cy - 180, cx + 10, cy - 140, cx + 140, cy - 210);
-      ctx.stroke();
+      // Sweeping Radar Beam (semi-circle oscillation)
+      angle = (angle + 0.016) % Math.PI;
+      const sweepAngle = Math.PI + angle;
 
-      // 6. Uber H3 Hexagonal risk cells
-      hexes.forEach((hex) => {
-        const hx = cx + hex.x;
-        const hy = cy + hex.y;
-        let stroke = '#DDD8CD';
-        let fill = 'rgba(239, 236, 230, 0.4)';
-        if (hex.risk === 'alert') {
-          stroke = '#D67A20';
-          fill = 'rgba(214, 122, 32, 0.12)';
-        } else if (hex.risk === 'warning') {
-          stroke = '#E88A2F';
-          fill = 'rgba(232, 138, 47, 0.08)';
-        }
-        drawHex(hx, hy, hex.size, stroke, fill);
-      });
-
-      // 7. Sweeping Radar Beam (semi-circle oscillation)
-      angle = (angle + 0.015) % (Math.PI);
-      const sweepAngle = Math.PI + angle; // Sweeping across top semi-circle from 180° to 360°
-
-      const gradient = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
-      gradient.addColorStop(0, 'rgba(214, 122, 32, 0.25)');
-      gradient.addColorStop(0.5, 'rgba(214, 122, 32, 0.08)');
-      gradient.addColorStop(1, 'rgba(214, 122, 32, 0)');
+      const beamGradient = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      const sweepColor = mode === 'velocity' ? 'rgba(46, 90, 68, ' : 'rgba(214, 122, 32, ';
+      beamGradient.addColorStop(0, `${sweepColor}0.25)`);
+      beamGradient.addColorStop(0.5, `${sweepColor}0.08)`);
+      beamGradient.addColorStop(1, `${sweepColor}0)`);
 
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, maxRadius, sweepAngle - 0.25, sweepAngle, false);
+      ctx.arc(cx, cy, maxRadius, sweepAngle - 0.28, sweepAngle, false);
       ctx.closePath();
-      ctx.fillStyle = gradient;
+      ctx.fillStyle = beamGradient;
       ctx.fill();
 
       // Sweep leading edge line
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(cx + maxRadius * Math.cos(sweepAngle), cy + maxRadius * Math.sin(sweepAngle));
-      ctx.strokeStyle = '#D67A20';
+      ctx.strokeStyle = mode === 'velocity' ? '#2E5A44' : '#D67A20';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.restore();
 
-      // 8. Echoes / Rainfall intensity dots
-      echoes.forEach((pt) => {
-        const ex = cx + pt.r * Math.cos(pt.theta);
-        const ey = cy + pt.r * Math.sin(pt.theta);
+      // --- CHANNEL SPECIFIC RENDERING ---
 
-        // Calculate angular difference with sweep for illumination effect
-        const diff = Math.abs(sweepAngle - pt.theta);
-        const illuminated = diff < 0.35;
+      if (mode === 'reflectivity') {
+        // High-contrast multi-tier reflectivity dBZ precipitation clusters
+        echoes.forEach((pt) => {
+          const ex = cx + pt.r * Math.cos(pt.theta);
+          const ey = cy + pt.r * Math.sin(pt.theta);
+          const diff = Math.abs(sweepAngle - pt.theta);
+          const illuminated = diff < 0.35;
 
+          ctx.beginPath();
+          ctx.arc(ex, ey, pt.size * (illuminated ? 1.5 : 1.1), 0, Math.PI * 2);
+
+          if (pt.intensity > 0.72) {
+            // Severe cloudburst / thunderstorm core (>50 dBZ)
+            ctx.fillStyle = illuminated ? '#D67A20' : 'rgba(214, 122, 32, 0.75)';
+          } else if (pt.intensity > 0.4) {
+            // Moderate precipitation echo (35-50 dBZ)
+            ctx.fillStyle = illuminated ? '#2E5A44' : 'rgba(46, 90, 68, 0.65)';
+          } else {
+            // Light rain (<35 dBZ)
+            ctx.fillStyle = illuminated ? '#737571' : 'rgba(115, 117, 113, 0.45)';
+          }
+          ctx.fill();
+
+          // Outer halo for high-intensity storm cells
+          if (pt.intensity > 0.78) {
+            ctx.beginPath();
+            ctx.arc(ex, ey, pt.size * 2.2, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(214, 122, 32, 0.25)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        });
+
+        // Subtle faint background hexes to show grid coverage
+        hexes.slice(0, 3).forEach((h) => {
+          drawHex(cx + h.x, cy + h.y, h.size, 'rgba(221, 216, 205, 0.6)', 'rgba(239, 236, 230, 0.15)');
+        });
+
+      } else if (mode === 'velocity') {
+        // Dual-Doppler Radial Velocity mode: Inflow (-Vr) vs Outflow (+Vr) & Zero-Isodop
+        const zeroIsodopAngle = Math.PI * 1.55; // 279°
+
+        // Draw Zero-Isodop Shear Line (where radial velocity is 0)
+        ctx.save();
         ctx.beginPath();
-        ctx.arc(ex, ey, pt.size * (illuminated ? 1.4 : 1), 0, Math.PI * 2);
-        if (pt.intensity > 0.75) {
-          ctx.fillStyle = illuminated ? '#D67A20' : 'rgba(214, 122, 32, 0.65)';
-        } else if (pt.intensity > 0.45) {
-          ctx.fillStyle = illuminated ? '#2E5A44' : 'rgba(46, 90, 68, 0.55)';
-        } else {
-          ctx.fillStyle = illuminated ? '#161816' : 'rgba(115, 117, 113, 0.45)';
-        }
-        ctx.fill();
-      });
+        ctx.setLineDash([5, 4]);
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(
+          cx + maxRadius * Math.cos(zeroIsodopAngle),
+          cy + maxRadius * Math.sin(zeroIsodopAngle)
+        );
+        ctx.strokeStyle = '#737571';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label Zero Isodop
+        ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#737571';
+        ctx.fillText('ZERO-ISODOP (0 m/s)', cx - 15, cy - maxRadius * 0.75);
+        ctx.restore();
+
+        // Inflow sector label (-V_r towards radar)
+        ctx.font = 'bold 9px "JetBrains Mono", monospace';
+        ctx.fillStyle = '#2E5A44';
+        ctx.fillText('INFLOW (-V_r)', cx - 110, cy - 40);
+
+        // Outflow sector label (+V_r away from radar)
+        ctx.fillStyle = '#D67A20';
+        ctx.fillText('OUTFLOW (+V_r)', cx + 45, cy - 40);
+
+        // Draw velocity vectors with radial flow animation
+        velocityVectors.forEach((v) => {
+          const flowShift = Math.sin(angle * 3 + v.flowOffset) * 4;
+          const currentR = v.r + (v.isInflow ? -flowShift : flowShift);
+          const vx = cx + currentR * Math.cos(v.theta);
+          const vy = cy + currentR * Math.sin(v.theta);
+
+          const dir = v.isInflow ? -1 : 1; // -1 inward, +1 outward
+          const tipX = vx + dir * v.length * Math.cos(v.theta);
+          const tipY = vy + dir * v.length * Math.sin(v.theta);
+
+          const col = v.isInflow ? '#2E5A44' : '#D67A20';
+
+          ctx.beginPath();
+          ctx.moveTo(vx, vy);
+          ctx.lineTo(tipX, tipY);
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Arrow head
+          ctx.beginPath();
+          ctx.arc(tipX, tipY, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = col;
+          ctx.fill();
+        });
+
+      } else if (mode === 'hexRisk') {
+        // Uber H3 Discrete Global Hexagonal Risk Cells
+        // Background radar echo context (faint)
+        echoes.forEach((pt) => {
+          const ex = cx + pt.r * Math.cos(pt.theta);
+          const ey = cy + pt.r * Math.sin(pt.theta);
+          ctx.beginPath();
+          ctx.arc(ex, ey, 2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(180, 175, 165, 0.4)';
+          ctx.fill();
+        });
+
+        // Prominent H3 cells with glowing borders, risk fills, and report tags
+        hexes.forEach((hex) => {
+          const hx = cx + hex.x;
+          const hy = cy + hex.y;
+          let stroke = '#2E5A44';
+          let fill = 'rgba(46, 90, 68, 0.12)';
+
+          if (hex.risk === 'alert') {
+            stroke = '#D67A20';
+            fill = 'rgba(214, 122, 32, 0.22)';
+          } else if (hex.risk === 'warning') {
+            stroke = '#E88A2F';
+            fill = 'rgba(232, 138, 47, 0.16)';
+          }
+
+          drawHex(hx, hy, hex.size, stroke, fill, hex.label, hex.tag);
+        });
+      }
 
       // 9. Radar Center Pivot Station
       ctx.beginPath();
@@ -224,7 +355,7 @@ export function TechnicalWeatherVisual({
       ctx.fill();
       ctx.beginPath();
       ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-      ctx.strokeStyle = '#D67A20';
+      ctx.strokeStyle = mode === 'velocity' ? '#2E5A44' : '#D67A20';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
@@ -253,6 +384,7 @@ export function TechnicalWeatherVisual({
             type="button"
             className={`${styles.channelBtn} ${activeTab === 'reflectivity' ? styles.channelBtnActive : ''}`}
             onClick={() => setActiveTab('reflectivity')}
+            title="Precipitation Echo Power (dBZ)"
           >
             Reflectivity (dBZ)
           </button>
@@ -260,6 +392,7 @@ export function TechnicalWeatherVisual({
             type="button"
             className={`${styles.channelBtn} ${activeTab === 'velocity' ? styles.channelBtnActive : ''}`}
             onClick={() => setActiveTab('velocity')}
+            title="Doppler Radial Wind Velocity (m/s)"
           >
             Doppler Velocity
           </button>
@@ -267,6 +400,7 @@ export function TechnicalWeatherVisual({
             type="button"
             className={`${styles.channelBtn} ${activeTab === 'hexRisk' ? styles.channelBtnActive : ''}`}
             onClick={() => setActiveTab('hexRisk')}
+            title="Uber H3 Discrete Hexagonal Spatial Grid"
           >
             H3 Ground Risk
           </button>
@@ -282,20 +416,56 @@ export function TechnicalWeatherVisual({
           className={styles.radarCanvas}
         />
 
-        {/* Floating Telemetry Data Cards */}
-        <div className={styles.telemetryOverlayTopLeft}>
-          <div className={styles.telemetryTag}>AZIMUTH SWEEP</div>
-          <div className={styles.telemetryVal}>0.5° Elevation</div>
-          <div className={styles.telemetrySub}>Dual Polarization · 2.85 GHz</div>
-        </div>
+        {/* Dynamic Floating Telemetry Data Cards based on Active Channel */}
+        {activeTab === 'reflectivity' && (
+          <>
+            <div className={styles.telemetryOverlayTopLeft}>
+              <div className={styles.telemetryTag}>RADAR REFLECTIVITY (Z)</div>
+              <div className={styles.telemetryVal}>54.2 dBZ Core Detected</div>
+              <div className={styles.telemetrySub}>Dual-Pol S-Band · 0.5° Elevation</div>
+            </div>
 
-        <div className={styles.telemetryOverlayTopRight}>
-          <div className={styles.telemetryTag}>GROUND CORRELATION</div>
-          <div className={styles.telemetryVal}>
-            {activeHazardsCount > 0 ? `${activeHazardsCount} Active Corroborated` : 'Baseline Nominal'}
-          </div>
-          <div className={styles.telemetrySub}>H3 Hex Spatial Index (Res 8)</div>
-        </div>
+            <div className={styles.telemetryOverlayTopRight}>
+              <div className={styles.telemetryTag}>SURFACE PRECIP RATE</div>
+              <div className={styles.telemetryVal}>62 mm/hr Cloudburst</div>
+              <div className={styles.telemetrySub}>Marshall-Palmer Z-R Calibrated</div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'velocity' && (
+          <>
+            <div className={styles.telemetryOverlayTopLeft}>
+              <div className={styles.telemetryTag}>RADIAL VELOCITY (V_r)</div>
+              <div className={styles.telemetryVal}>Inflow -28 · Outflow +34 m/s</div>
+              <div className={styles.telemetrySub}>Zero-Isodop Shear Axis: 215° SW</div>
+            </div>
+
+            <div className={styles.telemetryOverlayTopRight}>
+              <div className={styles.telemetryTag}>DOPPLER WIND SHEAR</div>
+              <div className={styles.telemetryVal}>Squall Front / Downdraft</div>
+              <div className={styles.telemetrySub}>Low-Level Microburst Detection</div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'hexRisk' && (
+          <>
+            <div className={styles.telemetryOverlayTopLeft}>
+              <div className={styles.telemetryTag}>H3 SPATIAL INDEX</div>
+              <div className={styles.telemetryVal}>Resolution 8 (~400m Cells)</div>
+              <div className={styles.telemetrySub}>Uber Discrete Hexagonal Grid</div>
+            </div>
+
+            <div className={styles.telemetryOverlayTopRight}>
+              <div className={styles.telemetryTag}>GROUND CORRELATION</div>
+              <div className={styles.telemetryVal}>
+                {activeHazardsCount > 0 ? `${activeHazardsCount} Corroborated Reports` : '3 High-Risk Hex Clusters'}
+              </div>
+              <div className={styles.telemetrySub}>Citizen Reports + Radar Confluence</div>
+            </div>
+          </>
+        )}
 
         {/* Compass Cardinal Points */}
         <div className={styles.compassWest}>W · 270°</div>
@@ -303,24 +473,62 @@ export function TechnicalWeatherVisual({
         <div className={styles.compassEast}>E · 090°</div>
       </div>
 
-      {/* Bottom Technical Readout Strip */}
+      {/* Dynamic Bottom Technical Readout Strip based on Active Channel */}
       <div className={styles.visualFooter}>
         <div className={styles.readoutLeft}>
           <span className={styles.geoLabel}>{locationLabel}</span>
         </div>
         <div className={styles.readoutRight}>
-          <div className={styles.legendItem}>
-            <span className={styles.legendDot} style={{ background: '#D67A20' }} />
-            <span>Severe / Warning</span>
-          </div>
-          <div className={styles.legendItem}>
-            <span className={styles.legendDot} style={{ background: '#2E5A44' }} />
-            <span>Moderate Echo</span>
-          </div>
-          <div className={styles.legendItem}>
-            <span className={styles.legendDot} style={{ background: '#737571' }} />
-            <span>Light Rain</span>
-          </div>
+          {activeTab === 'reflectivity' && (
+            <>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#D67A20' }} />
+                <span>Severe (&gt;50 dBZ)</span>
+              </div>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#2E5A44' }} />
+                <span>Moderate (35–50 dBZ)</span>
+              </div>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#737571' }} />
+                <span>Light (&lt;35 dBZ)</span>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'velocity' && (
+            <>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#2E5A44' }} />
+                <span>Inflow (-V_r Inbound)</span>
+              </div>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#D67A20' }} />
+                <span>Outflow (+V_r Outbound)</span>
+              </div>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#737571' }} />
+                <span>Zero-Isodop (0 m/s)</span>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'hexRisk' && (
+            <>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#D67A20' }} />
+                <span>Critical Flooded Hex</span>
+              </div>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#E88A2F' }} />
+                <span>Waterlogging Warning</span>
+              </div>
+              <div className={styles.legendItem}>
+                <span className={styles.legendDot} style={{ background: '#2E5A44' }} />
+                <span>Nominal Baseline</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
