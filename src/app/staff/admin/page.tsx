@@ -1576,26 +1576,27 @@ export default function AdminPage() {
         {/* 🇮🇳 Compact Pan-India Sentinel Executive Bar */}
         <div style={{
           margin: '0 24px 12px',
-          background: (indiaRiskScan?.criticalZonesCount || 0) > 0
-            ? 'linear-gradient(90deg, rgba(239, 68, 68, 0.15) 0%, rgba(15, 23, 42, 0.95) 100%)'
-            : 'linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%)',
-          border: `1px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(56, 189, 248, 0.3)'}`,
+          background: '#0F172A',
+          border: `1px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#1E293B'}`,
           borderRadius: '8px',
-          padding: '8px 16px',
+          padding: '10px 18px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
-          flexWrap: 'wrap'
+          flexWrap: 'wrap',
+          boxShadow: '0 2px 8px rgba(15, 23, 42, 0.12)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '1.2rem' }}>🇮🇳</span>
             <div>
-              <span style={{ fontSize: '0.86rem', fontWeight: 600, color: '#F1F5F9' }}>
-                <strong style={{ color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FCA5A5' : '#38BDF8' }}>
+              <span style={{ fontSize: '0.88rem', fontWeight: 500, color: '#F8FAFC' }}>
+                <strong style={{ color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#F87171' : '#38BDF8', fontWeight: 700 }}>
                   {(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '🚨 SEVERE WEATHER DETECTED' : 'Pan-India Sentinel'}:
                 </strong>{' '}
-                {indiaRiskScan?.nationalExecutiveBriefing || '11 vulnerable Indian hubs actively scanned via Doppler radar & real-time telemetry.'}
+                <span style={{ color: '#E2E8F0' }}>
+                  {indiaRiskScan?.nationalExecutiveBriefing || 'Pan-India meteorological surveillance active: Atmospheric conditions are stable across all major hubs.'}
+                </span>
               </span>
             </div>
           </div>
@@ -1603,9 +1604,9 @@ export default function AdminPage() {
             <span style={{
               fontSize: '11px',
               fontWeight: 700,
-              padding: '2px 8px',
+              padding: '3px 10px',
               borderRadius: '999px',
-              background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+              background: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.2)',
               color: (indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#FCA5A5' : '#4ADE80',
               border: `1px solid ${(indiaRiskScan?.criticalZonesCount || 0) > 0 ? '#EF4444' : '#22C55E'}`
             }}>
@@ -1615,7 +1616,15 @@ export default function AdminPage() {
               type="button"
               className="btn btn-secondary"
               onClick={() => setActiveTab('sentinel')}
-              style={{ fontSize: '0.78rem', padding: '4px 10px', borderColor: '#38BDF8', color: '#38BDF8', fontWeight: 700 }}
+              style={{
+                fontSize: '0.78rem',
+                padding: '5px 12px',
+                borderColor: '#38BDF8',
+                color: '#38BDF8',
+                background: 'rgba(56, 189, 248, 0.12)',
+                fontWeight: 700,
+                borderRadius: '6px'
+              }}
             >
               Open Dedicated Sentinel Desk →
             </button>
@@ -2379,18 +2388,19 @@ export default function AdminPage() {
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '12px 16px',
-                      background: 'rgba(16, 185, 129, 0.12)',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
+                      background: '#ECFDF5',
+                      border: '1px solid #A7F3D0',
                       borderRadius: '8px',
                       marginBottom: '14px',
                       flexWrap: 'wrap',
-                      gap: '10px'
+                      gap: '10px',
+                      boxShadow: '0 1px 3px rgba(16, 185, 129, 0.06)'
                     }}>
                       <div>
-                        <strong style={{ color: '#34D399', fontSize: '0.94rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <strong style={{ color: '#047857', fontSize: '0.94rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>✅</span> Stage 2: Verified Genuine Hazards Ready for Tactical Action ({verifiedPendingReports.length})
                         </strong>
-                        <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
+                        <div style={{ fontSize: '0.82rem', color: '#0F172A', marginTop: '2px' }}>
                           Corroborated against Doppler radar. Deploy municipal pumps or evacuation orders directly below.
                         </div>
                       </div>
@@ -2398,7 +2408,7 @@ export default function AdminPage() {
                         type="button"
                         className="btn btn-secondary"
                         onClick={() => setActiveTab('verified_pending')}
-                        style={{ fontSize: '0.78rem', padding: '4px 10px', borderColor: '#34D399', color: '#34D399', fontWeight: 700 }}
+                        style={{ fontSize: '0.78rem', padding: '4px 10px', borderColor: '#059669', color: '#047857', background: '#FFFFFF', fontWeight: 700 }}
                       >
                         Open Dedicated Stage 2 Tab ({verifiedPendingReports.length}) →
                       </button>
@@ -2415,18 +2425,19 @@ export default function AdminPage() {
         {activeTab === 'verified_pending' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(52, 211, 153, 0.1)',
-              border: '1px solid rgba(52, 211, 153, 0.3)',
+              background: '#ECFDF5',
+              border: '1px solid #A7F3D0',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(16, 185, 129, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#34D399', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#047857', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>✅</span> Section 2: Verified Genuine Hazards — Pending Initial Tactical Action
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
-                <strong>Earlier Action Taken:</strong> Confirmed Genuine Hazard by duty meteorologist. <br />
-                <strong>Recommended Next Steps:</strong> Take the appropriate first action: Order Evacuation (for depth &gt; 3.5 ft), Dispatch 3x 500HP Dewatering Pumps, or Broadcast a Public CAP 1.2 Warning.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#065F46' }}>Earlier Action Taken:</strong> Confirmed Genuine Hazard by duty meteorologist. <br />
+                <strong style={{ color: '#065F46' }}>Recommended Next Steps:</strong> Take the appropriate first action: Order Evacuation (for depth &gt; 3.5 ft), Dispatch 3x 500HP Dewatering Pumps, or Broadcast a Public CAP 1.2 Warning.
               </p>
             </div>
 
@@ -2448,18 +2459,19 @@ export default function AdminPage() {
         {activeTab === 'evacuation' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(239, 68, 68, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#EF4444', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#B91C1C', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>🚨</span> Section 3: First Action Taken — Evacuation Ordered ({evacuationReports.length})
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#FEE2E2' }}>
-                <strong>Earlier Action Taken:</strong> Civil authority issued mandatory evacuation for ground floors and commuters. <br />
-                <strong>Meteorologist Recommended Next Step:</strong> Run ML Predictive Hydrodynamics to project flood crest arrival time (T-peak). Confirm evacuation assembly shelters are located above +3.5m datum and disconnect local transformer lines.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#991B1B' }}>Earlier Action Taken:</strong> Civil authority issued mandatory evacuation for ground floors and commuters. <br />
+                <strong style={{ color: '#991B1B' }}>Meteorologist Recommended Next Step:</strong> Run ML Predictive Hydrodynamics to project flood crest arrival time (T-peak). Confirm evacuation assembly shelters are located above +3.5m datum and disconnect local transformer lines.
               </p>
             </div>
 
@@ -2481,18 +2493,19 @@ export default function AdminPage() {
         {activeTab === 'dewatering' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(56, 189, 248, 0.1)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              background: '#F0F9FF',
+              border: '1px solid #BAE6FD',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(56, 189, 248, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#38BDF8', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#0369A1', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>🚒</span> Section 4: First Action Taken — Dewatering & Municipal Crew Dispatched ({dewateringReports.length})
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#E0F2FE' }}>
-                <strong>Earlier Action Taken:</strong> Mobilized 3x 500HP Diesel Pumps (Discharge: 45,000 LPM) and road barricades. <br />
-                <strong>Meteorologist Recommended Next Step:</strong> Track ongoing precipitation rate (mm/h) vs dewatering extraction rate. Ensure 3-tier sandbag barriers hold against sheet flow.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#075985' }}>Earlier Action Taken:</strong> Mobilized 3x 500HP Diesel Pumps (Discharge: 45,000 LPM) and road barricades. <br />
+                <strong style={{ color: '#075985' }}>Meteorologist Recommended Next Step:</strong> Track ongoing precipitation rate (mm/h) vs dewatering extraction rate. Ensure 3-tier sandbag barriers hold against sheet flow.
               </p>
             </div>
 
@@ -2514,18 +2527,19 @@ export default function AdminPage() {
         {activeTab === 'cap_warning' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
+              background: '#FFFBEB',
+              border: '1px solid #FDE68A',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(245, 158, 11, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#F59E0B', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#B45309', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>📢</span> Section 5: First Action Taken — Public Warning Issued (CAP 1.2) ({capWarningReports.length})
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#FEF3C7' }}>
-                <strong>Earlier Action Taken:</strong> Broadcasted Common Alerting Protocol (CAP 1.2) alert to public stream. <br />
-                <strong>Meteorologist Recommended Next Step:</strong> Monitor citizen cell feedback and traffic diversions. If rainfall exceeds 35 mm/h, escalate directly to Phase 2 dewatering or evacuation.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#92400E' }}>Earlier Action Taken:</strong> Broadcasted Common Alerting Protocol (CAP 1.2) alert to public stream. <br />
+                <strong style={{ color: '#92400E' }}>Meteorologist Recommended Next Step:</strong> Monitor citizen cell feedback and traffic diversions. If rainfall exceeds 35 mm/h, escalate directly to Phase 2 dewatering or evacuation.
               </p>
             </div>
 
@@ -2547,18 +2561,19 @@ export default function AdminPage() {
         {activeTab === 'sar' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(167, 139, 250, 0.1)',
-              border: '1px solid rgba(167, 139, 250, 0.3)',
+              background: '#F5F3FF',
+              border: '1px solid #DDD6FE',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(124, 58, 237, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#A78BFA', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#6D28D9', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>🚤</span> Section 6: First Action Taken — Search & Rescue / SDRF Deployed ({sarReports.length})
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#EDE9FE' }}>
-                <strong>Earlier Action Taken:</strong> SDRF rescue boats and emergency triage medical camp staged. <br />
-                <strong>Meteorologist Recommended Next Step:</strong> Maintain continuous 10-minute Doppler wind gust watch to protect rescue personnel in open flood currents.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#5B21B6' }}>Earlier Action Taken:</strong> SDRF rescue boats and emergency triage medical camp staged. <br />
+                <strong style={{ color: '#5B21B6' }}>Meteorologist Recommended Next Step:</strong> Maintain continuous 10-minute Doppler wind gust watch to protect rescue personnel in open flood currents.
               </p>
             </div>
 
@@ -2580,18 +2595,19 @@ export default function AdminPage() {
         {activeTab === 'monitoring' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(56, 189, 248, 0.1)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              background: '#F0F9FF',
+              border: '1px solid #BAE6FD',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(2, 132, 199, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#38BDF8', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#0369A1', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>🛰️</span> Section 7: First Action Taken — Meteorological Sensor Watch ({monitoringReports.length})
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#E0F2FE' }}>
-                <strong>Earlier Action Taken:</strong> Established high-frequency telemetry polling. <br />
-                <strong>Meteorologist Recommended Next Step:</strong> Re-run SCS-CN soil saturation index if precipitation intensifies past 25mm/h.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#075985' }}>Earlier Action Taken:</strong> Established high-frequency telemetry polling. <br />
+                <strong style={{ color: '#075985' }}>Meteorologist Recommended Next Step:</strong> Re-run SCS-CN soil saturation index if precipitation intensifies past 25mm/h.
               </p>
             </div>
 
@@ -2613,18 +2629,19 @@ export default function AdminPage() {
         {activeTab === 'resolved' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(52, 211, 153, 0.1)',
-              border: '1px solid rgba(52, 211, 153, 0.3)',
+              background: '#ECFDF5',
+              border: '1px solid #A7F3D0',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(16, 185, 129, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#34D399', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#047857', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>🏁</span> Section 8: First Action Taken — Hazard Resolved & Corridor Restored ({resolvedReports.length})
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#D1FAE5' }}>
-                <strong>Earlier Action Taken:</strong> Hazard marked as resolved and corridor cleared. <br />
-                <strong>Meteorologist Recommended Next Step:</strong> Verify post-recession silt clearance and confirm electrical safety clearance before de-escalation archive.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#065F46' }}>Earlier Action Taken:</strong> Hazard marked as resolved and corridor cleared. <br />
+                <strong style={{ color: '#065F46' }}>Meteorologist Recommended Next Step:</strong> Verify post-recession silt clearance and confirm electrical safety clearance before de-escalation archive.
               </p>
             </div>
 
@@ -2646,17 +2663,18 @@ export default function AdminPage() {
         {activeTab === 'false_alarm' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(148, 163, 184, 0.1)',
-              border: '1px solid rgba(148, 163, 184, 0.3)',
+              background: '#F1F5F9',
+              border: '1px solid #CBD5E1',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(100, 116, 139, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#CBD5E1', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#334155', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>❌</span> Section 9: Flagged as False Alarm / Dismissed (Wrong Citizen Reports) ({falseAlarmReports.length})
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#94A3B8' }}>
-                <strong>Reviewer Finding:</strong> Reports rejected as inaccurate, duplicate, or absent hazard upon Doppler AWS radar cross-reference. Complainer tracking displays the explanation and no municipal resources were wasted.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#1E293B' }}>Reviewer Finding:</strong> Reports rejected as inaccurate, duplicate, or absent hazard upon Doppler AWS radar cross-reference. Complainer tracking displays the explanation and no municipal resources were wasted.
               </p>
             </div>
 
