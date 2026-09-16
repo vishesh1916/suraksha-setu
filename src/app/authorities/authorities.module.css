@@ -456,3 +456,370 @@
   display: block;
   margin-bottom: 2px;
 }
+
+/* ============================================================
+   Authorities Authentication Gate (Restricted Authority Access)
+   ============================================================ */
+.authContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 180px);
+  padding: 3rem 1.5rem;
+}
+
+.authLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #737571;
+  font-size: 0.95rem;
+}
+
+.authCard {
+  width: 100%;
+  max-width: 440px;
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 8px;
+  padding: 2.75rem 2.25rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.authBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #D67A20;
+  background: #FAF7F2;
+  border: 1px solid #D67A20;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-family-mono, monospace);
+}
+
+.authTitle {
+  font-family: var(--font-family-sans);
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: #161816;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.authSubtitle {
+  font-size: 0.875rem;
+  color: #737571;
+  line-height: 1.5;
+  margin: 0 0 1.75rem 0;
+}
+
+.authErrorAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 4px;
+  padding: 0.85rem 1rem;
+  color: #DC2626;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.4;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.authFormGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.authLabel {
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #161816;
+  text-transform: uppercase;
+  font-family: var(--font-family-mono, monospace);
+}
+
+.authInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.authInput {
+  width: 100%;
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 4px;
+  padding: 0.8rem 1rem;
+  color: #161816;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+
+.authInput:focus {
+  border-color: #D67A20;
+  box-shadow: 0 0 0 3px rgba(214, 122, 32, 0.12);
+}
+
+.authToggleBtn {
+  position: absolute;
+  right: 0.85rem;
+  background: transparent;
+  border: none;
+  color: #737571;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.authSubmitBtn {
+  margin-top: 0.5rem;
+  width: 100%;
+  background: #161816;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 4px;
+  padding: 0.9rem 1.25rem;
+  font-size: 0.925rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background 0.15s ease;
+}
+
+.authSubmitBtn:hover:not(:disabled) {
+  background: #000000;
+}
+
+.authSubmitBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.autoFillBtn {
+  background: #FAF7F2;
+  border: 1px dashed #E5E2D9;
+  color: #161816;
+  font-size: 12px;
+  padding: 9px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.autoFillBtn:hover {
+  background: #F3EFE8;
+  border-color: #D67A20;
+}
+
+.authCardFooter {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E2D9;
+  font-size: 0.775rem;
+  color: #737571;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ============================================================
+   Clearance Bar & Operational Controls
+   ============================================================ */
+.clearanceBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin-bottom: 2rem;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 2px rgba(22, 24, 22, 0.03);
+}
+
+.clearanceInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #4A4D4A;
+}
+
+.clearanceDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2E5A44;
+  box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.15);
+  display: inline-block;
+}
+
+.clearanceCode {
+  font-family: var(--font-family-mono, monospace);
+  font-weight: 700;
+  color: #161816;
+  background: #F4F1EB;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.clearanceActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.syncBtn {
+  background: #FAF8F5;
+  border: 1px solid #E5E2D9;
+  color: #161816;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.syncBtn:hover:not(:disabled) {
+  background: #F0ECE3;
+  border-color: #D67A20;
+}
+
+.syncTimestamp {
+  font-size: 11px;
+  color: #737571;
+  font-weight: 400;
+}
+
+.logoutBtn {
+  background: #FFFFFF;
+  border: 1px solid #E2DDD5;
+  color: #991B1B;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.logoutBtn:hover {
+  background: #FEF2F2;
+  border-color: #DC2626;
+}
+
+/* Tactical Action Badges */
+.statusTacticalEvac {
+  background: rgba(220, 38, 38, 0.1);
+  color: #DC2626;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.statusTacticalSAR {
+  background: rgba(217, 119, 6, 0.1);
+  color: #D97706;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.statusTacticalDewater {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563EB;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.statusTacticalCAP {
+  background: rgba(147, 51, 234, 0.1);
+  color: #9333EA;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.statusTacticalResolved {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.inlineActionsRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.quickActionBtn {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #E5E2D9;
+  background: #FAF8F5;
+  color: #161816;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.quickActionBtn:hover {
+  background: #161816;
+  color: #FFFFFF;
+  border-color: #161816;
+}
+
+.quickActionBtnSuccess {
+  border-color: rgba(46, 90, 68, 0.3);
+  color: #2E5A44;
+  background: rgba(46, 90, 68, 0.05);
+}
+
+.quickActionBtnSuccess:hover {
+  background: #2E5A44;
+  color: #FFFFFF;
+}
+
+.quickActionBtnDanger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #DC2626;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.quickActionBtnDanger:hover {
+  background: #DC2626;
+  color: #FFFFFF;
+}

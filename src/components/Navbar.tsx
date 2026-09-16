@@ -11,11 +11,18 @@ export function Navbar() {
   const [lang, setLang] = useState<Language>('en');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const langWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLang(getSavedLanguage());
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAdmin(localStorage.getItem('suraksha_admin_authenticated') === 'true');
+    }
+  }, [pathname]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -154,9 +161,16 @@ export function Navbar() {
 
             <div className={styles.navDivider} />
 
-            <Link href="/login" className={styles.signInLink}>
-              {t.nav.signIn}
-            </Link>
+            {isAdmin ? (
+              <Link href="/authorities" className={styles.signInLink} title="Admin Clearance Verified">
+                <span>🛡️</span>
+                <span>Admin Desk</span>
+              </Link>
+            ) : (
+              <Link href="/login" className={styles.signInLink}>
+                {t.nav.signIn}
+              </Link>
+            )}
 
             <Link href="/map" className={styles.openPlatformBtn} id="open-platform-btn">
               <span>{t.nav.openPlatform}</span>
