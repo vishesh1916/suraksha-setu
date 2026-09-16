@@ -10,53 +10,91 @@
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 2.25rem;
-  min-height: 60px;
-  background: rgba(247, 245, 240, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid #E5E2D9;
+  justify-content: center;
+  padding: 0 2rem;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid #EAE6DC;
   width: 100%;
+  transition: all 0.2s ease;
 }
 
 @media (max-width: 640px) {
   .navbar {
-    padding: 0.65rem 1.25rem;
+    padding: 0 1.25rem;
+    height: 58px;
   }
+}
+
+.navbarInner {
+  width: 100%;
+  max-width: 1440px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
 }
 
 .brandGroup {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  flex-shrink: 0;
 }
 
 .wordmark {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-family-sans);
-  font-size: 1.05rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: #161816;
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .brandIcon {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.brandTitle {
+  font-family: var(--font-family-sans);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #161816;
+  white-space: nowrap;
 }
 
 .subBrand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-left: 1px solid #E5E2D9;
+  padding-left: 14px;
   font-size: 0.775rem;
   color: #737571;
-  border-left: 1px solid #E5E2D9;
-  padding-left: 12px;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-@media (max-width: 960px) {
+.subBrandDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2E5A44;
+  display: inline-block;
+}
+
+.subBrandText {
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
   .subBrand {
     display: none;
   }
@@ -65,7 +103,8 @@
 .navLinks {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: clamp(6px, 1.2vw, 20px);
+  flex-shrink: 0;
 }
 
 @media (max-width: 1080px) {
@@ -80,35 +119,30 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   text-decoration: none;
-  transition: color 0.15s ease;
+  white-space: nowrap;
+  padding: 6px 11px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
   position: relative;
-  padding: 6px 2px;
 }
 
 .navLink:hover {
   color: #161816;
+  background: rgba(22, 24, 22, 0.04);
 }
 
 .navLinkActive {
-  color: #161816;
+  color: #D67A20;
   font-weight: 600;
-}
-
-.navLinkActive::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #D67A20;
-  border-radius: 1px;
+  background: rgba(214, 122, 32, 0.08);
 }
 
 .navActions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Language Switcher Pill & Dropdown */
@@ -117,10 +151,11 @@
 }
 
 .langBtn {
-  background: #FFFFFF;
+  background: #FAF8F5;
   border: 1px solid #E5E2D9;
   border-radius: 6px;
-  padding: 5px 12px;
+  padding: 0 10px;
+  height: 34px;
   font-size: 12px;
   font-weight: 600;
   color: #161816;
@@ -129,7 +164,8 @@
   align-items: center;
   gap: 6px;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(22, 24, 22, 0.04);
+  box-shadow: 0 1px 2px rgba(22, 24, 22, 0.03);
+  white-space: nowrap;
 }
 
 .langBtn:hover {
@@ -189,16 +225,22 @@
 }
 
 .signInLink {
-  color: #737571;
-  font-size: 13.5px;
-  font-weight: 500;
+  color: #5C5E5A;
+  font-size: 13px;
+  font-weight: 600;
   text-decoration: none;
-  transition: color 0.15s ease;
-  padding: 6px 10px;
+  transition: all 0.15s ease;
+  padding: 0 10px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  white-space: nowrap;
 }
 
 .signInLink:hover {
   color: #161816;
+  background: rgba(22, 24, 22, 0.04);
 }
 
 @media (max-width: 768px) {
@@ -209,10 +251,11 @@
 
 .openPlatformBtn {
   color: #FFFFFF;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 7px 16px;
+  padding: 0 16px;
+  height: 34px;
   border: 1px solid #161816;
   border-radius: 6px;
   text-decoration: none;
@@ -220,14 +263,17 @@
   transition: all 0.15s ease;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   box-shadow: 0 1px 3px rgba(22, 24, 22, 0.12);
+  white-space: nowrap;
 }
 
 .openPlatformBtn:hover {
-  background: #333835;
-  border-color: #333835;
-  box-shadow: 0 2px 6px rgba(22, 24, 22, 0.18);
+  background: #2E5A44;
+  border-color: #2E5A44;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(46, 90, 68, 0.2);
 }
 
 @media (max-width: 580px) {

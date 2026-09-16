@@ -64,109 +64,113 @@ export function Navbar() {
   return (
     <>
       <header className={styles.navbar}>
-        <div className={styles.brandGroup}>
-          <Link href="/" className={styles.wordmark} id="brand-wordmark">
-            <span className={styles.brandIcon}>🛡️</span>
-            <span>{t.appName}</span>
-          </Link>
-          <span className={styles.subBrand}>
-            {lang === 'en' ? 'सुरक्षा सेतु · ' : ''}
-            {t.subTitle}
-          </span>
-        </div>
-
-        {/* Desktop Navigation Links */}
-        <nav className={styles.navLinks}>
-          <Link
-            href="/map"
-            className={`${styles.navLink} ${pathname === '/map' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.map}
-          </Link>
-          <Link
-            href="/report"
-            className={`${styles.navLink} ${pathname === '/report' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.report}
-          </Link>
-          <Link
-            href="/alerts"
-            className={`${styles.navLink} ${pathname === '/alerts' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.alerts}
-          </Link>
-          <Link
-            href="/track"
-            className={`${styles.navLink} ${pathname === '/track' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.track}
-          </Link>
-          <Link
-            href="/authorities"
-            className={`${styles.navLink} ${pathname.startsWith('/authorities') || pathname.startsWith('/staff') ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.authorities}
-          </Link>
-          <Link
-            href="/about"
-            className={`${styles.navLink} ${pathname === '/about' ? styles.navLinkActive : ''}`}
-          >
-            {t.nav.about}
-          </Link>
-        </nav>
-
-        {/* Desktop Actions */}
-        <div className={styles.navActions}>
-          {/* 6-Language Multilingual Dropdown */}
-          <div className={styles.langDropdownWrapper} ref={langWrapperRef}>
-            <button
-              type="button"
-              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className={styles.langBtn}
-              title="Choose Language (6 Prominent Languages of India)"
-              id="language-toggle-btn"
-              aria-expanded={langDropdownOpen}
-            >
-              <span>🌐</span>
-              <span>{SUPPORTED_LANGUAGES.find((l) => l.code === lang)?.nativeName || 'English'}</span>
-              <span style={{ fontSize: '10px', opacity: 0.7 }}>▾</span>
-            </button>
-
-            {langDropdownOpen && (
-              <div className={styles.langDropdown}>
-                {SUPPORTED_LANGUAGES.map((l) => (
-                  <button
-                    key={l.code}
-                    type="button"
-                    className={`${styles.langDropdownItem} ${lang === l.code ? styles.langDropdownItemActive : ''}`}
-                    onClick={() => handleSelectLanguage(l.code)}
-                  >
-                    <span className={styles.langNativeName}>{l.nativeName}</span>
-                    <span className={styles.langEnglishName}>{l.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+        <div className={styles.navbarInner}>
+          <div className={styles.brandGroup}>
+            <Link href="/" className={styles.wordmark} id="brand-wordmark">
+              <span className={styles.brandIcon}>🛡️</span>
+              <span className={styles.brandTitle}>{t.appName}</span>
+            </Link>
+            <div className={styles.subBrand}>
+              <span className={styles.subBrandDot} />
+              <span className={styles.subBrandText}>
+                {lang === 'en' ? 'National Radar & Early Warning Network' : t.subTitle}
+              </span>
+            </div>
           </div>
 
-          <Link href="/login" className={styles.signInLink}>
-            {t.nav.signIn}
-          </Link>
+          {/* Desktop Navigation Links */}
+          <nav className={styles.navLinks}>
+            <Link
+              href="/map"
+              className={`${styles.navLink} ${pathname === '/map' ? styles.navLinkActive : ''}`}
+            >
+              {t.nav.map}
+            </Link>
+            <Link
+              href="/report"
+              className={`${styles.navLink} ${pathname === '/report' ? styles.navLinkActive : ''}`}
+            >
+              {t.nav.report}
+            </Link>
+            <Link
+              href="/alerts"
+              className={`${styles.navLink} ${pathname === '/alerts' ? styles.navLinkActive : ''}`}
+            >
+              {t.nav.alerts}
+            </Link>
+            <Link
+              href="/track"
+              className={`${styles.navLink} ${pathname === '/track' ? styles.navLinkActive : ''}`}
+            >
+              {t.nav.track}
+            </Link>
+            <Link
+              href="/authorities"
+              className={`${styles.navLink} ${pathname.startsWith('/authorities') || pathname.startsWith('/staff') ? styles.navLinkActive : ''}`}
+            >
+              {t.nav.authorities}
+            </Link>
+            <Link
+              href="/about"
+              className={`${styles.navLink} ${pathname === '/about' ? styles.navLinkActive : ''}`}
+            >
+              {t.nav.about}
+            </Link>
+          </nav>
 
-          <Link href="/map" className={styles.openPlatformBtn} id="open-platform-btn">
-            <span>{t.nav.openPlatform}</span>
-          </Link>
+          {/* Desktop Actions */}
+          <div className={styles.navActions}>
+            {/* 6-Language Multilingual Dropdown */}
+            <div className={styles.langDropdownWrapper} ref={langWrapperRef}>
+              <button
+                type="button"
+                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                className={styles.langBtn}
+                title="Choose Language (6 Prominent Languages of India)"
+                id="language-toggle-btn"
+                aria-expanded={langDropdownOpen}
+              >
+                <span>🌐</span>
+                <span>{SUPPORTED_LANGUAGES.find((l) => l.code === lang)?.nativeName || 'English'}</span>
+                <span style={{ fontSize: '10px', opacity: 0.7 }}>▾</span>
+              </button>
 
-          {/* Accessible Mobile Hamburger Toggle */}
-          <button
-            type="button"
-            className={styles.mobileMenuToggle}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
+              {langDropdownOpen && (
+                <div className={styles.langDropdown}>
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      type="button"
+                      className={`${styles.langDropdownItem} ${lang === l.code ? styles.langDropdownItemActive : ''}`}
+                      onClick={() => handleSelectLanguage(l.code)}
+                    >
+                      <span className={styles.langNativeName}>{l.nativeName}</span>
+                      <span className={styles.langEnglishName}>{l.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Link href="/login" className={styles.signInLink}>
+              {t.nav.signIn}
+            </Link>
+
+            <Link href="/map" className={styles.openPlatformBtn} id="open-platform-btn">
+              <span>{t.nav.openPlatform}</span>
+            </Link>
+
+            {/* Accessible Mobile Hamburger Toggle */}
+            <button
+              type="button"
+              className={styles.mobileMenuToggle}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? '✕' : '☰'}
+            </button>
+          </div>
         </div>
       </header>
 
