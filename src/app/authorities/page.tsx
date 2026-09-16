@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import type { Report, ActionCategory } from '@/types';
@@ -290,8 +291,20 @@ export default function AuthoritiesPortalPage() {
         <Navbar />
         <main className={styles.authContainer}>
           <div className={styles.authCard}>
-            <div className={styles.authBadge}>
-              <span>🔒</span> Restricted Authority Portal
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <Image
+                src="/logo.png"
+                alt="Suraksha Setu Emblem"
+                width={68}
+                height={68}
+                style={{ objectFit: 'contain', filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.12))' }}
+                priority
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div className={styles.authBadge}>
+                <span>🔒</span> Restricted Authority Portal
+              </div>
             </div>
 
             <h1 className={styles.authTitle}>Official Access</h1>
@@ -404,6 +417,13 @@ export default function AuthoritiesPortalPage() {
         {/* Admin Operational Clearance Bar */}
         <div className={styles.clearanceBar}>
           <div className={styles.clearanceInfo}>
+            <Image
+              src="/logo.png"
+              alt="Suraksha Setu Emblem"
+              width={24}
+              height={24}
+              style={{ objectFit: 'contain' }}
+            />
             <span className={styles.clearanceDot} />
             <span>
               <strong>ADMIN CLEARANCE VERIFIED</strong> · Operator: <code className={styles.clearanceCode}>admin</code> · Department: Disaster Operations &amp; Tactical Dispatch

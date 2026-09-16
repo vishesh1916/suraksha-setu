@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './login.module.css';
 
@@ -47,8 +48,20 @@ function LoginForm() {
 
   return (
     <div className={styles.loginCard}>
-      <div className={styles.cardBadge}>
-        <span>🔒</span> Restricted Authority Portal
+      <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+        <Image
+          src="/logo.png"
+          alt="Suraksha Setu Emblem"
+          width={64}
+          height={64}
+          style={{ objectFit: 'contain', filter: 'drop-shadow(0 4px 10px rgba(0, 0, 0, 0.12))' }}
+          priority
+        />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className={styles.cardBadge}>
+          <span>🔒</span> Restricted Authority Portal
+        </div>
       </div>
 
       <h1 className={styles.title}>Official Access</h1>
@@ -168,7 +181,13 @@ export default function LoginPage() {
       <header className={styles.navbar}>
         <div className={styles.brandGroup}>
           <Link href="/" className={styles.wordmark}>
-            <span className={styles.brandIcon}>🛡️</span>
+            <Image
+              src="/logo.png"
+              alt="Suraksha Setu Emblem"
+              width={28}
+              height={28}
+              style={{ objectFit: 'contain' }}
+            />
             <span>SURAKSHA SETU</span>
           </Link>
           <span className={styles.subBrand}>

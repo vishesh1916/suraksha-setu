@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './footer.module.css';
 
 export function Footer() {
@@ -10,7 +11,13 @@ export function Footer() {
         {/* Brand Column */}
         <div className={styles.brandCol}>
           <div className={styles.wordmark}>
-            <span className={styles.brandIcon}>🛡️</span>
+            <Image
+              src="/logo.png"
+              alt="Suraksha Setu Emblem"
+              width={34}
+              height={34}
+              className={styles.brandLogoImg}
+            />
             <span>SURAKSHA SETU</span>
           </div>
           <p className={styles.tagline}>

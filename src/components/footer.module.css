@@ -46,6 +46,14 @@
   font-size: 1.35rem;
 }
 
+.brandLogoImg {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 4px rgba(22, 24, 22, 0.16));
+}
+
 .tagline {
   font-size: 0.875rem;
   color: #737571;

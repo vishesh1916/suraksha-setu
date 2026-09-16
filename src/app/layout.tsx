@@ -20,6 +20,14 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Suraksha Setu Platform" }],
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/logo-sm.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: "/icons/icon-192.png" }],
+  },
   openGraph: {
     title: "Suraksha Setu — Weather clarity. When every minute matters.",
     description: "Verified citizen reports and live weather intelligence for safer local decisions.",

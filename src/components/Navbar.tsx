@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { translations, getSavedLanguage, setSavedLanguage, SUPPORTED_LANGUAGES, type Language } from '@/lib/i18n';
 import styles from './navbar.module.css';
@@ -75,7 +76,16 @@ export function Navbar() {
           {/* 1. Official Brand Identity */}
           <div className={styles.brandGroup}>
             <Link href="/" className={styles.wordmark} id="brand-wordmark">
-              <span className={styles.brandIcon}>🛡️</span>
+              <span className={styles.brandIcon}>
+                <Image
+                  src="/logo.png"
+                  alt="Suraksha Setu Emblem"
+                  width={32}
+                  height={32}
+                  className={styles.brandLogoImg}
+                  priority
+                />
+              </span>
               <div className={styles.brandTitleWrap}>
                 <span className={styles.brandTitle}>{t.appName}</span>
                 <span className={styles.brandBadge}>NATIONAL NETWORK</span>
@@ -202,7 +212,13 @@ export function Navbar() {
           >
             <div className={styles.mobileDrawerHeader}>
               <div className={styles.mobileDrawerBrand}>
-                <span style={{ fontSize: 20 }}>🛡️</span>
+                <Image
+                  src="/logo.png"
+                  alt="Suraksha Setu Emblem"
+                  width={24}
+                  height={24}
+                  className={styles.brandLogoImg}
+                />
                 <strong>{t.appName}</strong>
               </div>
               <button
