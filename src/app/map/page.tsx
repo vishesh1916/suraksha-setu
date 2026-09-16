@@ -364,53 +364,33 @@ function MapContent() {
     setSearchResults(results);
   }, [searchQuery]);
 
-  // Map Markers: Governed by map layer visibility toggles, NOT the sidebar activeTab
-  // This ensures citizen community hazard reports are always rendered on the map canvas!
-  const mapMarkersList = useMemo(() => {
-    return events.filter((ev) => {
-      // 1. Layer Visibility checks
-      if (ev.is_community_report && !layerCommunity) return false;
-      if (ev.acronym === 'EQ' && !layerEarthquakes) return false;
-      if (['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym) && !layerWeatherFlood) return false;
-      if (['FR', 'HW'].includes(ev.acronym) && !layerFires) return false;
-
-      // 2. Facet Filters
-      if (selectedCountry !== 'ALL' && ev.country.toLowerCase() !== selectedCountry.toLowerCase()) return false;
-      if (selectedAcronym !== 'ALL' && ev.acronym !== selectedAcronym) return false;
-      if (selectedSeverity !== 'ALL' && ev.severity !== selectedSeverity) return false;
-
-      return true;
-    });
-  }, [
-    events,
-    selectedCountry,
-    selectedAcronym,
-    selectedSeverity,
-    layerCommunity,
-    layerEarthquakes,
-    layerWeatherFlood,
-    layerFires,
-  ]);
-
-  // Filtered Events for the Sidebar Feed List
+  // Filtered Events: Synchronized for BOTH the Sidebar Feed List and Map Canvas Markers
   const filteredEvents = useMemo(() => {
     return events.filter((ev) => {
-      // 1. Layer Visibility checks
+      // 1. Layer Visibility checks (from top-right controls)
       if (ev.is_community_report && !layerCommunity) return false;
       if (ev.acronym === 'EQ' && !layerEarthquakes) return false;
       if (['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym) && !layerWeatherFlood) return false;
       if (['FR', 'HW'].includes(ev.acronym) && !layerFires) return false;
 
-      // 2. Tab Category checks
+      // 2. Tab Category checks (Bifurcated Calamities)
       if (activeTab === 'official' && ev.is_community_report) return false;
       if (activeTab === 'earth' && !['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym)) return false;
       if (activeTab === 'weather_flood' && !['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym)) return false;
       if (activeTab === 'fire_heat' && !['FR', 'HW'].includes(ev.acronym)) return false;
       if (activeTab === 'community' && !ev.is_community_report) return false;
 
-      // 3. Facet Filters
-      if (selectedCountry !== 'ALL' && ev.country.toLowerCase() !== selectedCountry.toLowerCase()) return false;
+      // 3. Facet Country Filter (flexible matching)
+      if (selectedCountry !== 'ALL') {
+        const cLow = (ev.country || '').toLowerCase();
+        const selLow = selectedCountry.toLowerCase();
+        if (!cLow.includes(selLow) && !selLow.includes(cLow)) return false;
+      }
+
+      // 4. Facet Acronym Filter
       if (selectedAcronym !== 'ALL' && ev.acronym !== selectedAcronym) return false;
+
+      // 5. Facet Severity Filter
       if (selectedSeverity !== 'ALL' && ev.severity !== selectedSeverity) return false;
 
       return true;
@@ -427,13 +407,18 @@ function MapContent() {
     layerFires,
   ]);
 
-  // Global counts for tabs (unaffected by sidebar active tab)
-  const officialAlertsList = useMemo(
-    () => events.filter((e) => e.is_official),
+  // Map markers mirror filteredEvents so markers dynamically update with every tab/filter selection
+  const mapMarkersList = useMemo(() => {
+    return filteredEvents;
+  }, [filteredEvents]);
+
+  // Global counts for tabs (unaffected by active filter)
+  const officialAlertsCount = useMemo(
+    () => events.filter((e) => e.is_official).length,
     [events]
   );
-  const communityReportsList = useMemo(
-    () => events.filter((e) => e.is_community_report),
+  const communityReportsCount = useMemo(
+    () => events.filter((e) => e.is_community_report).length,
     [events]
   );
 
@@ -922,15 +907,21 @@ function MapContent() {
             <button
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'official' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('official')}
+              onClick={() => {
+                setActiveTab('official');
+                setSelectedAcronym('ALL');
+              }}
             >
               <span>{t.map.tabOfficial}</span>
-              <span className={styles.tabCountBadge}>{officialAlertsList.length}</span>
+              <span className={styles.tabCountBadge}>{officialAlertsCount}</span>
             </button>
             <button
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'earth' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('earth')}
+              onClick={() => {
+                setActiveTab('earth');
+                setSelectedAcronym('ALL');
+              }}
             >
               <span>{t.map.tabEarth}</span>
               <span className={styles.tabCountBadge}>
@@ -940,7 +931,10 @@ function MapContent() {
             <button
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'weather_flood' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('weather_flood')}
+              onClick={() => {
+                setActiveTab('weather_flood');
+                setSelectedAcronym('ALL');
+              }}
             >
               <span>{t.map.tabWeatherFlood}</span>
               <span className={styles.tabCountBadge}>
@@ -950,7 +944,10 @@ function MapContent() {
             <button
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'fire_heat' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('fire_heat')}
+              onClick={() => {
+                setActiveTab('fire_heat');
+                setSelectedAcronym('ALL');
+              }}
             >
               <span>{t.map.tabFireHeat}</span>
               <span className={styles.tabCountBadge}>
@@ -960,10 +957,13 @@ function MapContent() {
             <button
               type="button"
               className={`${styles.tabBtn} ${activeTab === 'community' ? styles.tabBtnActive : ''}`}
-              onClick={() => setActiveTab('community')}
+              onClick={() => {
+                setActiveTab('community');
+                setSelectedAcronym('ALL');
+              }}
             >
               <span>{t.map.tabCommunity}</span>
-              <span className={styles.tabCountBadge}>{communityReportsList.length}</span>
+              <span className={styles.tabCountBadge}>{communityReportsCount}</span>
             </button>
           </nav>
 
@@ -1036,7 +1036,19 @@ function MapContent() {
                   key={acr}
                   type="button"
                   className={`${styles.acronymPill} ${selectedAcronym === acr ? styles.acronymPillActive : ''}`}
-                  onClick={() => setSelectedAcronym(selectedAcronym === acr ? 'ALL' : acr)}
+                  onClick={() => {
+                    const next = selectedAcronym === acr ? 'ALL' : acr;
+                    setSelectedAcronym(next);
+                    if (next !== 'ALL') {
+                      if (['EQ', 'LS', 'TS', 'AV'].includes(next)) {
+                        setActiveTab('earth');
+                      } else if (['FL', 'RF', 'CW', 'ST', 'CV'].includes(next)) {
+                        setActiveTab('weather_flood');
+                      } else if (['FR', 'HW'].includes(next)) {
+                        setActiveTab('fire_heat');
+                      }
+                    }
+                  }}
                   title={HAZARD_ACRONYM_META[acr].name}
                 >
                   {acr}
@@ -1057,148 +1069,140 @@ function MapContent() {
               </div>
             ) : (
               <>
-                {/* 1. Official Government & Agency Alerts Feed */}
-                {officialAlertsList.length > 0 && (
-                  <>
-                    <div className={styles.feedSectionHeader}>
-                      <span className={styles.feedSectionTitle}>{t.map.latestOfficial}</span>
-                      <span className={styles.tabCountBadge}>{officialAlertsList.length}</span>
-                    </div>
+                <div className={styles.feedSectionHeader}>
+                  <span className={styles.feedSectionTitle}>
+                    {activeTab === 'official' && t.map.latestOfficial}
+                    {activeTab === 'earth' && (t.map.tabEarth || 'Earthquake & Seismic Events')}
+                    {activeTab === 'weather_flood' && (t.map.tabWeatherFlood || 'Weather & Flood Alerts')}
+                    {activeTab === 'fire_heat' && (t.map.tabFireHeat || 'Thermal Fires & Heatwaves')}
+                    {activeTab === 'community' && (t.map.tabCommunity || 'Community Reports')}
+                    {selectedAcronym !== 'ALL' && ` · ${selectedAcronym}`}
+                  </span>
+                  <span className={styles.tabCountBadge}>{filteredEvents.length}</span>
+                </div>
 
-                    {officialAlertsList.map((ev) => {
-                      const isSelected = selectedEvent?.id === ev.id;
-                      let sevClass = styles.sevAdvisory;
-                      if (ev.severity === 'SEVERE') sevClass = styles.sevSevere;
-                      else if (ev.severity === 'WARNING') sevClass = styles.sevWarning;
-                      else if (ev.severity === 'WATCH') sevClass = styles.sevWatch;
+                {filteredEvents.map((ev) => {
+                  const isSelected = selectedEvent?.id === ev.id;
 
-                      return (
-                        <div
-                          key={ev.id}
-                          className={`${styles.hazardCard} ${isSelected ? styles.hazardCardSelected : ''}`}
-                          onClick={() => {
-                            setSelectedEvent(ev);
-                            const center = getEventCenter(ev);
-                            if (center) {
-                              flyToCoords(center[0], center[1], ev.geometry.type === 'Polygon' ? 8.5 : 9);
-                            }
-                          }}
-                        >
-                          <div className={styles.cardTopRow}>
-                            <div className={styles.cardLeftIdent}>
-                              <span className={`${styles.acronymBadge} ${sevClass}`}>
-                                {ev.acronym}
-                              </span>
-                              <div>
-                                <h3 className={styles.cardTitle}>{ev.title}</h3>
-                                <div className={styles.cardLocation}>
-                                  <span>📍 {ev.district || ev.state || ev.country}</span>
-                                </div>
-                              </div>
+                  if (ev.is_community_report) {
+                    const modStatus = ev.details?.moderationStatus || 'Received';
+                    let modClass = styles.modReceived;
+                    if (modStatus === 'Under review') modClass = styles.modUnderReview;
+                    else if (modStatus === 'Verified') modClass = styles.modVerified;
+                    else if (modStatus === 'Dismissed') modClass = styles.modDismissed;
+                    else if (modStatus === 'Resolved') modClass = styles.modResolved;
+
+                    return (
+                      <div
+                        key={ev.id}
+                        className={`${styles.communityCard} ${isSelected ? styles.hazardCardSelected : ''}`}
+                        onClick={() => {
+                          setSelectedEvent(ev);
+                          const center = getEventCenter(ev);
+                          if (center) {
+                            flyToCoords(center[0], center[1], 11);
+                          }
+                        }}
+                      >
+                        <div className={styles.communityBadgeRow}>
+                          <span className={styles.unverifiedLabel}>Unverified Community Report</span>
+                          <span className={`${styles.moderationPill} ${modClass}`}>
+                            {modStatus}
+                          </span>
+                        </div>
+
+                        <h3 className={styles.cardTitle}>{ev.title}</h3>
+                        <div className={styles.cardLocation}>
+                          <span>📍 {ev.district || 'Ground observation'}</span>
+                        </div>
+
+                        <div className={styles.cardFooterRow}>
+                          <span>Reported: {new Date(ev.issued_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <Link href={ev.source_url} className={styles.cardSourceLink} onClick={(e) => e.stopPropagation()}>
+                            Track report ↗
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  let sevClass = styles.sevAdvisory;
+                  if (ev.severity === 'SEVERE') sevClass = styles.sevSevere;
+                  else if (ev.severity === 'WARNING') sevClass = styles.sevWarning;
+                  else if (ev.severity === 'WATCH') sevClass = styles.sevWatch;
+
+                  return (
+                    <div
+                      key={ev.id}
+                      className={`${styles.hazardCard} ${isSelected ? styles.hazardCardSelected : ''}`}
+                      onClick={() => {
+                        setSelectedEvent(ev);
+                        const center = getEventCenter(ev);
+                        if (center) {
+                          flyToCoords(center[0], center[1], ev.geometry.type === 'Polygon' ? 8.5 : 9);
+                        }
+                      }}
+                    >
+                      <div className={styles.cardTopRow}>
+                        <div className={styles.cardLeftIdent}>
+                          <span className={`${styles.acronymBadge} ${sevClass}`}>
+                            {ev.acronym}
+                          </span>
+                          <div>
+                            <h3 className={styles.cardTitle}>{ev.title}</h3>
+                            <div className={styles.cardLocation}>
+                              <span>📍 {ev.district || ev.state || ev.country}</span>
                             </div>
-                            <span className={`${styles.severityPill} ${sevClass}`}>
-                              {ev.severity}
-                            </span>
-                          </div>
-
-                          {/* Telemetry Metrics Row */}
-                          <div className={styles.cardTelemetryRow}>
-                            {ev.details?.magnitude !== undefined && (
-                              <div className={styles.cardTelemetryItem}>
-                                <span>Magnitude:</span>
-                                <span className={styles.cardTelemetryVal}>M {ev.details.magnitude.toFixed(1)}</span>
-                              </div>
-                            )}
-                            {ev.details?.depthKm !== undefined && (
-                              <div className={styles.cardTelemetryItem}>
-                                <span>Depth:</span>
-                                <span className={styles.cardTelemetryVal}>{ev.details.depthKm} km</span>
-                              </div>
-                            )}
-                            {ev.details?.rainfallRateMmH !== undefined && (
-                              <div className={styles.cardTelemetryItem}>
-                                <span>Rain Rate:</span>
-                                <span className={styles.cardTelemetryVal}>{ev.details.rainfallRateMmH.toFixed(1)} mm/h</span>
-                              </div>
-                            )}
-                            {ev.details?.brightnessTempK !== undefined && (
-                              <div className={styles.cardTelemetryItem}>
-                                <span>Temp:</span>
-                                <span className={styles.cardTelemetryVal}>{ev.details.brightnessTempK} K</span>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className={styles.cardFooterRow}>
-                            <span>{ev.freshness}</span>
-                            <a
-                              href={ev.source_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.cardSourceLink}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {ev.source} ↗
-                            </a>
                           </div>
                         </div>
-                      );
-                    })}
-                  </>
-                )}
+                        <span className={`${styles.severityPill} ${sevClass}`}>
+                          {ev.severity}
+                        </span>
+                      </div>
 
-                {/* 2. Separate Community-Reported Hazards Feed */}
-                {communityReportsList.length > 0 && (
-                  <>
-                    <div className={styles.feedSectionHeader} style={{ marginTop: '16px' }}>
-                      <span className={styles.feedSectionTitle}>{t.map.tabCommunity}</span>
-                      <span className={styles.unverifiedLabel}>{t.map.citizenTruth}</span>
-                    </div>
+                      {/* Telemetry Metrics Row */}
+                      <div className={styles.cardTelemetryRow}>
+                        {ev.details?.magnitude !== undefined && (
+                          <div className={styles.cardTelemetryItem}>
+                            <span>Magnitude:</span>
+                            <span className={styles.cardTelemetryVal}>M {ev.details.magnitude.toFixed(1)}</span>
+                          </div>
+                        )}
+                        {ev.details?.depthKm !== undefined && (
+                          <div className={styles.cardTelemetryItem}>
+                            <span>Depth:</span>
+                            <span className={styles.cardTelemetryVal}>{ev.details.depthKm} km</span>
+                          </div>
+                        )}
+                        {ev.details?.rainfallRateMmH !== undefined && (
+                          <div className={styles.cardTelemetryItem}>
+                            <span>Rain Rate:</span>
+                            <span className={styles.cardTelemetryVal}>{ev.details.rainfallRateMmH.toFixed(1)} mm/h</span>
+                          </div>
+                        )}
+                        {ev.details?.brightnessTempK !== undefined && (
+                          <div className={styles.cardTelemetryItem}>
+                            <span>Temp:</span>
+                            <span className={styles.cardTelemetryVal}>{ev.details.brightnessTempK} K</span>
+                          </div>
+                        )}
+                      </div>
 
-                    {communityReportsList.map((ev) => {
-                      const isSelected = selectedEvent?.id === ev.id;
-                      const modStatus = ev.details?.moderationStatus || 'Received';
-                      let modClass = styles.modReceived;
-                      if (modStatus === 'Under review') modClass = styles.modUnderReview;
-                      else if (modStatus === 'Verified') modClass = styles.modVerified;
-                      else if (modStatus === 'Dismissed') modClass = styles.modDismissed;
-                      else if (modStatus === 'Resolved') modClass = styles.modResolved;
-
-                      return (
-                        <div
-                          key={ev.id}
-                          className={`${styles.communityCard} ${isSelected ? styles.hazardCardSelected : ''}`}
-                          onClick={() => {
-                            setSelectedEvent(ev);
-                            const center = getEventCenter(ev);
-                            if (center) {
-                              flyToCoords(center[0], center[1], 11);
-                            }
-                          }}
+                      <div className={styles.cardFooterRow}>
+                        <span>{ev.freshness}</span>
+                        <a
+                          href={ev.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.cardSourceLink}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <div className={styles.communityBadgeRow}>
-                            <span className={styles.unverifiedLabel}>Unverified Community Report</span>
-                            <span className={`${styles.moderationPill} ${modClass}`}>
-                              {modStatus}
-                            </span>
-                          </div>
-
-                          <h3 className={styles.cardTitle}>{ev.title}</h3>
-                          <div className={styles.cardLocation}>
-                            <span>📍 {ev.district || 'Ground observation'}</span>
-                          </div>
-
-                          <div className={styles.cardFooterRow}>
-                            <span>Reported: {new Date(ev.issued_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            <Link href={ev.source_url} className={styles.cardSourceLink} onClick={(e) => e.stopPropagation()}>
-                              Track report ↗
-                            </Link>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
+                          {ev.source} ↗
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
               </>
             )}
           </div>
