@@ -1781,21 +1781,22 @@ export default function AdminPage() {
           return (
             <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
               <div style={{
-                background: 'rgba(56, 189, 248, 0.1)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
+                background: '#F0F9FF',
+                border: '1px solid #BAE6FD',
                 borderRadius: '10px',
                 padding: '16px',
-                marginBottom: '16px'
+                marginBottom: '16px',
+                boxShadow: '0 1px 3px rgba(2, 132, 199, 0.06)'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                  <h3 style={{ margin: 0, color: '#38BDF8', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ margin: 0, color: '#0369A1', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                     <span>🌐</span> Master Operational Command Feed ({reports.length} Total Hazards)
                   </h3>
-                  <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#0284C7', fontWeight: 600 }}>
                     On-Demand &amp; Configurable Auto-Sync · Instant Stage Transitions
                   </span>
                 </div>
-                <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
+                <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
                   Unified real-time disaster tactical desk. Every reported hazard is displayed with its active workflow stage, ground photos, and dynamic response actions tailored to hazard classification.
                 </p>
               </div>
@@ -2252,17 +2253,18 @@ export default function AdminPage() {
         {activeTab === 'verification' && (
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
             <div style={{
-              background: 'rgba(56, 189, 248, 0.1)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              background: '#F0F9FF',
+              border: '1px solid #BAE6FD',
               borderRadius: '10px',
               padding: '16px',
-              marginBottom: '20px'
+              marginBottom: '20px',
+              boxShadow: '0 1px 3px rgba(2, 132, 199, 0.06)'
             }}>
-              <h3 style={{ margin: 0, color: '#38BDF8', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, color: '#0369A1', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
                 <span>🔍</span> Section 1: Citizen Report Ground Truth Verification (Right vs Wrong Triage)
               </h3>
-              <p style={{ margin: '6px 0 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
-                <strong>Meteorologist Operational Guidance:</strong> Compare newly reported citizen claims against nearest Doppler radar echo and automated rain gauge (AWS) stations. Confirm if the report is <strong>RIGHT (Genuine Hazard)</strong> or <strong>WRONG (False Alarm / Exaggeration)</strong>. Once verified, the complainer is updated and tactical responders can order evacuation or dewatering.
+              <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: '#0F172A', lineHeight: 1.55 }}>
+                <strong style={{ color: '#075985' }}>Meteorologist Operational Guidance:</strong> Compare newly reported citizen claims against nearest Doppler radar echo and automated rain gauge (AWS) stations. Confirm if the report is <strong style={{ color: '#075985' }}>RIGHT (Genuine Hazard)</strong> or <strong style={{ color: '#075985' }}>WRONG (False Alarm / Exaggeration)</strong>. Once verified, the complainer is updated and tactical responders can order evacuation or dewatering.
               </p>
             </div>
 
