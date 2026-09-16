@@ -8,8 +8,93 @@ import { translations, getSavedLanguage, setSavedLanguage, SUPPORTED_LANGUAGES, 
 import { getActiveTileStyle, TILE_STYLES, SOUTH_ASIA_CENTER, OSM_STANDARD_STYLE, CARTO_API_KEY } from '@/lib/map/tileProvider';
 import { INDIA_LOCATIONS, searchIndiaLocations, type IndiaLocation } from '@/lib/map/indiaLocations';
 import { HAZARD_ACRONYM_META, type UnifiedHazardEvent, type HazardAcronym, type HazardSeverity, type ProviderHealth } from '@/lib/hazardAdapters/types';
+import { getClientReports, subscribeToSync, isDemoReport } from '@/lib/clientSync';
+import type { Report } from '@/types';
 import styles from './map.module.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+function convertReportToUnifiedEvent(r: Report): UnifiedHazardEvent {
+  let acronym: HazardAcronym = 'FL';
+  if (r.category === 'WATERLOGGING' || r.category === 'FLOODING') acronym = 'FL';
+  else if (r.category === 'SEVERE_RAIN' || r.category === 'CLOUDBURST') acronym = 'RF';
+  else if (r.category === 'STRONG_WIND') acronym = 'ST';
+  else if (r.category === 'HAIL') acronym = 'RF';
+
+  let sev: HazardSeverity = 'ADVISORY';
+  if (r.severity >= 5) sev = 'SEVERE';
+  else if (r.severity >= 4) sev = 'WARNING';
+  else if (r.severity >= 3) sev = 'WATCH';
+
+  let modStatus: 'Received' | 'Under review' | 'Verified' | 'Dismissed' | 'Resolved' = 'Received';
+  if (r.status === 'RESOLVED') modStatus = 'Resolved';
+  else if (r.verificationStatus === 'VERIFIED_GENUINE') modStatus = 'Verified';
+  else if (r.status === 'REVIEWED' || r.status === 'ATTACHED') modStatus = 'Under review';
+  else if (r.status === 'DISMISSED' || r.verificationStatus === 'FLAGGED_FALSE_REPORT') modStatus = 'Dismissed';
+
+  const lat = r.location?.latitude ?? 26.8467;
+  const lng = r.location?.longitude ?? 80.9462;
+
+  return {
+    id: `community_${r.id}`,
+    source: 'Public Citizen Report',
+    source_url: `/track?id=${r.id}`,
+    hazard_type: r.category,
+    acronym,
+    title: `Unverified community report: ${r.landmark || r.category.replace('_', ' ')}`,
+    severity: sev,
+    status: r.status === 'RESOLVED' ? 'RESOLVED' : 'ACTIVE',
+    geometry: {
+      type: 'Point',
+      coordinates: [lng, lat],
+    },
+    country: 'India',
+    district: r.landmark || 'Ground Report Area',
+    issued_at: r.createdAt || new Date().toISOString(),
+    updated_at: r.updatedAt || r.createdAt || new Date().toISOString(),
+    freshness: 'Ground Submission',
+    confidence: r.verificationStatus === 'VERIFIED_GENUINE' ? 'VERIFIED' : 'LOW',
+    is_official: false,
+    is_community_report: true,
+    details: {
+      nearestLocality: r.landmark,
+      waterDepthFeet: r.waterDepthFeet,
+      moderationStatus: modStatus,
+      mediaUrl: r.mediaUrl,
+      reportCount: 1,
+      safetyGuidance: 'Citizen-submitted ground observation. Triage in progress by district emergency control room.',
+    },
+  };
+}
+
+function mergeWithClientReports(eventsList: UnifiedHazardEvent[]): UnifiedHazardEvent[] {
+  if (typeof window === 'undefined') return eventsList;
+  const clientReps = getClientReports().filter((r) => !isDemoReport(r) && r.status !== 'DISMISSED');
+  const result = [...eventsList];
+
+  for (const cr of clientReps) {
+    const commId = `community_${cr.id}`;
+    const cleanId = cr.id.toLowerCase();
+    const existingIdx = result.findIndex(
+      (e) => e.id === commId || e.id === cr.id || e.id.toLowerCase().includes(cleanId)
+    );
+
+    const converted = convertReportToUnifiedEvent(cr);
+    if (existingIdx >= 0) {
+      result[existingIdx] = {
+        ...result[existingIdx],
+        ...converted,
+        details: {
+          ...result[existingIdx].details,
+          ...converted.details,
+        },
+      };
+    } else {
+      result.unshift(converted);
+    }
+  }
+
+  return result;
+}
 
 export interface ReliefShelter {
   id: string;
@@ -254,8 +339,13 @@ function MapContent() {
   const markersRef = useRef<any[]>([]);
   const [mapReady, setMapReady] = useState(false);
 
-  // Core Hazard Data State
-  const [events, setEvents] = useState<UnifiedHazardEvent[]>([]);
+  // Core Hazard Data State — Pre-populated with local client community reports for 0ms latency
+  const [events, setEvents] = useState<UnifiedHazardEvent[]>(() => {
+    if (typeof window !== 'undefined') {
+      return mergeWithClientReports([]);
+    }
+    return [];
+  });
   const eventsRef = useRef<UnifiedHazardEvent[]>([]);
   eventsRef.current = events;
   const [sourcesHealth, setSourcesHealth] = useState<ProviderHealth[]>([]);
@@ -305,23 +395,70 @@ function MapContent() {
   const [sosNotes, setSosNotes] = useState('');
   const [sosSuccessId, setSosSuccessId] = useState<string | null>(null);
 
-  // Fetch Unified Multi-Hazard Telemetry
+  // Fetch Unified Multi-Hazard Telemetry & Real-Time Citizen Reports
   const fetchHazardData = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/hazards/unified?includeCommunity=true&timeRange=${timeRange}&_t=${Date.now()}`,
-        { cache: 'no-store' }
-      );
-      if (res.ok) {
-        const json = await res.json();
+      const [unifiedRes, reportsRes] = await Promise.allSettled([
+        fetch(
+          `/api/hazards/unified?includeCommunity=true&timeRange=${timeRange}&_t=${Date.now()}`,
+          { cache: 'no-store' }
+        ),
+        fetch(`/api/reports?_t=${Date.now()}`, { cache: 'no-store' }),
+      ]);
+
+      let incomingEvents: UnifiedHazardEvent[] = [];
+      let healthData: ProviderHealth[] = [];
+
+      if (unifiedRes.status === 'fulfilled' && unifiedRes.value.ok) {
+        const json = await unifiedRes.value.json();
         if (json.success) {
-          setEvents(json.data || []);
-          setSourcesHealth(json.sourcesHealth || []);
-          setLastRefreshedAt(
-            new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-          );
+          incomingEvents = json.data || [];
+          healthData = json.sourcesHealth || [];
         }
       }
+
+      // If server reports endpoint returned active reports, merge any new genuine reports
+      if (reportsRes.status === 'fulfilled' && reportsRes.value.ok) {
+        try {
+          const repJson = await reportsRes.value.json();
+          if (repJson.success && Array.isArray(repJson.data)) {
+            const serverReports: Report[] = repJson.data.filter(
+              (r: Report) => !isDemoReport(r) && r.status !== 'DISMISSED'
+            );
+            for (const sr of serverReports) {
+              const commId = `community_${sr.id}`;
+              const cleanId = sr.id.toLowerCase();
+              const existingIdx = incomingEvents.findIndex(
+                (e) => e.id === commId || e.id === sr.id || e.id.toLowerCase().includes(cleanId)
+              );
+              const converted = convertReportToUnifiedEvent(sr);
+              if (existingIdx >= 0) {
+                incomingEvents[existingIdx] = {
+                  ...incomingEvents[existingIdx],
+                  ...converted,
+                  details: {
+                    ...incomingEvents[existingIdx].details,
+                    ...converted.details,
+                  },
+                };
+              } else {
+                incomingEvents.push(converted);
+              }
+            }
+          }
+        } catch {}
+      }
+
+      // Seamlessly merge with client reports (zero-latency local storage)
+      const mergedEvents = mergeWithClientReports(incomingEvents);
+
+      setEvents(mergedEvents);
+      if (healthData.length > 0) {
+        setSourcesHealth(healthData);
+      }
+      setLastRefreshedAt(
+        new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      );
     } catch (err) {
       console.warn('Hazard telemetry sync note:', err);
     } finally {
@@ -329,11 +466,53 @@ function MapContent() {
     }
   }, [timeRange]);
 
+  // Initial load and fast 5s background refresh
   useEffect(() => {
     fetchHazardData();
     const interval = setInterval(fetchHazardData, 5000); // 5s fast live refresh for cross-device updates
     return () => clearInterval(interval);
   }, [fetchHazardData]);
+
+  // Real-time zero-latency sync subscription across tabs (BroadcastChannel + storage)
+  useEffect(() => {
+    // Immediate hydration on mount
+    setEvents((prev) => mergeWithClientReports(prev));
+
+    const unsubscribe = subscribeToSync((msg) => {
+      if (msg.type === 'NEW_REPORT' && msg.report && !isDemoReport(msg.report)) {
+        const newEv = convertReportToUnifiedEvent(msg.report);
+        setEvents((prev) => {
+          const commId = `community_${msg.report!.id}`;
+          const cleanId = msg.report!.id.toLowerCase();
+          const exists = prev.some(
+            (e) => e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId)
+          );
+          if (exists) {
+            return prev.map((e) =>
+              e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId)
+                ? newEv
+                : e
+            );
+          }
+          return [newEv, ...prev];
+        });
+      } else if (msg.type === 'REPORT_ACTION' && msg.report) {
+        const updatedEv = convertReportToUnifiedEvent(msg.report);
+        setEvents((prev) => {
+          const commId = `community_${msg.report!.id}`;
+          const cleanId = msg.report!.id.toLowerCase();
+          return prev.map((e) =>
+            e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId)
+              ? updatedEv
+              : e
+          );
+        });
+      } else if (msg.type === 'PURGE_ALL') {
+        setEvents((prev) => prev.filter((e) => !e.is_community_report));
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   // Multilingual reactive listener (6 Indian languages)
   useEffect(() => {
@@ -375,9 +554,9 @@ function MapContent() {
 
       // 2. Tab Category checks (Bifurcated Calamities)
       if (activeTab === 'official' && ev.is_community_report) return false;
-      if (activeTab === 'earth' && !['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym)) return false;
-      if (activeTab === 'weather_flood' && !['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym)) return false;
-      if (activeTab === 'fire_heat' && !['FR', 'HW'].includes(ev.acronym)) return false;
+      if (activeTab === 'earth' && (ev.is_community_report || !['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym))) return false;
+      if (activeTab === 'weather_flood' && (ev.is_community_report || !['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym))) return false;
+      if (activeTab === 'fire_heat' && (ev.is_community_report || !['FR', 'HW'].includes(ev.acronym))) return false;
       if (activeTab === 'community' && !ev.is_community_report) return false;
 
       // 3. Facet Country Filter (flexible matching)
@@ -925,7 +1104,7 @@ function MapContent() {
             >
               <span>{t.map.tabEarth}</span>
               <span className={styles.tabCountBadge}>
-                {events.filter((e) => ['EQ', 'LS', 'TS', 'AV'].includes(e.acronym)).length}
+                {events.filter((e) => !e.is_community_report && ['EQ', 'LS', 'TS', 'AV'].includes(e.acronym)).length}
               </span>
             </button>
             <button
@@ -938,7 +1117,7 @@ function MapContent() {
             >
               <span>{t.map.tabWeatherFlood}</span>
               <span className={styles.tabCountBadge}>
-                {events.filter((e) => ['FL', 'RF', 'CW', 'ST', 'CV'].includes(e.acronym)).length}
+                {events.filter((e) => !e.is_community_report && ['FL', 'RF', 'CW', 'ST', 'CV'].includes(e.acronym)).length}
               </span>
             </button>
             <button
@@ -951,7 +1130,7 @@ function MapContent() {
             >
               <span>{t.map.tabFireHeat}</span>
               <span className={styles.tabCountBadge}>
-                {events.filter((e) => ['FR', 'HW'].includes(e.acronym)).length}
+                {events.filter((e) => !e.is_community_report && ['FR', 'HW'].includes(e.acronym)).length}
               </span>
             </button>
             <button

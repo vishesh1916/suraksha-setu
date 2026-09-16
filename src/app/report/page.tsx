@@ -224,6 +224,34 @@ export default function ReportPage() {
       setSubmitted(true);
       setSubmitting(false);
       saveToUserHistory(offlineId, payload);
+      const offlineReport: Report = {
+        id: offlineId,
+        reporterId: 'citizen_local',
+        reporterPseudonym: 'Citizen Reporter (Offline)',
+        category,
+        severity,
+        description: description.trim(),
+        location: finalLocation,
+        h3Index: '882a7bcfa911fffff',
+        landmark: finalLandmark,
+        waterDepthFeet: severity >= 4 ? 4.5 : severity === 3 ? 2.5 : 1.0,
+        consent: true,
+        status: 'RECEIVED',
+        verificationStatus: 'PENDING_VERIFICATION',
+        currentActionCategory: 'Pending Verification',
+        actionHistory: [
+          {
+            id: 'act_' + Date.now(),
+            action: 'Pending Verification',
+            actorName: 'Telemetry Gateway',
+            notes: 'Report queued for offline synchronization.',
+            timestamp: new Date().toISOString(),
+          },
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      saveClientReport(offlineReport);
       return;
     }
 
@@ -270,14 +298,74 @@ export default function ReportPage() {
         };
         saveClientReport(fullReport);
       } else {
-        setError(data.error || 'Server error submitting report. Please try again.');
+        // Resilient fallback: save locally and mark submitted so citizen's hazard is visible on map
+        const fallbackId = saveOfflineReport(payload);
+        setReportId(fallbackId);
+        setSubmitted(true);
+        saveToUserHistory(fallbackId, payload);
+        const fallbackReport: Report = {
+          id: fallbackId,
+          reporterId: 'citizen_local',
+          reporterPseudonym: 'Citizen Reporter',
+          category,
+          severity,
+          description: description.trim(),
+          location: finalLocation,
+          h3Index: '882a7bcfa911fffff',
+          landmark: finalLandmark,
+          waterDepthFeet: severity >= 4 ? 4.5 : severity === 3 ? 2.5 : 1.0,
+          consent: true,
+          status: 'RECEIVED',
+          verificationStatus: 'PENDING_VERIFICATION',
+          currentActionCategory: 'Pending Verification',
+          actionHistory: [
+            {
+              id: 'act_' + Date.now(),
+              action: 'Pending Verification',
+              actorName: 'Telemetry Gateway',
+              notes: 'Report queued in verification network.',
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        saveClientReport(fallbackReport);
       }
     } catch (err) {
-      // Real offline / connection error fallback
+      // Connection or server error fallback
       const offlineId = saveOfflineReport(payload);
       setReportId(offlineId);
       setSubmitted(true);
       saveToUserHistory(offlineId, payload);
+      const offlineReport: Report = {
+        id: offlineId,
+        reporterId: 'citizen_local',
+        reporterPseudonym: 'Citizen Reporter',
+        category,
+        severity,
+        description: description.trim(),
+        location: finalLocation,
+        h3Index: '882a7bcfa911fffff',
+        landmark: finalLandmark,
+        waterDepthFeet: severity >= 4 ? 4.5 : severity === 3 ? 2.5 : 1.0,
+        consent: true,
+        status: 'RECEIVED',
+        verificationStatus: 'PENDING_VERIFICATION',
+        currentActionCategory: 'Pending Verification',
+        actionHistory: [
+          {
+            id: 'act_' + Date.now(),
+            action: 'Pending Verification',
+            actorName: 'Telemetry Gateway',
+            notes: 'Report queued for synchronization.',
+            timestamp: new Date().toISOString(),
+          },
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      saveClientReport(offlineReport);
     } finally {
       setSubmitting(false);
     }
