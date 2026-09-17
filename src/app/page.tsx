@@ -9,7 +9,26 @@ import { Footer } from '@/components/Footer';
 import { TechnicalWeatherVisual } from '@/components/TechnicalWeatherVisual';
 import { AlertWorkflowSequence } from '@/components/AlertWorkflowSequence';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
+import { getClientReports, subscribeToSync, isDemoReport } from '@/lib/clientSync';
 import styles from './page.module.css';
+
+function formatRelativeTime(dateStr?: string): string {
+  if (!dateStr) return 'Active';
+  try {
+    const time = new Date(dateStr).getTime();
+    if (isNaN(time)) return 'Active';
+    const diff = Math.floor((Date.now() - time) / 1000);
+    if (diff < 60) return 'Just now';
+    const mins = Math.floor(diff / 60);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  } catch {
+    return 'Active';
+  }
+}
 
 export default function LandingPage() {
   const [lang, setLang] = useState<Language>('en');
@@ -142,7 +161,32 @@ export default function LandingPage() {
       }
       if (reportsRes.ok) {
         const d = await reportsRes.json();
-        setReports(d.data || []);
+        const serverReps: Report[] = (d.data || []).filter((r: Report) => !isDemoReport(r));
+        const clientReps: Report[] = getClientReports().filter((r: Report) => !isDemoReport(r));
+
+        const mergedMap = new Map<string, Report>();
+        for (const sr of serverReps) {
+          mergedMap.set(sr.id.toLowerCase(), sr);
+        }
+        for (const cr of clientReps) {
+          const existing = mergedMap.get(cr.id.toLowerCase());
+          if (existing) {
+            const crHasAction = cr.currentActionCategory && cr.currentActionCategory !== 'Pending Verification';
+            const srHasAction = existing.currentActionCategory && existing.currentActionCategory !== 'Pending Verification';
+            if (crHasAction && !srHasAction) {
+              mergedMap.set(cr.id.toLowerCase(), { ...existing, ...cr });
+            } else {
+              mergedMap.set(cr.id.toLowerCase(), { ...cr, ...existing });
+            }
+          } else {
+            mergedMap.set(cr.id.toLowerCase(), cr);
+          }
+        }
+
+        const sorted = Array.from(mergedMap.values()).sort(
+          (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        );
+        setReports(sorted);
       }
       if (statsRes.ok) {
         const d = await statsRes.json();
@@ -247,6 +291,30 @@ export default function LandingPage() {
     fetchData();
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
+  }, [fetchData]);
+
+  // Zero-latency cross-tab event synchronization
+  useEffect(() => {
+    const unsubscribe = subscribeToSync((msg) => {
+      if (msg.type === 'PURGE_ALL') {
+        fetchData();
+      } else if (msg.type === 'NEW_REPORT' && msg.report && !isDemoReport(msg.report)) {
+        setReports((prev) => {
+          const cleanId = msg.report!.id.toLowerCase();
+          const exists = prev.some((r) => r.id.toLowerCase() === cleanId);
+          if (exists) {
+            return prev.map((r) => (r.id.toLowerCase() === cleanId ? { ...r, ...msg.report! } : r));
+          }
+          return [msg.report!, ...prev];
+        });
+      } else if (msg.type === 'REPORT_ACTION' && msg.report) {
+        setReports((prev) => {
+          const cleanId = msg.report!.id.toLowerCase();
+          return prev.map((r) => (r.id.toLowerCase() === cleanId ? { ...r, ...msg.report! } : r));
+        });
+      }
+    });
+    return () => unsubscribe();
   }, [fetchData]);
 
   return (
@@ -384,8 +452,13 @@ export default function LandingPage() {
           {/* Column 1: Active National Alerts */}
           <div className={styles.feedColumn}>
             <h2>
-              <span>📢 Active Official Advisories</span>
-              <span className={styles.feedHeaderBadge}>Human Verified</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
+                <span>📢 Active Official Advisories</span>
+              </span>
+              <span className={styles.feedHeaderBadge}>
+                {alerts.length > 0 ? `${alerts.length} Official Bulletins` : 'Human Verified'}
+              </span>
             </h2>
 
             <div className={styles.feedList}>
@@ -406,6 +479,7 @@ export default function LandingPage() {
               ) : (
                 alerts.slice(0, 4).map((alert) => {
                   const severity = SEVERITY_LABELS[alert.severity];
+                  const relativeTime = formatRelativeTime(alert.updatedAt || alert.createdAt);
                   return (
                     <Link
                       key={alert.id}
@@ -413,18 +487,26 @@ export default function LandingPage() {
                       className={styles.alertFeedCard}
                     >
                       <div className={styles.alertFeedHeader}>
-                        <span className={`badge badge-${alert.severity >= 4 ? 'critical' : alert.severity >= 3 ? 'high' : 'moderate'}`}>
-                          {severity.label}
-                        </span>
-                        <span style={{ fontSize: 12, color: '#8A99A8' }}>
-                          {alert.areaName || 'Designated Risk Zone'}
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span className={`badge badge-${alert.severity >= 4 ? 'critical' : alert.severity >= 3 ? 'high' : 'moderate'}`}>
+                            {severity.label}
+                          </span>
+                          <span style={{ fontSize: 12, color: '#555753', fontWeight: 600 }}>
+                            📍 {alert.areaName || 'Designated Risk Zone'}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 11, color: '#737571', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                          {relativeTime}
                         </span>
                       </div>
                       <h3 className={styles.alertFeedHeadline}>{alert.headline}</h3>
-                      <p className={styles.alertFeedGuidance}>{alert.guidance.slice(0, 110)}…</p>
+                      <p className={styles.alertFeedGuidance}>{alert.guidance.slice(0, 130)}…</p>
                       <div className={styles.alertFeedFooter}>
                         <span>🏛️ {alert.source}</span>
-                        <span style={{ color: '#38BDF8', fontWeight: 600 }}>Inspect Alert →</span>
+                        <span style={{ color: '#0284C7', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          Inspect Alert →
+                        </span>
                       </div>
                     </Link>
                   );
@@ -436,8 +518,11 @@ export default function LandingPage() {
           {/* Column 2: Live Citizen Ground Reports */}
           <div className={styles.feedColumn}>
             <h2>
-              <span>📍 Live Ground Observations</span>
-              <Link href="/report" style={{ fontSize: 13, color: '#38BDF8', textDecoration: 'none', fontWeight: 600 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                <span>📍 Live Ground Observations</span>
+              </span>
+              <Link href="/report" style={{ fontSize: 13, color: '#0284C7', textDecoration: 'none', fontWeight: 600 }}>
                 + Submit Report
               </Link>
             </h2>
@@ -469,15 +554,34 @@ export default function LandingPage() {
                     report.currentActionCategory !== 'Pending Verification' &&
                     report.currentActionCategory !== 'Verified Genuine — Pending Tactical Action'
                   );
+                  const relativeTime = formatRelativeTime(report.updatedAt || report.createdAt);
                   return (
                     <div key={report.id} className={styles.reportStreamCard}>
                       <div className={styles.reportStreamHeader}>
-                        <span className={styles.reportCategoryTag}>
-                          {hazard?.icon} {hazard?.label || report.category}
-                        </span>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span className={styles.reportCategoryTag}>
+                            {hazard?.icon} {hazard?.label || report.category}
+                          </span>
                           <span className={`badge badge-${report.severity >= 4 ? 'high' : report.severity >= 3 ? 'moderate' : 'low'}`}>
                             Level {report.severity}
+                          </span>
+                          {report.waterDepthFeet ? (
+                            <span style={{
+                              fontSize: '11px',
+                              color: '#0284C7',
+                              background: 'rgba(2,132,199,0.08)',
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              fontWeight: 600,
+                              border: '1px solid rgba(2,132,199,0.2)'
+                            }}>
+                              💧 {report.waterDepthFeet} ft
+                            </span>
+                          ) : null}
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <span style={{ fontSize: 11, color: '#737571', fontWeight: 600 }}>
+                            ⏱ {relativeTime}
                           </span>
                           <span style={{
                             fontFamily: 'monospace',
@@ -489,7 +593,7 @@ export default function LandingPage() {
                             color: '#D67A20',
                             fontWeight: 700
                           }}>
-                            {report.id.slice(0, 12)}
+                            {report.id.slice(0, 14)}
                           </span>
                         </div>
                       </div>
@@ -502,19 +606,26 @@ export default function LandingPage() {
                           <span>{report.landmark}</span>
                         </div>
                       )}
-                      <div className={styles.reportStreamMeta} style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #F0EDE6' }}>
+                      <div className={styles.reportStreamMeta} style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #F0EDE6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: '11px', color: '#737571' }}>
-                          👤 {report.reporterPseudonym}
+                          👤 {report.reporterPseudonym || 'Citizen Reporter'}
                         </span>
                         <span style={{
                           fontSize: '11px',
                           fontWeight: 700,
-                          color: hasAction ? '#0284C7' : isVerified ? '#2E5A44' : '#D67A20'
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          background: hasAction ? 'rgba(2, 132, 199, 0.08)' : isVerified ? 'rgba(46, 90, 68, 0.08)' : 'rgba(214, 122, 32, 0.08)',
+                          color: hasAction ? '#0284C7' : isVerified ? '#2E5A44' : '#D67A20',
+                          border: `1px solid ${hasAction ? 'rgba(2, 132, 199, 0.25)' : isVerified ? 'rgba(46, 90, 68, 0.25)' : 'rgba(214, 122, 32, 0.25)'}`
                         }}>
                           {hasAction ? `🚨 ${report.currentActionCategory}` : isVerified ? '✓ Verified Genuine' : '⏱ Queued for Radar Triage'}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: '6px' }}>
+                      <div style={{ display: 'flex', gap: 8, marginTop: '8px' }}>
                         <button
                           type="button"
                           onClick={() => {
@@ -524,14 +635,14 @@ export default function LandingPage() {
                             el?.scrollIntoView({ behavior: 'smooth' });
                           }}
                           className="btn btn-primary btn-sm"
-                          style={{ fontSize: '11.5px', padding: '4px 10px', flex: 1, textAlign: 'center', cursor: 'pointer' }}
+                          style={{ fontSize: '11.5px', padding: '5px 12px', flex: 1, textAlign: 'center', cursor: 'pointer' }}
                         >
                           🔍 Track Live Status →
                         </button>
                         <Link
                           href={`/map?lat=${report.location.latitude}&lng=${report.location.longitude}&highlight=${report.id}`}
                           className="btn btn-secondary btn-sm"
-                          style={{ fontSize: '11.5px', padding: '4px 10px', textDecoration: 'none' }}
+                          style={{ fontSize: '11.5px', padding: '5px 12px', textDecoration: 'none' }}
                         >
                           🗺️ Map
                         </Link>

@@ -1,289 +1,145 @@
 {
   "reports": [
     {
-      "reporterId": "anon_1789318363455",
-      "reporterPseudonym": "Citizen-001",
+      "id": "rep_del_pragati_01",
+      "reporterId": "anon_del_084",
+      "reporterPseudonym": "Citizen-084",
       "category": "WATERLOGGING",
-      "severity": 3,
-      "description": "ghjkh",
+      "severity": 4,
+      "description": "Severe waterlogging near Pragati Maidan tunnel and Mathura Road underpass. Depth ~3.8 ft, multiple vehicles stranded, traffic police requesting municipal suction tankers.",
       "location": {
-        "latitude": 12.9716,
-        "longitude": 77.5946,
-        "accuracy": 25
+        "latitude": 28.6186,
+        "longitude": 77.2415,
+        "accuracy": 15
       },
-      "h3Index": "882aa494b9e0fffff",
-      "landmark": "Bengaluru (Station Region)",
-      "waterDepthFeet": 2.5,
+      "h3Index": "882a7bcfa911fffff",
+      "landmark": "Pragati Maidan Tunnel & Mathura Road, New Delhi",
+      "waterDepthFeet": 3.8,
       "consent": true,
       "status": "REVIEWED",
-      "id": "id_mu01ydds_tpqmwbg",
       "verificationStatus": "VERIFIED_GENUINE",
       "currentActionCategory": "Dewatering & Municipal Crew Dispatched",
       "actionHistory": [
         {
-          "id": "id_mu020a93_js3lye4",
+          "id": "act_del_01",
           "action": "Dewatering & Municipal Crew Dispatched",
-          "actorName": "Emergency Administrator",
-          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
-          "timestamp": "2026-09-13T16:54:12.711Z"
+          "actorName": "Delhi Disaster Management Cell",
+          "notes": "4x high-capacity trailer pumps deployed. Traffic police diverting eastbound traffic to Barapullah corridor.",
+          "timestamp": "2026-09-17T16:05:14.452Z"
         },
         {
-          "id": "id_mu020611_h749qwz",
-          "action": "Verified Genuine — Pending Tactical Action",
-          "actorName": "Emergency Administrator",
-          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
-          "timestamp": "2026-09-13T16:54:07.237Z"
-        },
-        {
-          "id": "id_mu01ydds_t1pwpb0",
-          "action": "Pending Verification",
-          "actorName": "Telemetry Gateway",
-          "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
-          "timestamp": "2026-09-13T16:52:43.456Z"
+          "id": "act_del_02",
+          "action": "Verified Genuine \u2014 Pending Tactical Action",
+          "actorName": "Doppler Reviewer Dr. Sharma",
+          "notes": "Corroborated with Palam Doppler radar (38 dBZ storm cell) and automatic rain gauge (42mm/h).",
+          "timestamp": "2026-09-17T15:48:14.452Z"
         }
       ],
-      "createdAt": "2026-09-13T16:52:43.456Z",
-      "updatedAt": "2026-09-13T16:54:12.711Z",
+      "createdAt": "2026-09-17T15:38:14.452Z",
+      "updatedAt": "2026-09-17T16:05:14.452Z",
       "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
-      "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
-    }
-  ],
-  "incidents": [
+      "verificationRationale": "Corroborated with Palam Doppler radar reflectivity and automatic rain gauge."
+    },
     {
-      "id": "inc_real_mu01yddu_ml7t",
-      "h3Parent": "882aa494b9e0fffff",
-      "category": "WATERLOGGING",
-      "state": "ESCALATED",
-      "confidenceScore": {
-        "total": 24,
-        "factors": [
-          {
-            "name": "Report Completeness",
-            "signal": "GPS location ✓, Category ✓, Timestamp ✓, Consent ✓, Photo missing (optional)",
-            "contribution": 18,
-            "maxContribution": 25,
-            "explanation": "4 of 6 evidence fields present. Missing fields reduce priority but do not invalidate the report."
-          },
-          {
-            "name": "Spatial Corroboration",
-            "signal": "No nearby reports",
-            "contribution": 0,
-            "maxContribution": 30,
-            "explanation": "No other reports of the same hazard within 500m and 20 minutes. Single report — awaiting corroboration."
-          },
-          {
-            "name": "Reporter History",
-            "signal": "New reporter",
-            "contribution": 2,
-            "maxContribution": 15,
-            "explanation": "First-time reporter. Base credibility assigned. Reports are never suppressed solely due to no history."
-          },
-          {
-            "name": "Weather Evidence",
-            "signal": "No weather data available",
-            "contribution": 0,
-            "maxContribution": 20,
-            "explanation": "Weather data source unavailable or stale. Cannot provide weather evidence. Absence of weather data does not reduce score.",
-            "freshness": "unavailable"
-          },
-          {
-            "name": "Contradiction Check",
-            "signal": "No flags detected",
-            "contribution": 4,
-            "maxContribution": 10,
-            "explanation": "No duplicate images, location mismatches, or clear-sky contradictions detected."
-          }
-        ],
-        "computedAt": "2026-09-13T16:52:43.458Z"
+      "id": "rep_mum_dadar_02",
+      "reporterId": "anon_mum_047",
+      "reporterPseudonym": "Citizen-047",
+      "category": "FLOODING",
+      "severity": 4,
+      "description": "Spring high tide surge spilling over coastal seawall coinciding with heavy squall rain. Hindmata junction and Dadar TT submerged up to 3.2 ft.",
+      "location": {
+        "latitude": 19.0178,
+        "longitude": 72.8478,
+        "accuracy": 20
       },
-      "impactLevel": "HIGH",
-      "reportCount": 1,
-      "reports": [
-        {
-          "reporterId": "anon_1789318363455",
-          "reporterPseudonym": "Citizen-001",
-          "category": "WATERLOGGING",
-          "severity": 3,
-          "description": "ghjkh",
-          "location": {
-            "latitude": 12.9716,
-            "longitude": 77.5946,
-            "accuracy": 25
-          },
-          "h3Index": "882aa494b9e0fffff",
-          "landmark": "Bengaluru (Station Region)",
-          "waterDepthFeet": 2.5,
-          "consent": true,
-          "status": "REVIEWED",
-          "id": "id_mu01ydds_tpqmwbg",
-          "verificationStatus": "VERIFIED_GENUINE",
-          "currentActionCategory": "Dewatering & Municipal Crew Dispatched",
-          "actionHistory": [
-            {
-              "id": "id_mu020a93_js3lye4",
-              "action": "Dewatering & Municipal Crew Dispatched",
-              "actorName": "Emergency Administrator",
-              "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
-              "timestamp": "2026-09-13T16:54:12.711Z"
-            },
-            {
-              "id": "id_mu020611_h749qwz",
-              "action": "Verified Genuine — Pending Tactical Action",
-              "actorName": "Emergency Administrator",
-              "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
-              "timestamp": "2026-09-13T16:54:07.237Z"
-            },
-            {
-              "id": "id_mu01ydds_t1pwpb0",
-              "action": "Pending Verification",
-              "actorName": "Telemetry Gateway",
-              "notes": "Report submitted by citizen and queued for meteorologist verification vs Doppler radar.",
-              "timestamp": "2026-09-13T16:52:43.456Z"
-            }
-          ],
-          "createdAt": "2026-09-13T16:52:43.456Z",
-          "updatedAt": "2026-09-13T16:54:12.711Z",
-          "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
-          "verificationRationale": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
-        }
-      ],
-      "evidence": [
-        {
-          "id": "id_mu01yddu_2ys4ir9",
-          "reportId": "id_mu01ydds_tpqmwbg",
-          "type": "WEATHER",
-          "source": "Doppler Weather Radar & Automated Rain Gauge",
-          "observedAt": "2026-09-13T16:52:43.458Z",
-          "freshnessSeconds": 45,
-          "value": {
-            "reflectivityDbz": 47,
-            "rainRateMmH": 33
-          },
-          "provenance": "Automated Weather Corroboration Engine"
-        }
-      ],
-      "reviewActions": [],
+      "h3Index": "8828308281fffff",
+      "landmark": "Hindmata Junction & Dadar TT, Mumbai",
+      "waterDepthFeet": 3.2,
+      "consent": true,
+      "status": "REVIEWED",
       "verificationStatus": "VERIFIED_GENUINE",
       "currentActionCategory": "Dewatering & Municipal Crew Dispatched",
       "actionHistory": [
         {
-          "id": "id_mu020a93_js3lye4",
+          "id": "act_mum_01",
           "action": "Dewatering & Municipal Crew Dispatched",
-          "actorName": "Emergency Administrator",
-          "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
-          "timestamp": "2026-09-13T16:54:12.711Z"
-        },
-        {
-          "id": "id_mu020611_h749qwz",
-          "action": "Verified Genuine — Pending Tactical Action",
-          "actorName": "Emergency Administrator",
-          "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry.",
-          "timestamp": "2026-09-13T16:54:07.237Z"
-        },
-        {
-          "id": "id_mu01yddv_a3ptn8c",
-          "action": "Pending Verification",
-          "actorName": "Cluster Engine",
-          "notes": "Candidate incident queued for meteorologist verification vs ground Doppler radar.",
-          "timestamp": "2026-09-13T16:52:43.456Z"
+          "actorName": "MCGM Disaster Operations",
+          "notes": "Britannia dewatering pumping station operating at 100% capacity. Floodgates shut during high tide.",
+          "timestamp": "2026-09-17T15:55:14.452Z"
         }
       ],
-      "landmark": "Bengaluru (Station Region)",
+      "createdAt": "2026-09-17T15:18:14.452Z",
+      "updatedAt": "2026-09-17T15:55:14.452Z",
+      "firstActionTaken": "Dewatering & Municipal Crew Dispatched",
+      "verificationRationale": "INCOIS sea surge telemetry cross-verified with MCGM rain gauge."
+    },
+    {
+      "id": "rep_blr_ecospace_03",
+      "reporterId": "anon_blr_062",
+      "reporterPseudonym": "Citizen-062",
+      "category": "WATERLOGGING",
+      "severity": 3,
+      "description": "Stormwater drain overflow along Outer Ring Road near Bellandur EcoSpace. Moderate service road inundation, vehicles moving slowly on main flyover.",
       "location": {
-        "latitude": 12.9716,
-        "longitude": 77.5946,
+        "latitude": 12.9279,
+        "longitude": 77.6833,
+        "accuracy": 18
+      },
+      "h3Index": "882aa494b9e0fffff",
+      "landmark": "Outer Ring Road, Bellandur, Bengaluru",
+      "waterDepthFeet": 2.0,
+      "consent": true,
+      "status": "REVIEWED",
+      "verificationStatus": "VERIFIED_GENUINE",
+      "currentActionCategory": "Meteorological Monitoring",
+      "actionHistory": [
+        {
+          "id": "act_blr_01",
+          "action": "Meteorological Monitoring",
+          "actorName": "Bengaluru IMD Station",
+          "notes": "Convective storm cell weakening. BBMP road maintenance team cleared drain grating.",
+          "timestamp": "2026-09-17T15:43:14.452Z"
+        }
+      ],
+      "createdAt": "2026-09-17T14:58:14.452Z",
+      "updatedAt": "2026-09-17T15:43:14.452Z",
+      "firstActionTaken": "Meteorological Monitoring",
+      "verificationRationale": "Bengaluru Doppler radar tracking cell dissipation."
+    },
+    {
+      "id": "rep_kol_parkcircus_05",
+      "reporterId": "anon_kol_091",
+      "reporterPseudonym": "Citizen-091",
+      "category": "SEVERE_RAIN",
+      "severity": 3,
+      "description": "Sudden squall line with 65 km/h gusts and high-intensity rainfall. Water accumulating along Park Circus 7-point crossing tram tracks.",
+      "location": {
+        "latitude": 22.5411,
+        "longitude": 88.3644,
         "accuracy": 25
       },
-      "createdAt": "2026-09-13T16:52:43.456Z",
-      "updatedAt": "2026-09-13T16:54:12.712Z",
-      "firstActionTaken": "Dewatering & Municipal Crew Dispatched"
+      "h3Index": "882e3b2e59fffff",
+      "landmark": "Park Circus 7-Point Crossing, Kolkata",
+      "waterDepthFeet": 1.5,
+      "consent": true,
+      "status": "RECEIVED",
+      "verificationStatus": "PENDING_VERIFICATION",
+      "currentActionCategory": "Pending Verification",
+      "actionHistory": [
+        {
+          "id": "act_kol_01",
+          "action": "Pending Verification",
+          "actorName": "Telemetry Gateway",
+          "notes": "Report queued for Kolkata Doppler radar cross-correlation.",
+          "timestamp": "2026-09-17T16:11:14.452Z"
+        }
+      ],
+      "createdAt": "2026-09-17T16:11:14.452Z",
+      "updatedAt": "2026-09-17T16:11:14.452Z",
+      "firstActionTaken": "Pending Verification"
     }
   ],
   "alerts": [
-    {
-      "id": "alert_pump_id_mu01ydds_tpqmwbg",
-      "incidentId": "id_mu01ydds_tpqmwbg",
-      "polygon": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              77.5746,
-              12.951600000000001
-            ],
-            [
-              77.6146,
-              12.951600000000001
-            ],
-            [
-              77.6146,
-              12.9916
-            ],
-            [
-              77.5746,
-              12.9916
-            ],
-            [
-              77.5746,
-              12.951600000000001
-            ]
-          ]
-        ]
-      },
-      "severity": 3,
-      "category": "WATERLOGGING",
-      "headline": "🚒 MUNICIPAL DEWATERING DISPATCHED — Bengaluru (Station Region)",
-      "guidance": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions.",
-      "startsAt": "2026-09-13T16:54:12.712Z",
-      "expiresAt": "2026-09-13T22:54:12.712Z",
-      "publishedBy": "Emergency Administrator",
-      "status": "PUBLISHED",
-      "source": "Municipal Corporation Emergency Services",
-      "createdAt": "2026-09-13T16:54:12.712Z",
-      "updatedAt": "2026-09-13T16:54:12.712Z"
-    },
-    {
-      "id": "alert_obs_id_mu01ydds_tpqmwbg",
-      "incidentId": "id_mu01ydds_tpqmwbg",
-      "polygon": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [
-              77.5646,
-              12.941600000000001
-            ],
-            [
-              77.6246,
-              12.941600000000001
-            ],
-            [
-              77.6246,
-              13.0016
-            ],
-            [
-              77.5646,
-              13.0016
-            ],
-            [
-              77.5646,
-              12.941600000000001
-            ]
-          ]
-        ]
-      },
-      "severity": 3,
-      "category": "WATERLOGGING",
-      "headline": "⚠️ GROUND OBSERVATION: Severe WATERLOGGING — Bengaluru (Station Region)",
-      "guidance": "ghjkh",
-      "startsAt": "2026-09-13T16:52:43.457Z",
-      "expiresAt": "2026-09-13T22:52:43.457Z",
-      "publishedBy": "Doppler AWS Telemetry Gateway",
-      "status": "PUBLISHED",
-      "source": "Ground Sensor & Citizen Eyewitness Corroborator",
-      "createdAt": "2026-09-13T16:52:43.457Z",
-      "updatedAt": "2026-09-13T16:52:43.457Z"
-    },
     {
       "id": "alert_imd_delhi_yamuna_red",
       "incidentId": "inc_delhi_yamuna_basin",
@@ -300,12 +156,12 @@
               28.615
             ],
             [
-              77.275,
-              28.685
+              77.265,
+              28.715
             ],
             [
-              77.205,
-              28.685
+              77.195,
+              28.715
             ],
             [
               77.195,
@@ -316,15 +172,16 @@
       },
       "severity": 5,
       "category": "FLOODING",
-      "headline": "🔴 IMD RED ALERT: Flash Flood & Yamuna Inundation Warning — NCT Delhi",
-      "guidance": "NDMA & DDMA emergency directive: Extreme water discharge recorded at Hathnikund Barrage. Minto Bridge, Kashmere Gate Ring Road, and Yamuna Bazar underpasses severely submerged (>4.2 ft). Evacuate all low-lying floodplains immediately. Avoid Ring Road underpasses.",
-      "startsAt": "2026-09-13T15:47:40.166Z",
-      "expiresAt": "2026-09-14T06:47:40.166Z",
+      "areaName": "NCT Delhi & Yamuna Basin",
+      "headline": "\ud83d\udd34 IMD RED ALERT: Flash Flood & Yamuna Inundation Warning \u2014 NCT Delhi",
+      "guidance": "National Disaster Management Authority & Delhi Emergency Operations: Extreme monsoon discharge recorded across Yamuna River catchment. Salimgarh bypass, Kashmere Gate Ring Road, and Pragati Maidan underpass corridors severely inundated (>3.8 ft). Citizens strictly advised to avoid low-lying underpasses and arterial riverine transit corridors.",
+      "startsAt": "2026-09-17T15:23:14.452Z",
+      "expiresAt": "2026-09-18T06:23:14.452Z",
       "publishedBy": "DDMA / IMD National Weather Forecasting Centre",
       "status": "PUBLISHED",
       "source": "India Meteorological Department & Delhi Disaster Management Authority",
-      "createdAt": "2026-09-13T15:47:40.166Z",
-      "updatedAt": "2026-09-13T16:47:40.168Z"
+      "createdAt": "2026-09-17T15:23:14.452Z",
+      "updatedAt": "2026-09-17T16:23:14.452Z"
     },
     {
       "id": "alert_incois_mumbai_surge_orange",
@@ -358,15 +215,16 @@
       },
       "severity": 4,
       "category": "FLOODING",
-      "headline": "🟠 INCOIS ORANGE ALERT: Arabian Sea Coastal Inundation & Spring High Tide",
-      "guidance": "INCOIS & MCGM Emergency Operations Cell: Spring high tide reaching 4.87m coinciding with intense squall rains. Sea surge breaching Mahim Causeway and Marine Drive seawalls. Citizens strictly advised to stay away from promenades and low-lying coastal arterial roads.",
-      "startsAt": "2026-09-13T14:47:40.166Z",
-      "expiresAt": "2026-09-14T04:47:40.166Z",
+      "areaName": "Mumbai & Konkan Coastline",
+      "headline": "\ud83d\udfe0 INCOIS ORANGE ALERT: Arabian Sea Coastal Inundation & Spring High Tide",
+      "guidance": "Indian National Centre for Ocean Information Services (INCOIS): Spring high tide surge reaching 4.87m coinciding with intense squall rains. Sea surge breaching Mahim Causeway and Marine Drive seawalls. Citizens strictly advised to stay away from promenades and low-lying coastal arterial roads.",
+      "startsAt": "2026-09-17T14:23:14.452Z",
+      "expiresAt": "2026-09-18T04:23:14.452Z",
       "publishedBy": "MCGM Disaster Management Unit",
       "status": "PUBLISHED",
       "source": "Indian National Centre for Ocean Information Services (INCOIS)",
-      "createdAt": "2026-09-13T14:47:40.166Z",
-      "updatedAt": "2026-09-13T16:47:40.168Z"
+      "createdAt": "2026-09-17T14:23:14.452Z",
+      "updatedAt": "2026-09-17T16:23:14.452Z"
     },
     {
       "id": "alert_cwc_guwahati_brahmaputra_red",
@@ -400,15 +258,16 @@
       },
       "severity": 5,
       "category": "FLOODING",
-      "headline": "🔴 CWC RED ADVISORY: Brahmaputra River Above Extreme Inundation Level",
+      "areaName": "Guwahati & Brahmaputra Catchment",
+      "headline": "\ud83d\udd34 CWC RED ADVISORY: Brahmaputra River Above Extreme Inundation Level",
       "guidance": "Central Water Commission (CWC) Official Hydro-Bulletin: River Brahmaputra at Guwahati Gauge Station is flowing at 50.18m (0.68m above Extreme Danger Level) with rising trend. SDRF and 1st NDRF Battalion deployed with rescue motorboats. Avoid ferry transit.",
-      "startsAt": "2026-09-13T15:17:40.166Z",
-      "expiresAt": "2026-09-14T16:47:40.166Z",
+      "startsAt": "2026-09-17T13:23:14.452Z",
+      "expiresAt": "2026-09-18T16:23:14.452Z",
       "publishedBy": "Central Water Commission & ASDMA",
       "status": "PUBLISHED",
       "source": "Central Water Commission (CWC) Hydrological Sentinel",
-      "createdAt": "2026-09-13T15:17:40.166Z",
-      "updatedAt": "2026-09-13T16:47:40.168Z"
+      "createdAt": "2026-09-17T13:23:14.452Z",
+      "updatedAt": "2026-09-17T16:23:14.452Z"
     },
     {
       "id": "alert_imd_hp_cloudburst_orange",
@@ -442,91 +301,63 @@
       },
       "severity": 4,
       "category": "CLOUDBURST",
-      "headline": "🟠 IMD ORANGE ALERT: Severe Cloudburst & Slope Debris Flow Watch",
+      "areaName": "Kangra & Western Himalayan Foothills",
+      "headline": "\ud83d\udfe0 IMD ORANGE ALERT: Severe Cloudburst & Slope Debris Flow Watch",
       "guidance": "State Disaster Management Authority Himachal Pradesh: Doppler Radar at Shimla indicates cloudburst rain rates exceeding 80mm/hr over Kangra / Dharamsala slopes. High vulnerability of flash mudslides along NH-154. Travel restricted.",
-      "startsAt": "2026-09-13T16:17:40.166Z",
-      "expiresAt": "2026-09-14T00:47:40.166Z",
+      "startsAt": "2026-09-17T15:23:14.452Z",
+      "expiresAt": "2026-09-18T00:23:14.452Z",
       "publishedBy": "HPSDMA State Emergency Operations Centre",
       "status": "PUBLISHED",
       "source": "India Meteorological Department Shimla Radar & HPSDMA",
-      "createdAt": "2026-09-13T16:17:40.166Z",
-      "updatedAt": "2026-09-13T16:47:40.168Z"
-    }
-  ],
-  "sosRequests": [
-    {
-      "id": "sos_req_delhi_01",
-      "reporterName": "Aarav Sharma",
-      "phone": "+91 98110 44821",
-      "location": {
-        "latitude": 28.6328,
-        "longitude": 77.2197
-      },
-      "landmark": "Near Minto Bridge Underpass, Connaught Place Outer Circle, New Delhi",
-      "hazardType": "FLOODING",
-      "peopleCount": 4,
-      "hasMedicalEmergency": true,
-      "notes": "Car submerged up to bonnet in underpass floodwaters. Elderly diabetic passenger requires urgent insulin & water evacuation.",
-      "status": "DISPATCHED",
-      "dispatchedUnit": "NDRF 8th Battalion Water Rescue Unit (Boat #3)",
-      "createdAt": "2026-09-13T16:27:40.168Z",
-      "updatedAt": "2026-09-13T16:42:40.168Z"
+      "createdAt": "2026-09-17T15:23:14.452Z",
+      "updatedAt": "2026-09-17T16:23:14.452Z"
     },
     {
-      "id": "sos_req_mumbai_02",
-      "reporterName": "Rohit Kulkarni",
-      "phone": "+91 98201 55902",
-      "location": {
-        "latitude": 19.0178,
-        "longitude": 72.8478
+      "id": "alert_imd_bengaluru_yellow",
+      "incidentId": "inc_blr_stormwater",
+      "polygon": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              77.55,
+              12.9
+            ],
+            [
+              77.72,
+              12.9
+            ],
+            [
+              77.72,
+              13.05
+            ],
+            [
+              77.55,
+              13.05
+            ],
+            [
+              77.55,
+              12.9
+            ]
+          ]
+        ]
       },
-      "landmark": "Near Hindmata Cinema Junction, Dadar East, Mumbai",
-      "hazardType": "FLOODING",
-      "peopleCount": 6,
-      "hasMedicalEmergency": false,
-      "notes": "Ground floor shop flooded with 3.5ft water. 6 people stranded on mezzanine slab. Power lines sparking nearby.",
-      "status": "PENDING_RESCUE",
-      "createdAt": "2026-09-13T16:17:40.168Z",
-      "updatedAt": "2026-09-13T16:17:40.168Z"
+      "severity": 3,
+      "category": "WATERLOGGING",
+      "areaName": "Bengaluru Urban IT Corridor",
+      "headline": "\ud83d\udfe1 IMD YELLOW ADVISORY: Convective Storm Waterlogging & Squall Watch",
+      "guidance": "IMD Bengaluru Regional Meteorological Centre: Intense localized convective rain bands accompanied by 50 km/h wind squalls across Mahadevapura and Bellandur corridors. BBMP rapid-action dewatering pumps stationed.",
+      "startsAt": "2026-09-17T15:38:14.452Z",
+      "expiresAt": "2026-09-17T22:23:14.452Z",
+      "publishedBy": "IMD Bengaluru & BBMP Disaster Cell",
+      "status": "PUBLISHED",
+      "source": "India Meteorological Department Bengaluru Doppler & BBMP",
+      "createdAt": "2026-09-17T15:38:14.452Z",
+      "updatedAt": "2026-09-17T16:23:14.452Z"
     }
   ],
-  "auditEvents": [
-    {
-      "id": "id_mu01yddt_lfk6bdt",
-      "actorId": "system",
-      "actorRole": "CITIZEN",
-      "entityType": "report",
-      "entityId": "id_mu01ydds_tpqmwbg",
-      "action": "CREATE",
-      "metadata": {
-        "category": "WATERLOGGING"
-      },
-      "createdAt": "2026-09-13T16:52:43.457Z"
-    },
-    {
-      "id": "id_mu020611_qiiucf0",
-      "actorId": "Emergency Administrator",
-      "actorRole": "ADMIN",
-      "entityType": "report",
-      "entityId": "id_mu01ydds_tpqmwbg",
-      "action": "Verified Genuine — Pending Tactical Action",
-      "metadata": {
-        "notes": "Corroborated against Doppler radar reflectivity and automatic weather station telemetry."
-      },
-      "createdAt": "2026-09-13T16:54:07.237Z"
-    },
-    {
-      "id": "id_mu020a94_ypo315m",
-      "actorId": "Emergency Administrator",
-      "actorRole": "ADMIN",
-      "entityType": "report",
-      "entityId": "id_mu01ydds_tpqmwbg",
-      "action": "Dewatering & Municipal Crew Dispatched",
-      "metadata": {
-        "notes": "Dispatched 3x 500HP Dewatering Pumps (45,000 LPM) and traffic police diversions."
-      },
-      "createdAt": "2026-09-13T16:54:12.712Z"
-    }
-  ],
-  "savedAt": "2026-09-13T16:54:12.712Z"
+  "incidents": [],
+  "sosRequests": [],
+  "auditEvents": [],
+  "savedAt": "2026-09-17T16:23:14.452Z"
 }
