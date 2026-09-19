@@ -1483,7 +1483,6 @@ function MapContent() {
               <div className={styles.leftCardHeader}>
                 <div className={styles.headerTopRow}>
                   <div className={styles.titleWithDot}>
-                    <span className={styles.livePulseDot}></span>
                     <h2 className={styles.leftCardTitle}>Live Hazard Intelligence</h2>
                   </div>
                   <div className={styles.headerActionsGroup}>
