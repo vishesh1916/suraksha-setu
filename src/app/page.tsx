@@ -300,13 +300,6 @@ export default function LandingPage() {
           <div className={styles.heroGrid}>
             {/* Left Column: Editorial Typography & Directives */}
             <div className={styles.heroContent}>
-              <div className={styles.liveTelemetryPill}>
-                <span className={styles.liveTelemetryDot} />
-                <span className={styles.liveTelemetryText}>
-                  National Doppler Network · Drizzle · {liveLucknowData?.temperature ? `${liveLucknowData.temperature}°C` : '29.8°C'}
-                </span>
-              </div>
-
               <h1 className={styles.headline}>
                 Weather clarity.<br />
                 <span className={styles.headlineAccent}>
