@@ -169,10 +169,6 @@ export default function SosHubPage() {
         {/* Header Section */}
         <section className={styles.headerSection}>
           <div className={styles.headerLeft}>
-            <div className={styles.emergencyPill}>
-              <span className={styles.livePulseDot}></span>
-              NATIONAL RESCUE &amp; TACTICAL OPERATIONS HUB
-            </div>
             <h1 className={styles.title}>
               Suraksha Emergency <span>SOS Command</span>
             </h1>
