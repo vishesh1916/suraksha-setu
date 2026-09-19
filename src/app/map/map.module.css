@@ -1976,21 +1976,167 @@
   }
 }
 
+.mobileFloatingFeedBtn {
+  display: none;
+}
+
+.mobileCloseFeedBtn {
+  display: none;
+}
+
+.mapFooterWrapper {
+  display: block;
+}
+
 @media (max-width: 960px) {
+  .mapPage {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .mapFooterWrapper {
+    display: none;
+  }
+
   .dashboardContainer {
-    padding: 1rem;
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+    height: calc(100dvh - 64px);
+    overflow: hidden;
   }
+
+  .topWatermarkBar {
+    display: none;
+  }
+
   .mainDashboardGrid {
-    grid-template-columns: 1fr;
-    height: auto;
+    display: block;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
   }
-  .leftIntelligenceCard {
-    height: 520px;
-  }
+
   .mapCard {
-    height: 500px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    z-index: 1;
   }
+
+  .mapCanvas {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0;
+  }
+
+  .leftIntelligenceCard {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 72dvh;
+    max-height: 82dvh;
+    z-index: 50;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -10px 40px rgba(15, 43, 58, 0.35);
+    background: #FFFFFF;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mainDashboardGridCollapsed .leftIntelligenceCard {
+    transform: translateY(100%);
+    display: none;
+  }
+
+  .mobileFloatingFeedBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 35;
+    background: #1F3440;
+    color: #FFFFFF;
+    border: 1.5px solid #4C8DA2;
+    padding: 11px 22px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(31, 52, 64, 0.4);
+    cursor: pointer;
+    white-space: nowrap;
+    animation: mobileBounceUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mobileFeedPulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4C8B71;
+    box-shadow: 0 0 0 3px rgba(76, 139, 113, 0.35);
+  }
+
+  .mobileCloseFeedBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #F1F5F9;
+    border: 1px solid #CBD5E1;
+    color: #1F3440;
+    border-radius: 8px;
+    padding: 5px 11px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-left: 6px;
+  }
+
+  .topFloatingToolbar {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    gap: 5px;
+  }
+
+  .searchBoxWrap {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .searchInput {
+    padding: 7px 10px 7px 30px;
+    font-size: 11.5px;
+    border-radius: 10px;
+  }
+
+  .searchIconSvg {
+    left: 9px;
+    font-size: 11.5px;
+  }
+
+  .toolbarActionBtn {
+    padding: 6px 9px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
   .bottomKpiRow {
-    grid-template-columns: 1fr;
+    display: none;
   }
+}
+
+@keyframes mobileBounceUp {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }

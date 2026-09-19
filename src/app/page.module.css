@@ -97,9 +97,9 @@
 
 .headline {
   font-family: var(--font-family-heading, 'Manrope', sans-serif);
-  font-size: clamp(2.75rem, 5.5vw, 4.4rem);
+  font-size: clamp(2.1rem, 5.5vw, 4.4rem);
   font-weight: 800;
-  line-height: 1.08;
+  line-height: 1.1;
   letter-spacing: -0.035em;
   color: #1F3440;
   margin: 0 0 1.5rem;
@@ -2141,5 +2141,69 @@
   color: #60717B;
 }
 
+/* ============================================================
+   Mobile First Responsive Rules (< 640px)
+   ============================================================ */
+@media (max-width: 640px) {
+  .heroSection {
+    padding: 1.5rem 1rem 2.5rem;
+  }
 
+  .ctaGroup {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
 
+  .primaryPillCta,
+  .secondaryPillCta {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 14px 20px;
+    font-size: 0.92rem;
+  }
+
+  .heroOpsDeck {
+    padding: 1.1rem;
+    border-radius: 20px;
+  }
+
+  .opsHeaderTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .opsToggleGroup {
+    width: 100%;
+  }
+
+  .opsToggleBtn {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .opsBadgeRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .opsTimestamp {
+    font-size: 10px;
+  }
+
+  .opsActionRow {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .opsActionBtnPrimary,
+  .opsActionBtnSecondary {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+}

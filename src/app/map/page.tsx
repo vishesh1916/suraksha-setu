@@ -638,6 +638,13 @@ function MapContent() {
   const [isDeckExpanded, setIsDeckExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<RailTab>('official');
 
+  // Mobile viewport: Start with full-screen map
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 900) {
+      setIsRailOpen(false);
+    }
+  }, []);
+
   // All Calamities Directory Modal State
   const [isAllCalamitiesModalOpen, setIsAllCalamitiesModalOpen] = useState(false);
   const [calamitiesSearch, setCalamitiesSearch] = useState('');
@@ -1506,6 +1513,17 @@ function MapContent() {
                     >
                       <span>↻</span>
                       <span>{loading ? 'Syncing...' : 'Sync'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.mobileCloseFeedBtn}
+                      onClick={() => {
+                        setIsRailOpen(false);
+                        setTimeout(() => { if (mapRef.current) mapRef.current.resize(); }, 320);
+                      }}
+                      title="Close Hazard Feed to view full map"
+                    >
+                      ✕ Map
                     </button>
                   </div>
                 </div>
@@ -2708,6 +2726,21 @@ function MapContent() {
                 </div>
               );
             })() : null}
+            {/* Mobile Floating Button to Open Live Hazard Feed */}
+            {!isRailOpen && (
+              <button
+                type="button"
+                className={styles.mobileFloatingFeedBtn}
+                onClick={() => {
+                  setIsRailOpen(true);
+                  setTimeout(() => { if (mapRef.current) mapRef.current.resize(); }, 320);
+                }}
+                aria-label="Open Live Hazard Feed"
+              >
+                <span>📋 Live Hazards ({mapEvents.length})</span>
+                <span className={styles.mobileFeedPulse} />
+              </button>
+            )}
           </div>
         </section>
 
@@ -2994,7 +3027,9 @@ function MapContent() {
         )}
       </main>
 
-      <Footer />
+      <div className={styles.mapFooterWrapper}>
+        <Footer />
+      </div>
     </div>
   );
 }

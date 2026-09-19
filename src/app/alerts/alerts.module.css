@@ -300,7 +300,38 @@
 
 @media (max-width: 640px) {
   .container {
-    padding: 2rem 1rem 3.5rem;
+    padding: 1.5rem 1rem 3.5rem;
+  }
+
+  .title {
+    font-size: 1.85rem;
+  }
+
+  .filterBar {
+    padding: 10px 12px;
+    border-radius: 16px;
+    gap: 10px;
+  }
+
+  .filterPills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pillBtn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 6px 14px;
+  }
+
+  .feedStatus {
+    font-size: 11px;
+    width: 100%;
   }
 
   .alertCard {
@@ -313,5 +344,16 @@
 
   .mapCellVisual {
     align-items: flex-start;
+  }
+
+  .actionsRow {
+    flex-direction: column;
+  }
+
+  .capBtn,
+  .inspectBtn {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
   }
 }

@@ -42,6 +42,8 @@ export const viewport: Viewport = {
   themeColor: "#F8FBFC",
 };
 
+import { EmergencyAlertMonitor } from "@/components/EmergencyAlertMonitor";
+
 export default function RootLayout({
   children,
 }: {
@@ -57,7 +59,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <EmergencyAlertMonitor />
+        {children}
+      </body>
     </html>
   );
 }

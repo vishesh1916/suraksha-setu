@@ -3,6 +3,70 @@
   "incidents": [],
   "alerts": [],
   "sosRequests": [],
-  "auditEvents": [],
-  "savedAt": "2026-09-19T15:00:00.000Z"
+  "auditEvents": [
+    {
+      "id": "id_mu8oer13_tzvng5t",
+      "actorId": "system",
+      "actorRole": "OFFICER",
+      "entityType": "alert",
+      "entityId": "id_mu8oer10_6vetpx7",
+      "action": "CREATE_DRAFT",
+      "metadata": {
+        "headline": "NATIONAL EMERGENCY ALERT: Severe Cloudburst Warning across Central & Northern Sectors",
+        "severity": 4
+      },
+      "createdAt": "2026-09-19T17:43:28.599Z"
+    },
+    {
+      "id": "id_mu8ogb2d_12vvdn0",
+      "actorId": "system",
+      "actorRole": "OFFICER",
+      "entityType": "alert",
+      "entityId": "id_mu8ogb2b_wifojfl",
+      "action": "CREATE_DRAFT",
+      "metadata": {
+        "headline": "NATIONAL EMERGENCY ALERT: Severe Cloudburst Warning across Central & Northern Sectors",
+        "severity": 4
+      },
+      "createdAt": "2026-09-19T17:44:41.221Z"
+    },
+    {
+      "id": "id_mu8ogb41_b5em30m",
+      "actorId": "officer",
+      "actorRole": "OFFICER",
+      "entityType": "alert",
+      "entityId": "id_mu8ogb2b_wifojfl",
+      "action": "PUBLISH",
+      "metadata": {
+        "severity": 4
+      },
+      "createdAt": "2026-09-19T17:44:41.281Z"
+    },
+    {
+      "id": "id_mu8oir8m_iylgijw",
+      "actorId": "system",
+      "actorRole": "OFFICER",
+      "entityType": "alert",
+      "entityId": "id_mu8oir8h_q8pi2kk",
+      "action": "CREATE_DRAFT",
+      "metadata": {
+        "headline": "NATIONAL EMERGENCY ALERT: Severe Cloudburst Warning across Central & Northern Sectors",
+        "severity": 4
+      },
+      "createdAt": "2026-09-19T17:46:35.494Z"
+    },
+    {
+      "id": "id_mu8oirfp_kr3adr3",
+      "actorId": "officer",
+      "actorRole": "OFFICER",
+      "entityType": "alert",
+      "entityId": "id_mu8oir8h_q8pi2kk",
+      "action": "PUBLISH",
+      "metadata": {
+        "severity": 4
+      },
+      "createdAt": "2026-09-19T17:46:35.749Z"
+    }
+  ],
+  "savedAt": "2026-09-19T17:46:35.751Z"
 }
