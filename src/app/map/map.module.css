@@ -73,12 +73,17 @@
    ============================================================ */
 .mainDashboardGrid {
   display: grid;
-  grid-template-columns: 410px 1fr;
-  gap: 1.5rem;
-  height: calc(100vh - 235px);
-  min-height: 640px;
+  grid-template-columns: 480px 1fr;
+  gap: 1.25rem;
+  height: calc(100vh - 165px);
+  min-height: 780px;
   margin-bottom: 1.5rem;
   transition: grid-template-columns 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mainDashboardGridExpanded {
+  grid-template-columns: 640px 1fr;
+  gap: 1.25rem;
 }
 
 .mainDashboardGridCollapsed {
@@ -102,14 +107,15 @@
 }
 
 .leftCardHeader {
-  padding: 1.25rem 1.4rem 0.75rem;
+  padding: 0.9rem 1.25rem 0.45rem;
+  flex-shrink: 0;
 }
 
 .headerTopRow {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2px;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .titleWithDot {
@@ -142,16 +148,42 @@
   margin: 0;
 }
 
+.headerActionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expandDeckBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: #F0F6F8;
+  border: 1.5px solid #C8E3EA;
+  color: #1F3440;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.expandDeckBtn:hover {
+  background: #E1EFF4;
+  border-color: #4C8DA2;
+}
+
 .syncBtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
+  gap: 5px;
+  padding: 4px 10px;
   border-radius: 9999px;
   background: #F8FBFC;
   border: 1.5px solid #C8E3EA;
   color: #1F3440;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -167,113 +199,79 @@
   cursor: wait;
 }
 
-.headerSubtext {
-  font-size: 12px;
-  color: #60717B;
-  margin: 0 0 4px 0;
-}
-
-.headerTimeUpdated {
-  font-size: 11px;
-  color: #8FA2AD;
-  margin: 0;
-}
-
-/* Active Data Source Box */
-.activeDataSourceBox {
-  margin: 0 1.25rem 0.85rem;
-  background: #F8FBFC;
-  border: 1px solid #DCEEF2;
-  border-radius: 14px;
-  padding: 9px 14px;
+/* Compact Integrated Status Ribbon */
+.deckStatusRibbon {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 10px;
+  padding: 5px 10px;
+  margin: 4px 0 2px;
+  font-size: 11px;
+  color: #60717B;
 }
 
-.dataSourceLeft {
+.deckStatusLeft {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.dataSourceEmblem {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #EBF4F7;
-  border: 1px solid #C8E3EA;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  color: #4C8DA2;
-}
-
-.dataSourceMeta {
-  display: flex;
-  flex-direction: column;
-}
-
-.dataSourceLabel {
-  font-size: 10.5px;
-  color: #8FA2AD;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.dataSourceValue {
-  font-size: 13px;
-  font-weight: 700;
-  color: #1F3440;
+  gap: 6px;
 }
 
 .onlineBadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
+  gap: 4px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #4C8B71;
   background: #E8F4EC;
   border: 1px solid #C7E6D0;
-  padding: 3px 9px;
+  padding: 2px 7px;
   border-radius: 9999px;
 }
 
-/* SOS Beacon Button Card */
+/* Compact SOS Beacon Emergency Bar */
 .sosBeaconCardBtn {
-  margin: 0 1.25rem 0.85rem;
+  margin: 0 1.25rem 0.5rem;
   background: #D76D63;
-  border-radius: 16px;
-  padding: 12px 16px;
+  border-radius: 12px;
+  padding: 8px 12px;
   color: #FFFFFF;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 10px;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(215, 109, 99, 0.28);
+  box-shadow: 0 3px 12px rgba(215, 109, 99, 0.22);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
+  flex-shrink: 0;
 }
 
 .sosBeaconCardBtn:hover {
   background: #C4574D;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(215, 109, 99, 0.36);
+  box-shadow: 0 5px 16px rgba(215, 109, 99, 0.32);
+}
+
+.sosBeaconLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sosIconWrapper {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.20);
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
@@ -284,27 +282,37 @@
 
 .sosTitle {
   font-family: var(--font-family-heading, 'Manrope', sans-serif);
-  font-size: 14.5px;
+  font-size: 12.5px;
   font-weight: 800;
   line-height: 1.2;
 }
 
 .sosSubtitle {
-  font-size: 11px;
-  opacity: 0.9;
+  font-size: 10px;
+  opacity: 0.92;
   font-weight: 500;
 }
 
-/* 4 Tabs 2x2 Grid */
+.sosArrowBadge {
+  font-size: 10.5px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 3px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* 4 Tabs Segmented Row */
 .fourTabsRow {
-  margin: 0 1.25rem 0.75rem;
+  margin: 0 1.25rem 0.5rem;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .threeTabsRow {
-  margin: 0 1.25rem 0.75rem;
+  margin: 0 1.25rem 0.5rem;
   display: flex;
   gap: 5px;
 }
@@ -314,16 +322,16 @@
   box-sizing: border-box;
   background: #FFFFFF;
   border: 1.5px solid #C8E3EA;
-  border-radius: 12px;
-  padding: 6px 10px;
+  border-radius: 10px;
+  padding: 5px 4px;
   font-size: 11px;
   font-weight: 700;
   color: #60717B;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 5px;
+  justify-content: center;
+  gap: 4px;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
@@ -340,7 +348,7 @@
 }
 
 .tabBadgeNumber {
-  font-size: 10px;
+  font-size: 9.5px;
   background: rgba(0, 0, 0, 0.08);
   padding: 1px 5px;
   border-radius: 9999px;
@@ -353,30 +361,33 @@
 
 /* Filter Controls Section */
 .filterControlsSection {
-  margin: 0 1.25rem 0.75rem;
+  margin: 0 1.25rem 0.55rem;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-.selectsRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.filterControlsRow1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .filterSelect {
+  flex: 1;
   background: #FFFFFF;
   border: 1.5px solid #C8E3EA;
-  border-radius: 12px;
-  padding: 7px 10px;
-  font-size: 12px;
+  border-radius: 10px;
+  padding: 5px 8px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #1F3440;
   outline: none;
   cursor: pointer;
   font-family: inherit;
   transition: border-color 0.15s ease;
+  min-width: 0;
 }
 
 .filterSelect:focus {
@@ -385,20 +396,20 @@
 
 .timePillsRow {
   display: flex;
-  gap: 6px;
+  gap: 3px;
   background: #F8FBFC;
   border: 1px solid #DCEEF2;
   border-radius: 9999px;
-  padding: 3px;
-  width: fit-content;
+  padding: 2px;
+  flex-shrink: 0;
 }
 
 .timePill {
   background: transparent;
   border: none;
   border-radius: 9999px;
-  padding: 4px 12px;
-  font-size: 11px;
+  padding: 3px 8px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #60717B;
   cursor: pointer;
@@ -429,9 +440,9 @@
 .catChip {
   background: #FFFFFF;
   border: 1.5px solid #C8E3EA;
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 11px;
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #60717B;
   cursor: pointer;
@@ -453,11 +464,12 @@
 
 /* Latest Official Alerts Header */
 .alertsListHeader {
-  padding: 0.6rem 1.25rem 0.5rem;
+  padding: 0.65rem 1.25rem 0.45rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #EDF5F8;
+  border-top: 1.5px solid #EDF5F8;
+  flex-shrink: 0;
 }
 
 .alertsHeaderTitleWrap {
@@ -467,7 +479,7 @@
 }
 
 .alertsHeaderTitle {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 800;
   color: #1F3440;
   text-transform: uppercase;
@@ -484,61 +496,86 @@
 }
 
 .viewAllLink {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #4C8DA2;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
 }
 
 .viewAllLink:hover {
   text-decoration: underline;
 }
 
-/* Scrollable Alerts List */
+/* Scrollable Alerts List — Generous Spacious Height */
 .alertsScrollList {
   flex: 1;
+  min-height: 440px;
   overflow-y: auto;
   padding: 0.4rem 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #C8E3EA transparent;
+}
+
+.alertsScrollList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.alertsScrollList::-webkit-scrollbar-thumb {
+  background: #C8E3EA;
+  border-radius: 9999px;
 }
 
 .alertCard {
   background: #FFFFFF;
-  border: 1px solid #DCEEF2;
+  border: 1.5px solid #DCEEF2;
   border-radius: 14px;
   padding: 12px 14px;
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.03);
 }
 
 .alertCard:hover {
   border-color: #4C8DA2;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(31, 52, 64, 0.06);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 18px rgba(31, 52, 64, 0.08);
 }
 
 .alertCardSelected {
   border-color: #1F3440 !important;
-  box-shadow: 0 0 0 2px #1F3440 !important;
+  box-shadow: 0 0 0 2px #1F3440, 0 6px 20px rgba(31, 52, 64, 0.12) !important;
+  background: #FBFDFE;
+}
+
+.cardHeaderRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 /* Square Acronym Badges */
 .cardAcronymSquare {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
   color: #FFFFFF;
   font-family: var(--font-family-mono, monospace);
@@ -555,37 +592,31 @@
 .badgeRf { background: #2563EB; }
 .badgeNorm { background: #16A34A; }
 
-.cardDetailsCol {
+.cardHeaderMeta {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-}
-
-.cardRow1 {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 6px;
+  gap: 2px;
 }
 
 .cardHeadline {
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 750;
   color: #1F3440;
-  line-height: 1.35;
+  line-height: 1.3;
   margin: 0;
 }
 
 .severityChip {
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
+  align-self: flex-start;
 }
 
 .sevWatch { background: #FFF7ED; border: 1px solid #FFEDD5; color: #EA580C; }
@@ -602,28 +633,85 @@
   gap: 4px;
 }
 
-.cardMetricsRow {
-  font-size: 11px;
-  color: #1F3440;
-  font-weight: 600;
+/* Dedicated Problem Details Box */
+.cardProblemBox {
+  background: #F8FBFC;
+  border: 1px solid #E2EEF2;
+  border-radius: 9px;
+  padding: 7px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.cardFooterVerified {
+.problemMetricRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.problemLabel {
+  font-weight: 750;
+  color: #1F3440;
+  flex-shrink: 0;
+}
+
+.problemValue {
+  color: #384A54;
+}
+
+.cardFooterRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 10.5px;
   color: #8FA2AD;
-  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px solid #F1F7F9;
 }
 
-.verifiedSourceLink {
+.cardFreshness {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #72848F;
+  font-weight: 500;
+}
+
+.cardActionBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardLocateBtn {
+  background: #EBF4F7;
+  border: 1px solid #C8E3EA;
+  color: #1F3440;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cardLocateBtn:hover {
+  background: #1F3440;
+  color: #FFFFFF;
+  border-color: #1F3440;
+}
+
+.cardSourceLink {
   color: #4C8DA2;
   text-decoration: none;
   font-weight: 700;
+  font-size: 10.5px;
 }
 
-.verifiedSourceLink:hover {
+.cardSourceLink:hover {
   text-decoration: underline;
 }
 

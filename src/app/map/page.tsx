@@ -491,6 +491,7 @@ function MapContent() {
 
   // Layout & Navigation State
   const [isRailOpen, setIsRailOpen] = useState(true);
+  const [isDeckExpanded, setIsDeckExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<RailTab>('official');
 
   // All Calamities Directory Modal State
@@ -1153,57 +1154,66 @@ function MapContent() {
 
         {/* Main Dashboard Grid */}
         <section
-          className={`${styles.mainDashboardGrid} ${!isRailOpen ? styles.mainDashboardGridCollapsed : ''}`}
+          className={`${styles.mainDashboardGrid} ${isDeckExpanded ? styles.mainDashboardGridExpanded : ''} ${!isRailOpen ? styles.mainDashboardGridCollapsed : ''}`}
           aria-label="Hazard Intelligence and Operations Map"
         >
           {/* ============================================================
-              1. LEFT HAZARD INTELLIGENCE CARD
+              1. LEFT HAZARD INTELLIGENCE CARD (EXPANDABLE & SPACIOUS)
               ============================================================ */}
           {isRailOpen && (
             <aside className={styles.leftIntelligenceCard}>
-              {/* Header */}
+              {/* Header with Title, Expand Width Toggle & Live Sync */}
               <div className={styles.leftCardHeader}>
                 <div className={styles.headerTopRow}>
                   <div className={styles.titleWithDot}>
                     <span className={styles.livePulseDot}></span>
                     <h2 className={styles.leftCardTitle}>Live Hazard Intelligence</h2>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => fetchHazardData()}
-                    className={styles.syncBtn}
-                    disabled={loading}
-                    title="Synchronize live multi-agency feeds"
-                  >
-                    <span>↻</span>
-                    <span>{loading ? 'Syncing...' : 'Sync'}</span>
-                  </button>
-                </div>
-                <p className={styles.headerSubtext}>Real-time alerts from official sources</p>
-                <p className={styles.headerTimeUpdated}>Last updated: {lastRefreshedAt || 'Connecting feeds...'}</p>
-              </div>
-
-              {/* Active Data Source Box */}
-              <div className={styles.activeDataSourceBox}>
-                <div className={styles.dataSourceLeft}>
-                  <div className={styles.dataSourceEmblem}>🌐</div>
-                  <div className={styles.dataSourceMeta}>
-                    <span className={styles.dataSourceLabel}>Active Data Source</span>
-                    <span className={styles.dataSourceValue}>
-                      {selectedCountry === 'ALL' ? 'South Asia Grid' : `${selectedCountry} Sector`}
-                    </span>
+                  <div className={styles.headerActionsGroup}>
+                    <button
+                      type="button"
+                      className={styles.expandDeckBtn}
+                      onClick={() => {
+                        setIsDeckExpanded(!isDeckExpanded);
+                        setTimeout(() => { if (mapRef.current) mapRef.current.resize(); }, 320);
+                      }}
+                      title={isDeckExpanded ? "Switch to standard panel width (480px)" : "Expand panel width (640px) to see more details"}
+                    >
+                      {isDeckExpanded ? '⇲ Standard' : '⇱ Expand'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fetchHazardData()}
+                      className={styles.syncBtn}
+                      disabled={loading}
+                      title="Synchronize live multi-agency feeds"
+                    >
+                      <span>↻</span>
+                      <span>{loading ? 'Syncing...' : 'Sync'}</span>
+                    </button>
                   </div>
                 </div>
-                <span className={styles.onlineBadge}>● Online</span>
+
+                {/* Compact Integrated Status Ribbon */}
+                <div className={styles.deckStatusRibbon}>
+                  <div className={styles.deckStatusLeft}>
+                    <span>🌐 <strong>{selectedCountry === 'ALL' ? 'South Asia Grid' : `${selectedCountry} Sector`}</strong></span>
+                    <span className={styles.onlineBadge}>● Online</span>
+                  </div>
+                  <span>⏱️ {lastRefreshedAt ? `Updated ${lastRefreshedAt}` : 'Connecting feeds...'}</span>
+                </div>
               </div>
 
-              {/* SOS Beacon Emergency Button -> Directs to /sos */}
+              {/* Sleek Compact SOS Beacon -> Directs to /sos */}
               <Link href="/sos" className={styles.sosBeaconCardBtn} title="Open Suraksha Emergency SOS Command Hub">
-                <div className={styles.sosIconWrapper}>🚨</div>
-                <div className={styles.sosTextWrap}>
-                  <span className={styles.sosTitle}>SOS Beacon</span>
-                  <span className={styles.sosSubtitle}>Broadcast emergency location</span>
+                <div className={styles.sosBeaconLeft}>
+                  <div className={styles.sosIconWrapper}>🚨</div>
+                  <div className={styles.sosTextWrap}>
+                    <span className={styles.sosTitle}>SOS Emergency Beacon</span>
+                    <span className={styles.sosSubtitle}>Broadcast GPS &amp; request emergency assistance</span>
+                  </div>
                 </div>
+                <span className={styles.sosArrowBadge}>Launch Hub →</span>
               </Link>
 
               {/* Four Tabs: Official Alerts | Earth Events | Weather & Flood | Ground Reports */}
@@ -1218,7 +1228,7 @@ function MapContent() {
                     setSelectedAcronym('ALL');
                   }}
                 >
-                  <span>Official Alerts</span>
+                  <span>Official</span>
                   <span className={styles.tabBadgeNumber}>{officialAlertsCount}</span>
                 </button>
                 <button
@@ -1231,7 +1241,7 @@ function MapContent() {
                     setSelectedAcronym('ALL');
                   }}
                 >
-                  <span>Earth Events</span>
+                  <span>Earth</span>
                   <span className={styles.tabBadgeNumber}>{earthEventsCount}</span>
                 </button>
                 <button
@@ -1244,7 +1254,7 @@ function MapContent() {
                     setSelectedAcronym('ALL');
                   }}
                 >
-                  <span>Weather &amp; Flood</span>
+                  <span>Weather</span>
                   <span className={styles.tabBadgeNumber}>{weatherEventsCount}</span>
                 </button>
                 <button
@@ -1257,14 +1267,14 @@ function MapContent() {
                     setSelectedAcronym('ALL');
                   }}
                 >
-                  <span>Ground Reports</span>
+                  <span>Ground</span>
                   <span className={styles.tabBadgeNumber}>{communityReportsCount}</span>
                 </button>
               </div>
 
               {/* Filter Controls Section */}
               <div className={styles.filterControlsSection}>
-                <div className={styles.selectsRow}>
+                <div className={styles.filterControlsRow1}>
                   <select
                     className={styles.filterSelect}
                     value={selectedCountry}
@@ -1291,19 +1301,19 @@ function MapContent() {
                     <option value="WATCH">Watch</option>
                     <option value="ADVISORY">Advisory</option>
                   </select>
-                </div>
 
-                <div className={styles.timePillsRow}>
-                  {(['24h', '7d', '30d'] as const).map((range) => (
-                    <button
-                      key={range}
-                      type="button"
-                      className={`${styles.timePill} ${timeRange === range ? styles.timePillActive : ''}`}
-                      onClick={() => setTimeRange(range)}
-                    >
-                      {range}
-                    </button>
-                  ))}
+                  <div className={styles.timePillsRow}>
+                    {(['24h', '7d', '30d'] as const).map((range) => (
+                      <button
+                        key={range}
+                        type="button"
+                        className={`${styles.timePill} ${timeRange === range ? styles.timePillActive : ''}`}
+                        onClick={() => setTimeRange(range)}
+                      >
+                        {range}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className={styles.categoryChipsRow}>
@@ -1332,16 +1342,15 @@ function MapContent() {
                       ? 'Weather & Flood Alerts'
                       : 'Latest Official Alerts'}
                   </span>
-                  <span className={styles.alertsCountBadge}>{sidebarEvents.length}</span>
+                  <span className={styles.alertsCountBadge}>{sidebarEvents.length} Active</span>
                 </div>
                 <button
                   type="button"
                   className={styles.viewAllLink}
                   onClick={() => setIsAllCalamitiesModalOpen(true)}
                   title="Open National Calamities & Disasters Directory"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
-                  View All →
+                  View All Calamities →
                 </button>
               </div>
 
@@ -1389,59 +1398,108 @@ function MapContent() {
                           }
                         }}
                       >
-                        <div
-                          className={`${styles.cardAcronymSquare} ${badgeClass}`}
-                          style={ev.is_community_report ? { background: '#D97706' } : undefined}
-                        >
-                          {ev.is_community_report ? 'CR' : ev.acronym}
+                        <div className={styles.cardHeaderRow}>
+                          <div
+                            className={`${styles.cardAcronymSquare} ${badgeClass}`}
+                            style={ev.is_community_report ? { background: '#D97706' } : undefined}
+                          >
+                            {ev.is_community_report ? 'CR' : ev.acronym}
+                          </div>
+
+                          <div className={styles.cardHeaderMeta}>
+                            <h3 className={styles.cardHeadline}>{ev.title}</h3>
+                            <div className={styles.cardLocationRow}>
+                              <span>📍</span>
+                              <span>{ev.district ? `${ev.district}, ` : ''}{ev.state ? `${ev.state}, ` : ''}{ev.country}</span>
+                            </div>
+                          </div>
+
+                          <span className={`${styles.severityChip} ${sevClass}`}>
+                            {ev.severity}
+                          </span>
                         </div>
 
-                        <div className={styles.cardDetailsCol}>
-                          <div className={styles.cardRow1}>
-                            <h3 className={styles.cardHeadline}>{ev.title}</h3>
-                            <span className={`${styles.severityChip} ${sevClass}`}>
-                              {ev.severity}
-                            </span>
-                          </div>
-
-                          <div className={styles.cardLocationRow}>
-                            <span>📍</span>
-                            <span>{ev.district ? `${ev.district}, ` : ''}{ev.state ? `${ev.state}, ` : ''}{ev.country}</span>
-                          </div>
-
-                          <div className={styles.cardMetricsRow}>
-                            {ev.details?.magnitude !== undefined && (
-                              <span>Magnitude: M {ev.details.magnitude.toFixed(1)} · Depth: {ev.details.depthKm || 10} km</span>
-                            )}
-                            {ev.details?.waterDepthFeet !== undefined && (
-                              <span>Water Inundation: {ev.details.waterDepthFeet} ft · Observed depth</span>
-                            )}
-                            {ev.details?.rainfallRateMmH !== undefined && (
-                              <span>Rain Rate: {ev.details.rainfallRateMmH} mm/h · Monsoon Surge</span>
-                            )}
-                            {ev.details?.moderationStatus && (
-                              <span style={{ color: ev.confidence === 'VERIFIED' ? '#16A34A' : '#D97706', fontWeight: 700 }}>
-                                ● Status: {ev.details.moderationStatus}
+                        {/* Dedicated Problem & Telemetry Highlight Box */}
+                        <div className={styles.cardProblemBox}>
+                          {ev.details?.magnitude !== undefined && (
+                            <div className={styles.problemMetricRow}>
+                              <span className={styles.problemLabel}>⚡ Seismic Event:</span>
+                              <span className={styles.problemValue}>Magnitude <strong>M {ev.details.magnitude.toFixed(1)}</strong> · Depth: <strong>{ev.details.depthKm || 10} km</strong></span>
+                            </div>
+                          )}
+                          {ev.details?.waterDepthFeet !== undefined && (
+                            <div className={styles.problemMetricRow}>
+                              <span className={styles.problemLabel}>🌊 Inundation:</span>
+                              <span className={styles.problemValue}>Observed <strong>{ev.details.waterDepthFeet} ft</strong> ({Math.round(ev.details.waterDepthFeet * 30.48)} cm) water depth</span>
+                            </div>
+                          )}
+                          {ev.details?.rainfallRateMmH !== undefined && (
+                            <div className={styles.problemMetricRow}>
+                              <span className={styles.problemLabel}>🌧️ Precipitation:</span>
+                              <span className={styles.problemValue}><strong>{ev.details.rainfallRateMmH} mm/h</strong> monsoon cloudburst surge</span>
+                            </div>
+                          )}
+                          {ev.details?.riverBasin && (
+                            <div className={styles.problemMetricRow}>
+                              <span className={styles.problemLabel}>🏞️ River Basin:</span>
+                              <span className={styles.problemValue}>{ev.details.riverBasin}</span>
+                            </div>
+                          )}
+                          {ev.details?.moderationStatus && (
+                            <div className={styles.problemMetricRow}>
+                              <span className={styles.problemLabel}>🛡️ Verification:</span>
+                              <span className={styles.problemValue} style={{ color: ev.confidence === 'VERIFIED' ? '#16A34A' : '#D97706', fontWeight: 700 }}>
+                                ● {ev.details.moderationStatus}
                               </span>
-                            )}
-                            {ev.details?.riverBasin && (
-                              <span>Basin: {ev.details.riverBasin}</span>
-                            )}
-                            {ev.details?.magnitude === undefined && !ev.details?.waterDepthFeet && !ev.details?.rainfallRateMmH && !ev.details?.riverBasin && !ev.details?.moderationStatus && (
-                              <span>{ev.details?.safetyGuidance?.slice(0, 65) || 'Telemetry recorded by official monitoring network.'}</span>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                          {ev.is_community_report && ev.details?.safetyGuidance && (
+                            <div className={styles.problemMetricRow}>
+                              <span className={styles.problemLabel}>⚠️ Observation:</span>
+                              <span className={styles.problemValue}>{ev.details.safetyGuidance}</span>
+                            </div>
+                          )}
+                          {!ev.is_community_report && ev.details?.magnitude === undefined && !ev.details?.waterDepthFeet && !ev.details?.rainfallRateMmH && !ev.details?.riverBasin && (
+                            <div className={styles.problemMetricRow}>
+                              <span className={styles.problemLabel}>⚠️ Hazard Alert:</span>
+                              <span className={styles.problemValue}>{ev.details?.safetyGuidance?.slice(0, 95) || 'Telemetry recorded by official disaster monitoring network.'}</span>
+                            </div>
+                          )}
+                        </div>
 
-                          <div className={styles.cardFooterVerified}>
-                            <span>{ev.freshness || (ev.is_community_report ? 'Citizen Ground Submission' : `${ev.source} Verified`)}</span>
+                        {/* Card Actions & Source Footer */}
+                        <div className={styles.cardFooterRow}>
+                          <span className={styles.cardFreshness}>
+                            ⏱️ {ev.freshness || (ev.is_community_report ? 'Citizen Ground Submission' : `${ev.source} Telemetry`)}
+                          </span>
+                          <div className={styles.cardActionBtns}>
+                            <button
+                              type="button"
+                              className={styles.cardLocateBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedEvent(ev);
+                                const center = getEventCenter(ev);
+                                if (center) {
+                                  flyToCoords(center[0], center[1], 10);
+                                  const targetMarker = markersMapRef.current.get(ev.id);
+                                  if (targetMarker) {
+                                    const p = targetMarker.getPopup();
+                                    if (p && !p.isOpen()) targetMarker.togglePopup();
+                                  }
+                                }
+                              }}
+                            >
+                              Locate 🎯
+                            </button>
                             <a
                               href={ev.source_url}
                               target={ev.source_url.startsWith('http') ? '_blank' : undefined}
                               rel={ev.source_url.startsWith('http') ? 'noopener noreferrer' : undefined}
-                              className={styles.verifiedSourceLink}
+                              className={styles.cardSourceLink}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {ev.is_community_report ? 'Track Ground Report' : ev.source} ↗
+                              {ev.is_community_report ? 'Track Report ↗' : `${ev.source} ↗`}
                             </a>
                           </div>
                         </div>
