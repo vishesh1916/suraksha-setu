@@ -5,20 +5,42 @@
    ============================================================ */
 
 :root {
-  /* —— Editorial Brand Palette —— */
-  --color-canvas-base: #F7F5F0;
+  /* —— Reference Editorial Brand Palette —— */
+  --color-editorial-bg: #F8FBFC;
+  --color-editorial-surface: #FFFFFF;
+  --color-editorial-accent-bg: #DCEEF2;
+  --color-editorial-secondary-accent: #C8E3EA;
+  --color-editorial-text-primary: #1F3440;
+  --color-editorial-text-secondary: #60717B;
+  --color-editorial-accent: #4C8DA2;
+  --color-editorial-success: #4C8B71;
+  --color-editorial-warning: #D7AA63;
+  --color-editorial-danger: #D76D63;
+
+  --font-family-heading: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --radius-editorial: 28px;
+  --radius-pill: 9999px;
+  --shadow-editorial-card: 0 12px 32px -8px rgba(31, 52, 64, 0.05), 0 2px 6px -1px rgba(31, 52, 64, 0.02);
+  --shadow-editorial-hover: 0 20px 40px -12px rgba(31, 52, 64, 0.09), 0 4px 10px -2px rgba(31, 52, 64, 0.03);
+  --border-editorial: 1px solid rgba(76, 141, 162, 0.14);
+  --border-editorial-subtle: 1px solid rgba(200, 227, 234, 0.6);
+
+  /* —— Legacy / Core Fallbacks —— */
+  --color-canvas-base: #F8FBFC;
   --color-canvas-card: #FFFFFF;
-  --color-canvas-subtle: #EFECE6;
-  --color-canvas-muted: #E8E5DD;
+  --color-canvas-subtle: #DCEEF2;
+  --color-canvas-muted: #C8E3EA;
   
-  --color-charcoal-primary: #161816;
-  --color-charcoal-secondary: #333835;
-  --color-warm-gray: #737571;
-  --color-warm-gray-light: #9B9D98;
+  --color-charcoal-primary: #1F3440;
+  --color-charcoal-secondary: #334652;
+  --color-warm-gray: #60717B;
+  --color-warm-gray-light: #8FA2AD;
   
-  --color-border-hairline: #E5E2D9;
-  --color-border-subtle: #DDD8CD;
-  --color-border-strong: #C4BFB2;
+  --color-border-hairline: rgba(76, 141, 162, 0.14);
+  --color-border-subtle: #C8E3EA;
+  --color-border-strong: #4C8DA2;
 
   /* Muted Eucalyptus Green — Verified / Normal / Trust */
   --color-eucalyptus: #2E5A44;

@@ -7,7 +7,6 @@ import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { TechnicalWeatherVisual } from '@/components/TechnicalWeatherVisual';
-import { AlertWorkflowSequence } from '@/components/AlertWorkflowSequence';
 import { translations, getSavedLanguage, type Language } from '@/lib/i18n';
 import { getClientReports, subscribeToSync, isDemoReport } from '@/lib/clientSync';
 import styles from './page.module.css';
@@ -32,13 +31,10 @@ function formatRelativeTime(dateStr?: string): string {
 
 export default function LandingPage() {
   const [lang, setLang] = useState<Language>('en');
-  const [tickerIndex, setTickerIndex] = useState(0);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
-  const [scrollY, setScrollY] = useState(0);
-  const [selectedHazardIndex, setSelectedHazardIndex] = useState(0);
 
   // Multilingual reactive listener (6 Indian languages)
   useEffect(() => {
@@ -74,19 +70,6 @@ export default function LandingPage() {
     (r) => r.status !== 'DISMISSED' && r.status !== 'RESOLVED' && r.verificationStatus !== 'FLAGGED_FALSE_REPORT'
   );
 
-  const currentHazard = activeHazards.length > 0
-    ? activeHazards[selectedHazardIndex % activeHazards.length]
-    : null;
-
-  // Auto-cycle through multiple hazards if present
-  useEffect(() => {
-    if (activeHazards.length <= 1) return;
-    const interval = setInterval(() => {
-      setSelectedHazardIndex((prev) => (prev + 1) % activeHazards.length);
-    }, 7000);
-    return () => clearInterval(interval);
-  }, [activeHazards.length]);
-
   // Fetch real-time Lucknow weather conditions on mount
   useEffect(() => {
     async function fetchLucknowWeather() {
@@ -107,43 +90,6 @@ export default function LandingPage() {
     const interval = setInterval(fetchLucknowWeather, 120000); // 2-minute refresh
     return () => clearInterval(interval);
   }, []);
-
-  // Real-time live status strip derived dynamically from live website ground data
-  const liveTickerItems = activeHazards.length > 0
-    ? activeHazards.map((h) => {
-        const cat = HAZARD_CATEGORIES[h.category]?.label || h.category;
-        const directive = h.currentActionCategory
-          ? `${h.currentActionCategory}`
-          : h.verificationStatus === 'VERIFIED_GENUINE'
-          ? 'Verified Genuine — Response Active'
-          : 'Citizen Report — Triage in Progress';
-        return `⚠️ ACTIVE GROUND HAZARD: ${h.landmark || 'Designated Zone'} · ${cat} (Level ${h.severity}) · Directive: ${directive}`;
-      })
-    : [
-        '🟢 National Doppler Network · 45 Radar Stations Operational · Baseline Nominal',
-        '🛡️ Suraksha Setu Ground Truth System · Pan-India Telemetry Active Across 28 States & 8 UTs',
-        '📍 Public Citizen Reporting Gateway Open · Multi-Station Doppler Cross-Verification Active',
-        '🌧️ Automatic Weather Station Grid · Continuous Precipitation & Drainage Inundation Monitoring',
-      ];
-
-  // Rotate live status ticker
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTickerIndex((prev) => (prev + 1) % liveTickerItems.length);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [liveTickerItems.length]);
-
-  // Scroll listener for weather transition
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollProgress = Math.min(1, Math.max(0, scrollY / 750));
 
   // Fetch live alerts & stats from store with fast 3-second polling
   const fetchData = useCallback(async () => {
@@ -322,620 +268,582 @@ export default function LandingPage() {
       {/* 1. Universal Production Header */}
       <Navbar />
 
-      {/* 2. Asymmetric Editorial Hero */}
+      {/* ============================================================
+          SECTION 1: Asymmetrical Editorial Hero (Split Layout)
+          ============================================================ */}
       <section className={styles.hero}>
-        {/* Asymmetric Hero Grid Container */}
-        <div className={styles.heroGrid}>
-          {/* Left Column: Crisp Editorial Typography & Directives */}
-          <div className={styles.heroContent}>
-            {/* Small Live Status Label */}
-            <div className={styles.weatherConditionPill}>
-              <span className={styles.weatherPillDot} />
-              <span className={styles.weatherPillText}>
-                {liveLucknowData ? `Lucknow Doppler Radar · ${liveLucknowData.weatherCondition || 'Operational'} · ${liveLucknowData.temperature ?? 28}°C` : 'National Doppler Network · Real-Time Telemetry'}
-              </span>
+        <div className={styles.container}>
+          <div className={styles.heroGrid}>
+            {/* Left Column: Editorial Typography & Directives */}
+            <div className={styles.heroContent}>
+              <div className={styles.liveTelemetryPill}>
+                <span className={styles.liveTelemetryDot} />
+                <span className={styles.liveTelemetryText}>
+                  {liveLucknowData
+                    ? `National Doppler Network · ${liveLucknowData.weatherCondition || 'Operational'} · ${liveLucknowData.temperature ?? 28}°C`
+                    : 'National Doppler Network · 45 Radar Stations Operational'}
+                </span>
+              </div>
+
+              <h1 className={styles.headline}>
+                {t.hero.headlineLine1}<br />
+                <span className={styles.headlineAccent}>{t.hero.headlineLine2}</span>
+              </h1>
+
+              <p className={styles.supportingText}>
+                {t.hero.supportingText}
+              </p>
+
+              <div className={styles.ctaGroup}>
+                <Link href="/map" className={styles.primaryPillCta} id="hero-primary-cta">
+                  <span>{t.hero.viewRisk}</span>
+                  <span className={styles.ctaArrow}>→</span>
+                </Link>
+                <Link href="/report" className={styles.secondaryPillCta} id="hero-report-cta">
+                  <span>{t.hero.reportHazard}</span>
+                  <span className={styles.ctaArrow}>+</span>
+                </Link>
+              </div>
+
+              <div className={styles.heroTrustLine}>
+                <span>🏛️ Official Integration: IMD · NDMA · CWC · INCOIS</span>
+              </div>
             </div>
 
-            {/* Authoritative, Crisp Editorial Headline */}
-            <h1 className={styles.headline}>
-              {t.hero.headlineLine1}<br />
-              <span className={styles.headlineAccent}>{t.hero.headlineLine2}</span>
-            </h1>
+            {/* Right Column: Framed Platform Visual with Floating Elements */}
+            <div className={styles.heroVisualWrapper}>
+              <div className={styles.framedPlatformCard}>
+                <div className={styles.framedWindowBar}>
+                  <div className={styles.framedWindowDots}>
+                    <span className={styles.windowDot} />
+                    <span className={styles.windowDot} />
+                    <span className={styles.windowDot} />
+                  </div>
+                  <span className={styles.framedWindowLabel}>
+                    {liveLucknowData ? `LUCKNOW RADAR // AWADH BASIN · ${liveLucknowData.temperature ?? 28}°C` : 'LUCKNOW RADAR // AWADH BASIN · 26.85°N 80.95°E'}
+                  </span>
+                </div>
 
-            {/* Restrained Supporting Text */}
-            <p className={styles.supportingText}>
-              {t.hero.supportingText}
-            </p>
+                <TechnicalWeatherVisual
+                  activeHazardsCount={activeHazards.length}
+                  locationLabel={liveLucknowData ? `LUCKNOW RADAR // AWADH BASIN · ${liveLucknowData.temperature ?? 28}°C` : 'LUCKNOW RADAR // AWADH BASIN · 26.85°N 80.95°E'}
+                />
 
-            {/* Dual Primary / Secondary Action Directives */}
-            <div className={styles.ctaGroup}>
-              <Link href="/map" className={styles.primaryCta} id="hero-primary-cta">
-                <span>{t.hero.viewRisk}</span>
-                <span className={styles.ctaArrow}>→</span>
-              </Link>
-              <Link href="/report" className={styles.secondaryCta} id="hero-report-cta">
-                <span>{t.hero.reportHazard}</span>
-                <span className={styles.ctaArrow}>+</span>
-              </Link>
+                <div className={styles.floatingChipLeft}>
+                  <span>📍 45 Doppler Nodes Active</span>
+                </div>
+
+                <div className={styles.floatingChipRight}>
+                  <span>🛡️ 100% Verified Directives</span>
+                </div>
+              </div>
             </div>
           </div>
-
-          {/* Right Column: Original Technical Weather Visual */}
-          <div className={styles.heroVisualWrapper}>
-            <TechnicalWeatherVisual
-              activeHazardsCount={activeHazards.length}
-              locationLabel={liveLucknowData ? `LUCKNOW RADAR // AWADH BASIN · ${liveLucknowData.temperature ?? 28}°C` : 'LUCKNOW RADAR // AWADH BASIN · 26.85°N 80.95°E'}
-            />
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className={styles.scrollWeatherIndicator} style={{ opacity: scrollY > 160 ? 0 : 1 }}>
-          <div className={styles.scrollPulseIcon}>
-            <div className={styles.scrollPulseDot} />
-          </div>
-          <span>{t.hero.scrollHint}</span>
         </div>
       </section>
 
       {/* ============================================================
-          4. Live National Metrics Bar (Ground Truth Only)
+          SECTION 2: Real-time Safety Intelligence (Alternating Block A: Text Left, Visual Right)
           ============================================================ */}
-      {(() => {
-        const liveActiveAlerts = typeof stats.activeAlerts === 'number' && stats.activeAlerts > 0
-          ? stats.activeAlerts
-          : alerts.length;
-
-        const liveVerifiedReports = typeof stats.verifiedReportsToday === 'number'
-          ? stats.verifiedReportsToday
-          : reports.filter(r => r.verificationStatus === 'VERIFIED_GENUINE' && r.status !== 'DISMISSED').length;
-
-        const livePendingReview = typeof stats.pendingReview === 'number'
-          ? stats.pendingReview
-          : reports.filter(
-              r => (!r.verificationStatus || r.verificationStatus === 'PENDING_VERIFICATION') &&
-                   r.status !== 'DISMISSED' && r.status !== 'RESOLVED'
-            ).length;
-
-        const liveStationsOnline = `${stats.sourcesHealthy || 45} / ${stats.sourcesTotal || 45}`;
-
-        return (
-          <section className={styles.metricsStrip}>
-            <div className={styles.metricsHeaderStrip}>
-              <span className={styles.metricsLivePulse} />
-              <span className={styles.metricsLiveText}>LIVE TELEMETRY // REAL-TIME SYNCHRONIZED ACROSS PLATFORM</span>
-            </div>
-            <div className={styles.metricsContainer}>
-              <div className={styles.metricCard}>
-                <span className={styles.metricIcon}>🚨</span>
-                <div>
-                  <span className={styles.metricValue}>{liveActiveAlerts}</span>
-                  <span className={styles.metricLabel}>{t.metrics.activeAlerts}</span>
-                </div>
+      <section className={styles.alternatingSection}>
+        <div className={styles.container}>
+          <div className={styles.blockGrid}>
+            {/* Text Column */}
+            <div className={styles.editorialTextCol}>
+              <span className={styles.eyebrowTag}>01 // OFFICIAL ADVISORIES</span>
+              <h2 className={styles.editorialHeadline}>
+                Directives verified by human meteorologists, not algorithms.
+              </h2>
+              <p className={styles.editorialBody}>
+                During extreme monsoon spells and sudden storm surges, automated broadcasts and unverified social rumours cause panic. Suraksha Setu aggregates bulletins directly from India Meteorological Department (IMD), National Disaster Management Authority (NDMA), and Central Water Commission (CWC) — authenticating each before public broadcast.
+              </p>
+              <div className={styles.authorityBadgesRow}>
+                <span className={styles.authorityBadge}>🏛️ IMD NWFC</span>
+                <span className={styles.authorityBadge}>🌊 Central Water Commission</span>
+                <span className={styles.authorityBadge}>🛡️ NDMA India</span>
+                <span className={styles.authorityBadge}>🌊 INCOIS Coastal</span>
               </div>
-              <div className={styles.metricCard}>
-                <span className={styles.metricIcon}>📝</span>
-                <div>
-                  <span className={styles.metricValue}>{liveVerifiedReports}</span>
-                  <span className={styles.metricLabel}>{t.metrics.reportsToday}</span>
-                </div>
-              </div>
-              <div className={styles.metricCard}>
-                <span className={styles.metricIcon}>🔍</span>
-                <div>
-                  <span className={styles.metricValue}>{livePendingReview}</span>
-                  <span className={styles.metricLabel}>{t.metrics.underReview}</span>
-                </div>
-              </div>
-              <div className={styles.metricCard}>
-                <span className={styles.metricIcon}>📡</span>
-                <div>
-                  <span className={styles.metricValue}>{liveStationsOnline}</span>
-                  <span className={styles.metricLabel}>{t.metrics.stationsOnline}</span>
-                </div>
-              </div>
-            </div>
-          </section>
-        );
-      })()}
-
-      {/* ============================================================
-          5. Editorial 4-Step Story Sequence: "How Verified Alerts Work"
-          ============================================================ */}
-      <AlertWorkflowSequence />
-
-      {/* ============================================================
-          6. Active National Alerts & Live Citizen Reports Feed
-          ============================================================ */}
-      <section className={styles.liveFeedSection}>
-        <div className={styles.feedContainer}>
-          {/* Column 1: Active National Alerts */}
-          <div className={styles.feedColumn}>
-            <h2>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
-                <span>📢 Active Official Advisories</span>
-              </span>
-              <span className={styles.feedHeaderBadge}>
-                {alerts.length > 0 ? `${alerts.length} Official Bulletins` : 'Human Verified'}
-              </span>
-            </h2>
-
-            <div className={styles.feedList}>
-              {loading ? (
-                <p style={{ color: '#8A99A8' }}>Connecting to public safety network…</p>
-              ) : alerts.length === 0 ? (
-                <div className={styles.feedEmptyState}>
-                  <span style={{ fontSize: 24 }}>🛡️</span>
-                  <div>
-                    <strong style={{ display: 'block', color: '#F7F6F2', fontSize: '13.5px', marginBottom: 4 }}>
-                      No Active Public Emergency Warnings
-                    </strong>
-                    <span style={{ color: '#8A99A8', fontSize: '12px', lineHeight: 1.4, display: 'block' }}>
-                      Disaster management authorities have not published any Level 3+ emergency directives at this hour. Continuous Doppler radar surveillance active across all regional basins.
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                alerts.slice(0, 4).map((alert) => {
-                  const severity = SEVERITY_LABELS[alert.severity];
-                  const relativeTime = formatRelativeTime(alert.updatedAt || alert.createdAt);
-                  return (
-                    <Link
-                      key={alert.id}
-                      href={`/alerts/${alert.id}`}
-                      className={styles.alertFeedCard}
-                    >
-                      <div className={styles.alertFeedHeader}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span className={`badge badge-${alert.severity >= 4 ? 'critical' : alert.severity >= 3 ? 'high' : 'moderate'}`}>
-                            {severity.label}
-                          </span>
-                          <span style={{ fontSize: 12, color: '#555753', fontWeight: 600 }}>
-                            📍 {alert.areaName || 'Designated Risk Zone'}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: 11, color: '#737571', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-                          {relativeTime}
-                        </span>
-                      </div>
-                      <h3 className={styles.alertFeedHeadline}>{alert.headline}</h3>
-                      <p className={styles.alertFeedGuidance}>{alert.guidance.slice(0, 130)}…</p>
-                      <div className={styles.alertFeedFooter}>
-                        <span>🏛️ {alert.source}</span>
-                        <span style={{ color: '#0284C7', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                          Inspect Alert →
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          {/* Column 2: Live Citizen Ground Reports */}
-          <div className={styles.feedColumn}>
-            <h2>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-                <span>📍 Live Ground Observations</span>
-              </span>
-              <Link href="/report" style={{ fontSize: 13, color: '#0284C7', textDecoration: 'none', fontWeight: 600 }}>
-                + Submit Report
+              <Link href="/map" className={styles.editorialActionLink}>
+                <span>Explore Active Bulletins on Live Map</span>
+                <span>→</span>
               </Link>
-            </h2>
+            </div>
 
-            <div className={styles.feedList}>
-              {loading ? (
-                <p style={{ color: '#8A99A8' }}>Connecting to ground observations…</p>
-              ) : reports.length === 0 ? (
-                <div className={styles.feedEmptyState}>
-                  <span style={{ fontSize: 24 }}>📍</span>
-                  <div>
-                    <strong style={{ display: 'block', color: '#F7F6F2', fontSize: '13.5px', marginBottom: 4 }}>
-                      Zero Unaddressed Hazards Reported
-                    </strong>
-                    <span style={{ color: '#8A99A8', fontSize: '12px', lineHeight: 1.4, display: 'block', marginBottom: 10 }}>
-                      All monitored sectors currently reporting nominal drainage conditions. If you observe street waterlogging, fallen trees, or squall damage in your vicinity, submit a report to alert responders.
-                    </span>
-                    <Link href="/report" className="btn btn-primary" style={{ fontSize: '12px', padding: '6px 14px' }}>
-                      + Submit Ground Observation
-                    </Link>
-                  </div>
-                </div>
-              ) : (
-                reports.slice(0, 4).map((report) => {
-                  const hazard = HAZARD_CATEGORIES[report.category];
-                  const isVerified = report.verificationStatus === 'VERIFIED_GENUINE';
-                  const hasAction = Boolean(
-                    report.currentActionCategory &&
-                    report.currentActionCategory !== 'Pending Verification' &&
-                    report.currentActionCategory !== 'Verified Genuine — Pending Tactical Action'
-                  );
-                  const relativeTime = formatRelativeTime(report.updatedAt || report.createdAt);
-                  return (
-                    <div key={report.id} className={styles.reportStreamCard}>
-                      <div className={styles.reportStreamHeader}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span className={styles.reportCategoryTag}>
-                            {hazard?.icon} {hazard?.label || report.category}
-                          </span>
-                          <span className={`badge badge-${report.severity >= 4 ? 'high' : report.severity >= 3 ? 'moderate' : 'low'}`}>
-                            Level {report.severity}
-                          </span>
-                          {report.waterDepthFeet ? (
-                            <span style={{
-                              fontSize: '11px',
-                              color: '#0284C7',
-                              background: 'rgba(2,132,199,0.08)',
-                              padding: '2px 6px',
-                              borderRadius: 4,
-                              fontWeight: 600,
-                              border: '1px solid rgba(2,132,199,0.2)'
-                            }}>
-                              💧 {report.waterDepthFeet} ft
+            {/* Visual Column: Active Advisories Surface Card */}
+            <div className={styles.editorialCard}>
+              <div className={styles.cardHeaderRow}>
+                <h3 className={styles.cardHeaderTitle}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#D76D63', display: 'inline-block' }} />
+                  Active Official Advisories
+                </h3>
+                <span className={styles.cardHeaderBadge}>
+                  {alerts.length > 0 ? `${alerts.length} Official Bulletins` : 'Human Verified'}
+                </span>
+              </div>
+
+              <div className={styles.feedList}>
+                {loading ? (
+                  <p style={{ color: '#8FA2AD', fontSize: '13px' }}>Connecting to public safety network…</p>
+                ) : alerts.length === 0 ? (
+                  <p style={{ color: '#8FA2AD', fontSize: '13px' }}>No active emergency directives at this hour.</p>
+                ) : (
+                  alerts.slice(0, 3).map((alert) => {
+                    const severity = SEVERITY_LABELS[alert.severity];
+                    const relativeTime = formatRelativeTime(alert.updatedAt || alert.createdAt);
+                    return (
+                      <Link key={alert.id} href={`/alerts/${alert.id}`} className={styles.alertItemCard}>
+                        <div className={styles.alertItemTop}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            <span className={`badge badge-${alert.severity >= 4 ? 'critical' : alert.severity >= 3 ? 'high' : 'moderate'}`}>
+                              {severity.label}
                             </span>
-                          ) : null}
-                        </div>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontSize: 11, color: '#737571', fontWeight: 600 }}>
+                            <span style={{ fontSize: 12, color: '#60717B', fontWeight: 600 }}>
+                              📍 {alert.areaName || 'Designated Risk Zone'}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: 11, color: '#8FA2AD', fontWeight: 600 }}>
                             ⏱ {relativeTime}
                           </span>
-                          <span style={{
-                            fontFamily: 'monospace',
-                            fontSize: '11px',
-                            background: '#FAF7F2',
-                            border: '1px solid #D1CDC4',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            color: '#D67A20',
-                            fontWeight: 700
-                          }}>
-                            {report.id.slice(0, 14)}
-                          </span>
                         </div>
-                      </div>
-                      <p className={styles.reportStreamDesc} style={{ margin: '4px 0 2px' }}>
-                        {report.description}
-                      </p>
-                      {report.landmark && (
-                        <div style={{ fontSize: '11.5px', color: '#555753', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span>📍</span>
-                          <span>{report.landmark}</span>
+                        <h4 className={styles.alertItemHeadline}>{alert.headline}</h4>
+                        <p className={styles.alertItemGuidance}>{alert.guidance.slice(0, 120)}…</p>
+                        <div className={styles.alertItemFooter}>
+                          <span>🏛️ {alert.source}</span>
+                          <span style={{ color: '#4C8DA2', fontWeight: 600 }}>Inspect Alert →</span>
                         </div>
-                      )}
-                      <div className={styles.reportStreamMeta} style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #F0EDE6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '11px', color: '#737571' }}>
-                          👤 {report.reporterPseudonym || 'Citizen Reporter'}
-                        </span>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          background: hasAction ? 'rgba(2, 132, 199, 0.08)' : isVerified ? 'rgba(46, 90, 68, 0.08)' : 'rgba(214, 122, 32, 0.08)',
-                          color: hasAction ? '#0284C7' : isVerified ? '#2E5A44' : '#D67A20',
-                          border: `1px solid ${hasAction ? 'rgba(2, 132, 199, 0.25)' : isVerified ? 'rgba(46, 90, 68, 0.25)' : 'rgba(214, 122, 32, 0.25)'}`
-                        }}>
-                          {hasAction ? `🚨 ${report.currentActionCategory}` : isVerified ? '✓ Verified Genuine' : '⏱ Queued for Radar Triage'}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: '8px' }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTrackInput(report.id);
-                            performTrack(report.id);
-                            const el = document.getElementById('track-status');
-                            el?.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                          className="btn btn-primary btn-sm"
-                          style={{ fontSize: '11.5px', padding: '5px 12px', flex: 1, textAlign: 'center', cursor: 'pointer' }}
-                        >
-                          🔍 Track Live Status →
-                        </button>
-                        <Link
-                          href={`/map?lat=${report.location.latitude}&lng=${report.location.longitude}&highlight=${report.id}`}
-                          className="btn btn-secondary btn-sm"
-                          style={{ fontSize: '11.5px', padding: '5px 12px', textDecoration: 'none' }}
-                        >
-                          🗺️ Map
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                      </Link>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ============================================================
-          7. Dedicated Interactive Section: Track Your Report Status
+          SECTION 3: Live Incident Monitoring (Alternating Block B: Visual Left, Text Right)
           ============================================================ */}
-      <section className={styles.trackStatusSection} id="track-status">
-        <div className={styles.trackContainer}>
-          <div className={styles.trackHeaderArea}>
-            <div className={styles.trackBadge}>
-              <span>🔍</span> Citizen Transparency Pipeline · Real-Time 3s Sync
-            </div>
-            <h2 className={styles.trackTitle}>Track Your Hazard Report Status</h2>
-            <p className={styles.trackSubtitle}>
-              Enter your Report ID or select any community ground observation below to inspect real-time Doppler radar validation, meteorologist triage, and emergency response directives across all personal devices.
-            </p>
-          </div>
-
-          {/* Live Search Form */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              performTrack(trackInput);
-            }}
-            className={styles.trackSearchForm}
-          >
-            <input
-              type="text"
-              className={styles.trackInput}
-              placeholder="Enter Report ID (e.g. id_...) or search by area/pseudonym..."
-              value={trackInput}
-              onChange={(e) => setTrackInput(e.target.value)}
-              id="landing-track-input"
-            />
-            <button
-              type="submit"
-              className={styles.trackSubmitBtn}
-              disabled={trackingLoading || !trackInput.trim()}
-              id="landing-track-btn"
-            >
-              {trackingLoading ? 'Searching…' : 'Track Status →'}
-            </button>
-          </form>
-
-          {/* Quick Selectors for Community Hazard Reports */}
-          {reports.length > 0 && (
-            <div className={styles.trackPillsArea}>
-              <span className={styles.trackPillsLabel}>Active Community Reports:</span>
-              {reports.slice(0, 6).map((r) => {
-                const isActive = activeTrackedId === r.id;
-                const cat = HAZARD_CATEGORIES[r.category]?.icon || '⚠️';
-                return (
-                  <button
-                    key={r.id}
-                    type="button"
-                    className={`${styles.trackPill} ${isActive ? styles.trackPillActive : ''}`}
-                    onClick={() => {
-                      setTrackInput(r.id);
-                      performTrack(r.id);
-                    }}
-                  >
-                    <span>{cat}</span>
-                    <span>{r.landmark ? r.landmark.split(',')[0].slice(0, 20) : r.category}</span>
-                    <code style={{ fontSize: '0.7rem', opacity: 0.8 }}>({r.id.slice(0, 8)})</code>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Tracking Result View */}
-          {trackingLoading && (
-            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
-              <div className="spinner spinner-lg" />
-              <p style={{ marginTop: 12, color: '#737571', fontSize: '0.9rem' }}>
-                Querying live national disaster response registry…
-              </p>
-            </div>
-          )}
-
-          {!trackingLoading && trackingError && (
-            <div className="alert alert-warning" style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
-              <span>⚠️</span> {trackingError}
-            </div>
-          )}
-
-          {!trackingLoading && trackingData && (
-            <div className={styles.trackCard}>
-              {/* Dynamic Emergency Action Directive Banner */}
-              {trackingData.currentActionCategory && trackingData.currentActionCategory !== 'Pending Verification' && (
-                <div style={{
-                  background: trackingData.currentActionCategory.includes('Evacuation') ? 'rgba(239, 68, 68, 0.12)' :
-                              trackingData.currentActionCategory.includes('Dewatering') ? 'rgba(56, 189, 248, 0.15)' :
-                              trackingData.currentActionCategory.includes('Resolved') ? 'rgba(46, 90, 68, 0.12)' : 'rgba(214, 122, 32, 0.12)',
-                  border: `1.5px solid ${
-                    trackingData.currentActionCategory.includes('Evacuation') ? '#EF4444' :
-                    trackingData.currentActionCategory.includes('Dewatering') ? '#0284C7' :
-                    trackingData.currentActionCategory.includes('Resolved') ? '#2E5A44' : '#D67A20'
-                  }`,
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  marginBottom: '18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                }}>
-                  <span style={{ fontSize: '1.8rem' }}>
-                    {trackingData.currentActionCategory.includes('Evacuation') ? '🚨' :
-                     trackingData.currentActionCategory.includes('Dewatering') ? '🚒' :
-                     trackingData.currentActionCategory.includes('Resolved') ? '✅' : '📢'}
-                  </span>
-                  <div>
-                    <strong style={{
-                      color: trackingData.currentActionCategory.includes('Evacuation') ? '#B91C1C' :
-                             trackingData.currentActionCategory.includes('Dewatering') ? '#0369A1' :
-                             trackingData.currentActionCategory.includes('Resolved') ? '#2E5A44' : '#C4511A',
-                      fontSize: '0.95rem',
-                      display: 'block'
-                    }}>
-                      Active Tactical Directive: {trackingData.currentActionCategory}
-                    </strong>
-                    <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#474946' }}>
-                      {trackingData.reviewNote || 'Emergency responders and meteorologists are managing this sector.'}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Card Header */}
-              <div className={styles.trackCardHeader}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{
-                      background: 'rgba(22, 24, 22, 0.06)',
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      color: '#161816'
-                    }}>
-                      {HAZARD_CATEGORIES[trackingData.category as HazardCategory]?.icon || '⚠️'} {HAZARD_CATEGORIES[trackingData.category as HazardCategory]?.label || trackingData.category}
-                    </span>
-                    <span className={`badge badge-${trackingData.severity >= 4 ? 'critical' : trackingData.severity >= 3 ? 'high' : 'moderate'}`}>
-                      Severity {trackingData.severity}/5
-                    </span>
-                    <span style={{
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      color: trackingData.verificationStatus === 'VERIFIED_GENUINE' ? '#2E5A44' : '#D67A20',
-                      background: trackingData.verificationStatus === 'VERIFIED_GENUINE' ? '#EBF5EE' : '#FEF3E8',
-                      padding: '3px 8px',
-                      borderRadius: '4px'
-                    }}>
-                      {trackingData.verificationStatus === 'VERIFIED_GENUINE' ? '✓ Verified Genuine Hazard' : '⏱ Queued for Radar Triage'}
-                    </span>
-                  </div>
-                  <h3 className={styles.trackCardTitle}>
-                    {trackingData.landmark || `Hazard near ${trackingData.location?.latitude?.toFixed(4) || ''}°N, ${trackingData.location?.longitude?.toFixed(4) || ''}°E`}
-                  </h3>
-                  {trackingData.description && (
-                    <p style={{ margin: '6px 0 0', fontSize: '0.88rem', color: '#555753', lineHeight: 1.45 }}>
-                      &ldquo;{trackingData.description}&rdquo;
-                    </p>
-                  )}
-                </div>
-                <div className={styles.trackCardIdTag}>
-                  <span>ID: {trackingData.id}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(trackingData.id);
-                      alert('Copied Report ID to clipboard: ' + trackingData.id);
-                    }}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#D67A20',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      padding: 0,
-                      fontWeight: 700
-                    }}
-                    title="Copy Report ID"
-                  >
-                    📋
-                  </button>
-                </div>
+      <section className={styles.alternatingSectionTinted}>
+        <div className={styles.container}>
+          <div className={styles.blockGridReversed}>
+            {/* Visual Column: Live Ground Observations Surface Card */}
+            <div className={styles.editorialCard}>
+              <div className={styles.cardHeaderRow}>
+                <h3 className={styles.cardHeaderTitle}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4C8B71', display: 'inline-block' }} />
+                  Live Ground Observations
+                </h3>
+                <Link href="/report" style={{ fontSize: 12.5, color: '#4C8DA2', textDecoration: 'none', fontWeight: 700 }}>
+                  + Submit Report
+                </Link>
               </div>
 
-              {/* 4-Stage Timeline */}
-              <div className={styles.trackTimeline}>
-                {trackingData.stages.map((st, idx) => (
-                  <div
-                    key={idx}
-                    className={`${styles.trackTimelineStep} ${
-                      st.completed ? styles.trackTimelineStepCompleted : idx + 1 === trackingData.stage ? styles.trackTimelineStepActive : ''
-                    }`}
-                  >
-                    <div className={styles.trackStepNum}>
-                      {st.completed ? '✓' : idx + 1}
-                    </div>
-                    <span className={styles.trackStepName}>{st.name}</span>
-                    <span style={{ fontSize: '0.72rem', color: '#737571', display: 'block', marginTop: '4px' }}>
-                      {st.completed ? 'Completed' : idx + 1 === trackingData.stage ? 'In Progress' : 'Queued'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Telemetry Metrics Grid */}
-              <div className={styles.trackGrid}>
-                <div className={styles.trackGridItem}>
-                  <span className={styles.trackGridLabel}>Doppler Radar Correlation</span>
-                  <span className={styles.trackGridValue}>{trackingData.weatherSignal || 'Active AWS radar reflectivity match'}</span>
-                </div>
-                <div className={styles.trackGridItem}>
-                  <span className={styles.trackGridLabel}>Spatial Corroboration</span>
-                  <span className={styles.trackGridValue}>{trackingData.corroborationCount} eyewitness corroborating reports</span>
-                </div>
-                <div className={styles.trackGridItem}>
-                  <span className={styles.trackGridLabel}>GPS Coordinates</span>
-                  <span className={styles.trackGridValue} style={{ fontFamily: 'monospace' }}>
-                    {trackingData.location ? `${trackingData.location.latitude.toFixed(4)}°N, ${trackingData.location.longitude.toFixed(4)}°E (±${Math.round(trackingData.location.accuracy || 20)}m)` : 'Confirmed Area'}
-                  </span>
-                </div>
-                <div className={styles.trackGridItem}>
-                  <span className={styles.trackGridLabel}>Last Updated</span>
-                  <span className={styles.trackGridValue}>
-                    {trackingData.updatedAt ? new Date(trackingData.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'} · Live Sync
-                  </span>
-                </div>
-              </div>
-
-              {/* Action History / Audit Log */}
-              {trackingData.actionHistory && trackingData.actionHistory.length > 0 && (
-                <div className={styles.trackActionHistoryArea}>
-                  <h4 className={styles.trackActionHistoryTitle}>
-                    Agency Action History & Audit Log ({trackingData.actionHistory.length})
-                  </h4>
-                  <div className={styles.trackActionHistoryList}>
-                    {trackingData.actionHistory.map((item) => (
-                      <div key={item.id} className={styles.trackActionItem}>
-                        <div>
-                          <strong style={{ fontSize: '0.88rem', color: '#161816', display: 'block' }}>
-                            {item.action}
-                          </strong>
-                          <span style={{ fontSize: '0.78rem', color: '#555753' }}>
-                            By: <strong>{item.actorName}</strong>
-                            {item.notes && <span style={{ marginLeft: 6, color: '#737571' }}>— {item.notes}</span>}
+              <div className={styles.feedList}>
+                {loading ? (
+                  <p style={{ color: '#8FA2AD', fontSize: '13px' }}>Connecting to ground observations…</p>
+                ) : reports.length === 0 ? (
+                  <p style={{ color: '#8FA2AD', fontSize: '13px' }}>Zero unaddressed ground hazards reported.</p>
+                ) : (
+                  reports.slice(0, 3).map((report) => {
+                    const hazard = HAZARD_CATEGORIES[report.category];
+                    const isVerified = report.verificationStatus === 'VERIFIED_GENUINE';
+                    const hasAction = Boolean(
+                      report.currentActionCategory &&
+                      report.currentActionCategory !== 'Pending Verification' &&
+                      report.currentActionCategory !== 'Verified Genuine — Pending Tactical Action'
+                    );
+                    const relativeTime = formatRelativeTime(report.updatedAt || report.createdAt);
+                    return (
+                      <div key={report.id} className={styles.reportItemCard}>
+                        <div className={styles.reportItemHeader}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                            <span className={styles.reportCategoryText}>
+                              {hazard?.icon} {hazard?.label || report.category}
+                            </span>
+                            <span className={`badge badge-${report.severity >= 4 ? 'high' : report.severity >= 3 ? 'moderate' : 'low'}`}>
+                              Level {report.severity}
+                            </span>
+                            {report.waterDepthFeet ? (
+                              <span className={styles.waterDepthTag}>
+                                💧 {report.waterDepthFeet} ft
+                              </span>
+                            ) : null}
+                          </div>
+                          <span style={{ fontSize: 11, color: '#8FA2AD', fontWeight: 600 }}>
+                            ⏱ {relativeTime}
                           </span>
                         </div>
-                        <span style={{ fontSize: '0.72rem', color: '#737571', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
-                          {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
+                        <p className={styles.reportItemDesc}>{report.description}</p>
+                        {report.landmark && (
+                          <div className={styles.reportItemLandmark}>
+                            <span>📍</span>
+                            <span>{report.landmark}</span>
+                          </div>
+                        )}
+                        <div className={styles.reportItemMeta}>
+                          <span style={{ fontSize: '11px', color: '#8FA2AD' }}>
+                            👤 {report.reporterPseudonym || 'Citizen Reporter'}
+                          </span>
+                          <span style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            background: hasAction ? 'rgba(76, 141, 162, 0.1)' : isVerified ? 'rgba(76, 139, 113, 0.1)' : 'rgba(215, 170, 99, 0.12)',
+                            color: hasAction ? '#4C8DA2' : isVerified ? '#4C8B71' : '#D7AA63',
+                            border: `1px solid ${hasAction ? 'rgba(76, 141, 162, 0.25)' : isVerified ? 'rgba(76, 139, 113, 0.25)' : 'rgba(215, 170, 99, 0.25)'}`
+                          }}>
+                            {hasAction ? `🚨 ${report.currentActionCategory}` : isVerified ? '✓ Verified Genuine' : '⏱ Queued for Radar Triage'}
+                          </span>
+                        </div>
+                        <div className={styles.reportActionsRow}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTrackInput(report.id);
+                              performTrack(report.id);
+                              const el = document.getElementById('editorial-tracker');
+                              el?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="btn btn-primary btn-sm"
+                            style={{ fontSize: '11px', padding: '5px 12px', flex: 1, borderRadius: '9999px', cursor: 'pointer' }}
+                          >
+                            🔍 Track Live Status →
+                          </button>
+                          <Link
+                            href={`/map?lat=${report.location.latitude}&lng=${report.location.longitude}&highlight=${report.id}`}
+                            className="btn btn-secondary btn-sm"
+                            style={{ fontSize: '11px', padding: '5px 12px', borderRadius: '9999px', textDecoration: 'none' }}
+                          >
+                            🗺️ Map
+                          </Link>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    );
+                  })
+                )}
+              </div>
+            </div>
 
-              {/* Action Buttons */}
-              <div className={styles.trackActionsRow}>
-                <Link
-                  href={`/map?lat=${trackingData.location?.latitude || 26.8467}&lng=${trackingData.location?.longitude || 80.9462}&highlight=${trackingData.id}`}
-                  className={styles.trackBtnPrimary}
-                >
-                  <span>🗺️ Inspect on Live Map</span>
-                  <span>→</span>
+            {/* Text Column */}
+            <div className={styles.editorialTextCol}>
+              <span className={styles.eyebrowTag}>02 // CROWD-SOURCED GROUND TRUTH</span>
+              <h2 className={styles.editorialHeadline}>
+                Hyperlocal observations from citizens on the ground.
+              </h2>
+              <p className={styles.editorialBody}>
+                When an urban underpass floods or a coastal seawall is breached, eyewitnesses provide the earliest spatial evidence. Geotagged citizen reports are mapped into discrete H3 hexagonal partitions, clustered spatially, and cross-referenced with rain gauges to verify depth and risk severity.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Link href="/report" className={styles.primaryPillCta}>
+                  <span>Report a Hazard</span>
+                  <span className={styles.ctaArrow}>+</span>
                 </Link>
-                <Link
-                  href={`/track?id=${encodeURIComponent(trackingData.id)}`}
-                  className={styles.trackBtnSecondary}
-                >
-                  <span>🔍 Open Full Dedicated Tracking Page</span>
-                  <span>↗</span>
+                <Link href="/map" className={styles.editorialActionLink}>
+                  <span>Open Live Map View →</span>
                 </Link>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
-      {/* 8. Universal Editorial Footer */}
+      {/* ============================================================
+          SECTION 4: Emergency Reporting & Live Tracker (Alternating Block C: Text Left, Visual Right)
+          ============================================================ */}
+      <section className={styles.alternatingSection} id="editorial-tracker">
+        <div className={styles.container}>
+          <div className={styles.blockGrid}>
+            {/* Text Column */}
+            <div className={styles.editorialTextCol}>
+              <span className={styles.eyebrowTag}>03 // TRANSPARENT REPORTING & SOS</span>
+              <h2 className={styles.editorialHeadline}>
+                Report in 60 seconds. Track tactical response in real time.
+              </h2>
+              <p className={styles.editorialBody}>
+                Zero mandatory signup required. Capture standing water, fallen powerlines, or squall damage with automatic photo compression (&lt;150KB) and offline queuing. Follow municipal dewatering and rescue units as they mobilize. For life-threatening emergencies, trigger direct SOS dispatch.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <Link href="/report" className={styles.primaryPillCta}>
+                  <span>Submit Ground Report</span>
+                  <span className={styles.ctaArrow}>+</span>
+                </Link>
+                <Link href="/sos" className={styles.emergencySosPill}>
+                  <span>🚨 Emergency SOS</span>
+                  <span className={styles.ctaArrow}>→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Visual Column: Interactive Report Status Tracker */}
+            <div className={styles.editorialCard}>
+              <div className={styles.cardHeaderRow}>
+                <h3 className={styles.cardHeaderTitle}>
+                  <span>🔍</span>
+                  Citizen Transparency Tracker
+                </h3>
+                <span className={styles.cardHeaderBadge}>Real-Time Telemetry</span>
+              </div>
+
+              <div className={styles.trackerBox}>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    performTrack(trackInput);
+                  }}
+                  className={styles.trackerInputRow}
+                >
+                  <input
+                    type="text"
+                    value={trackInput}
+                    onChange={(e) => setTrackInput(e.target.value)}
+                    placeholder="Enter Report ID (e.g. rep_del_pragati_01)"
+                    className={styles.trackerInput}
+                  />
+                  <button type="submit" disabled={trackingLoading} className={styles.trackerSubmitBtn}>
+                    {trackingLoading ? 'Checking…' : 'Track'}
+                  </button>
+                </form>
+
+                {/* Quick Select Pill Buttons */}
+                <div className={styles.trackerPillsRow}>
+                  <span style={{ fontSize: '11px', color: '#8FA2AD', fontWeight: 600 }}>Quick Inspect:</span>
+                  {reports.slice(0, 3).map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => {
+                        setTrackInput(r.id);
+                        performTrack(r.id);
+                      }}
+                      className={styles.trackerPillTag}
+                    >
+                      {r.id.slice(0, 14)}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tracking Result Card */}
+                {trackingData && (
+                  <div className={styles.trackerResultCard}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: '11px', color: '#8FA2AD', fontWeight: 600 }}>ACTIVE HAZARD DOSSIER</div>
+                        <strong style={{ fontSize: '14px', color: '#1F3440' }}>
+                          {HAZARD_CATEGORIES[trackingData.category as HazardCategory]?.label || trackingData.category} (Level {trackingData.severity})
+                        </strong>
+                      </div>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '3px 10px',
+                        borderRadius: '9999px',
+                        background: 'rgba(76, 139, 113, 0.1)',
+                        color: '#4C8B71',
+                        border: '1px solid rgba(76, 139, 113, 0.25)'
+                      }}>
+                        {trackingData.currentActionCategory || 'Under Active Triage'}
+                      </span>
+                    </div>
+
+                    {/* 4-Stage Stepper */}
+                    <div className={styles.trackerStagesStepper}>
+                      {(trackingData.stages || [
+                        { name: '1. Ingested', completed: true },
+                        { name: '2. Doppler Radar', completed: trackingData.stage >= 2 },
+                        { name: '3. Human Verified', completed: trackingData.stage >= 3 },
+                        { name: '4. Action Taken', completed: trackingData.stage >= 4 },
+                      ]).map((stg, idx) => {
+                        const isDone = stg.completed;
+                        return (
+                          <div key={idx} className={styles.trackerStageItem}>
+                            <span className={`${styles.trackerStageDot} ${isDone ? styles.trackerStageDotActive : ''}`}>
+                              {isDone ? '✓' : idx + 1}
+                            </span>
+                            <span className={`${styles.trackerStageName} ${isDone ? styles.trackerStageNameActive : ''}`}>
+                              {stg.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {trackingData.landmark && (
+                      <div style={{ fontSize: '12px', color: '#60717B' }}>
+                        📍 <strong>Landmark:</strong> {trackingData.landmark}
+                      </div>
+                    )}
+
+                    {trackingData.verificationRationale && (
+                      <div style={{ fontSize: '11.5px', color: '#60717B', background: '#FFFFFF', padding: '8px 12px', borderRadius: '10px', border: '1px solid #C8E3EA' }}>
+                        📡 <strong>Doppler Reviewer Note:</strong> {trackingData.verificationRationale}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {trackingError && (
+                  <p style={{ color: '#D76D63', fontSize: '12px', margin: 0 }}>{trackingError}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          SECTION 5: Community Protection Features (4-Card Magazine Grid)
+          ============================================================ */}
+      <section className={styles.alternatingSectionTinted}>
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+            <span className={styles.eyebrowTag}>04 // PROTECTION ARCHITECTURE</span>
+            <h2 className={styles.editorialHeadline}>
+              Engineered for high-stakes monsoon resilience.
+            </h2>
+            <p className={styles.editorialBody} style={{ margin: '0 auto' }}>
+              Every layer of the platform is designed to eliminate false alarms and deliver actionable clarity when municipal infrastructure is strained.
+            </p>
+          </div>
+
+          <div className={styles.featuresGrid}>
+            <div className={styles.featureCard}>
+              <div className={styles.featureIconWrap}>📡</div>
+              <h3 className={styles.featureCardTitle}>Doppler Multi-Station Triangulation</h3>
+              <p className={styles.featureCardDesc}>
+                Dual-polarization S-band sweeps monitor cloud top reflectivity across 45 national radar stations, distinguishing genuine cloudbursts from light rainfall before issuing emergency directives.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.featureIconWrap}>🛡️</div>
+              <h3 className={styles.featureCardTitle}>False Alarm & Panic Filtering</h3>
+              <p className={styles.featureCardDesc}>
+                Spatial clustering algorithms group adjacent H3 hexagonal cells and cross-validate crowd observations with nearby automated weather stations to eliminate duplicate or fraudulent submissions.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.featureIconWrap}>🌐</div>
+              <h3 className={styles.featureCardTitle}>Multilingual CAP 1.2 Standards</h3>
+              <p className={styles.featureCardDesc}>
+                Adheres strictly to the ITU-T X.1303 Common Alerting Protocol, broadcasting actionable advisories across 6 Indian languages so every community receives clear, immediate life-safety guidance.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.featureIconWrap}>⚡</div>
+              <h3 className={styles.featureCardTitle}>Offline-First Telemetry</h3>
+              <p className={styles.featureCardDesc}>
+                Full client-side storage buffering guarantees that hazard observations taken during heavy cellular network blackouts are retained safely on-device and synchronized instantly upon reconnection.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          SECTION 6: Analytics & National Readiness (Editorial Spread)
+          ============================================================ */}
+      <section className={styles.alternatingSection}>
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+            <span className={styles.eyebrowTag}>05 // NATIONAL READINESS</span>
+            <h2 className={styles.editorialHeadline}>
+              Public safety operational readiness at a glance.
+            </h2>
+            <p className={styles.editorialBody} style={{ margin: '0 auto' }}>
+              Continuous multi-hazard surveillance operating 24 hours a day across 28 States and 8 Union Territories.
+            </p>
+          </div>
+
+          <div className={styles.analyticsSpread}>
+            <div className={styles.metricTile}>
+              <span className={styles.metricBigNumber}>45</span>
+              <span className={styles.metricTileLabel}>Doppler Radar Stations Monitored</span>
+            </div>
+            <div className={styles.metricTile}>
+              <span className={styles.metricBigNumber}>&lt; 90s</span>
+              <span className={styles.metricTileLabel}>Median Verification Turnaround</span>
+            </div>
+            <div className={styles.metricTile}>
+              <span className={styles.metricBigNumber}>100%</span>
+              <span className={styles.metricTileLabel}>Human-in-the-Loop Validated Directives</span>
+            </div>
+            <div className={styles.metricTile}>
+              <span className={styles.metricBigNumber}>Zero</span>
+              <span className={styles.metricTileLabel}>Personal Identity Data Exposed</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          SECTION 7: Trust, Governance & Privacy (Editorial Spread)
+          ============================================================ */}
+      <section className={styles.alternatingSectionTinted}>
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto' }}>
+            <span className={styles.eyebrowTag}>06 // TRUST & GOVERNANCE</span>
+            <h2 className={styles.editorialHeadline}>
+              Built on institutional trust and scientific integrity.
+            </h2>
+          </div>
+
+          <div className={styles.trustSpreadCard}>
+            <div className={styles.trustCol}>
+              <h3 className={styles.trustColTitle}>
+                <span>🏛️</span>
+                Institutional Alignment
+              </h3>
+              <p className={styles.trustColText}>
+                Suraksha Setu synthesizes real-time feeds from the India Meteorological Department (IMD), National Disaster Management Authority (NDMA), Central Water Commission (CWC), and INCOIS. Every advisory meets rigorous government standards, ensuring responders and citizens act on authoritative, calibrated data.
+              </p>
+            </div>
+
+            <div className={styles.trustCol}>
+              <h3 className={styles.trustColTitle}>
+                <span>🔒</span>
+                Cryptographic Audit & Privacy
+              </h3>
+              <p className={styles.trustColText}>
+                Citizen privacy is preserved by architecture: phone numbers and exact home coordinates are never made public, with locations generalized into spatial hexagons. Duty officer directives and reviewer authorizations are sealed with tamper-evident audit timestamps for public accountability.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ============================================================
+          SECTION 8: Final Storytelling Banner / Call to Action (Reference Match)
+          ============================================================ */}
+      <section className={styles.finalCtaSection}>
+        <div className={styles.finalCtaContainer}>
+          <span className={styles.finalCtaBadge}>PAN-INDIA PUBLIC SAFETY NETWORK</span>
+          <h2 className={styles.finalCtaTitle}>
+            Weather clarity built for the safety of every citizen.
+          </h2>
+          <p className={styles.finalCtaSubtitle}>
+            Whether reporting street waterlogging in your neighbourhood or coordinating municipal emergency response units, Suraksha Setu provides verified, human-confirmed intelligence when every minute matters.
+          </p>
+          <div className={styles.finalCtaButtonGroup}>
+            <Link href="/report" className={styles.primaryPillCta}>
+              <span>Report Local Hazard</span>
+              <span className={styles.ctaArrow}>+</span>
+            </Link>
+            <Link href="/authorities" className={styles.secondaryWhitePillCta}>
+              <span>Authority Operations Console</span>
+              <span className={styles.ctaArrow}>→</span>
+            </Link>
+            <Link href="/map" className={styles.editorialActionLink}>
+              <span>Explore National Risk Map →</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. Universal Production Footer */}
       <Footer />
     </div>
   );
