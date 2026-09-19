@@ -1,310 +1,405 @@
 /* ============================================================
-   SURAKSHA SETU — Multi-Hazard Operational Map Styles
-   Editorial design system: off-white canvas (#F8FBFC), charcoal (#1F3440),
-   warm gray (#60717B), eucalyptus green (#4C8B71), signal amber / burnt orange (#4C8DA2)
+   SURAKSHA SETU — Live Operational Risk Map Styles
+   Reference-accurate layout matching media_1789809095822.jpg
+   Editorial Palette: #EEF5F8, #FFFFFF, #DCEEF2, #1F3440, #60717B, #4C8DA2, #D76D63
    ============================================================ */
 
 .mapPage {
+  min-height: 100vh;
+  background-color: #EEF5F8;
+  color: #1F3440;
+  font-family: var(--font-family-body, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100vw;
-  background: #F8FBFC;
-  color: #1F3440;
-  font-family: var(--font-family-sans, system-ui, -apple-system, sans-serif);
-  overflow: hidden;
-  position: relative;
 }
 
-.mapLayout {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  position: relative;
-  overflow: hidden;
+.dashboardContainer {
+  max-width: 1560px;
+  margin: 0 auto;
+  padding: 1.25rem 2rem 2.5rem;
   width: 100%;
-  height: calc(100vh - 60px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Top Subtle Watermark Banner */
+.topWatermarkBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  margin-bottom: 0.85rem;
+  min-height: 38px;
+}
+
+.mottoWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.mottoLine1 {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #4C8DA2;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.mottoLine2 {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #60717B;
+  line-height: 1.25;
+}
+
+.watermarkMapSvg {
+  position: absolute;
+  right: -10px;
+  top: -15px;
+  width: 100px;
+  height: 90px;
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ============================================================
-   1. Persistent Left Information Rail
+   Main Dashboard Grid (Left Intelligence Card + Right Map Card)
    ============================================================ */
-.leftRail {
-  width: 440px;
-  min-width: 380px;
-  max-width: 480px;
-  background: #FFFFFF;
-  border-right: 1px solid #DCEEF2;
-  display: flex;
-  flex-direction: column;
-  z-index: 25;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), width 0.25s ease;
-  position: relative;
-  box-shadow: 2px 0 12px rgba(22, 24, 22, 0.04);
+.mainDashboardGrid {
+  display: grid;
+  grid-template-columns: 410px 1fr;
+  gap: 1.5rem;
+  height: calc(100vh - 235px);
+  min-height: 640px;
+  margin-bottom: 1.5rem;
+  transition: grid-template-columns 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.leftRailCollapsed {
-  transform: translateX(-100%);
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  pointer-events: none;
+.mainDashboardGridCollapsed {
+  grid-template-columns: 0px 1fr;
+  gap: 0;
 }
 
-.railToggleBtn {
-  position: absolute;
-  right: -36px;
-  top: 16px;
-  width: 36px;
-  height: 38px;
+/* ============================================================
+   1. Left Hazard Intelligence Card
+   ============================================================ */
+.leftIntelligenceCard {
   background: #FFFFFF;
   border: 1px solid #DCEEF2;
-  border-left: none;
-  border-radius: 0 6px 6px 0;
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(31, 52, 64, 0.04);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 30;
-  box-shadow: 3px 2px 8px rgba(22, 24, 22, 0.06);
-  font-size: 13px;
-  color: #1F3440;
-  pointer-events: auto;
-  transition: background 0.15s ease;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  position: relative;
 }
 
-.railToggleBtn:hover {
-  background: #DCEEF2;
+.leftCardHeader {
+  padding: 1.25rem 1.4rem 0.75rem;
 }
 
-.railHeader {
-  padding: 16px 20px 14px;
-  border-bottom: 1px solid #DCEEF2;
-  background: #F8FBFC;
-}
-
-.railHeaderTop {
+.headerTopRow {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  align-items: flex-start;
+  margin-bottom: 2px;
 }
 
-.railTitleWrapper {
+.titleWithDot {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.pulseDotLive {
+.livePulseDot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: #4C8B71;
-  box-shadow: 0 0 0 0 rgba(76, 139, 113, 0.5);
-  animation: livePulse 2s infinite;
+  box-shadow: 0 0 0 3px rgba(76, 139, 113, 0.25);
+  animation: pulseDot 2s infinite;
 }
 
-@keyframes livePulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(76, 139, 113, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(76, 139, 113, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(76, 139, 113, 0);
-  }
+@keyframes pulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 139, 113, 0.6); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 7px rgba(76, 139, 113, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 139, 113, 0); }
 }
 
-.railTitle {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+.leftCardTitle {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
   color: #1F3440;
+  letter-spacing: -0.02em;
   margin: 0;
 }
 
-.regionPill {
-  font-size: 11px;
-  font-weight: 600;
-  background: #EFECE6;
-  color: #555753;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid #DCEEF2;
+.syncBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: #F8FBFC;
+  border: 1.5px solid #C8E3EA;
+  color: #1F3440;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.railMetaSub {
+.syncBtn:hover:not(:disabled) {
+  background: #EBF4F7;
+  border-color: #4C8DA2;
+}
+
+.syncBtn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.headerSubtext {
+  font-size: 12px;
+  color: #60717B;
+  margin: 0 0 4px 0;
+}
+
+.headerTimeUpdated {
+  font-size: 11px;
+  color: #8FA2AD;
+  margin: 0;
+}
+
+/* Active Data Source Box */
+.activeDataSourceBox {
+  margin: 0 1.25rem 0.85rem;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 14px;
+  padding: 9px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
-  color: #60717B;
 }
 
-.refreshTriggerBtn {
+.dataSourceLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dataSourceEmblem {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #EBF4F7;
+  border: 1px solid #C8E3EA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #4C8DA2;
+}
+
+.dataSourceMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.dataSourceLabel {
+  font-size: 10.5px;
+  color: #8FA2AD;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dataSourceValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1F3440;
+}
+
+.onlineBadge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: #EFECE6;
-  border: 1px solid #D8D4CA;
-  border-radius: 4px;
-  padding: 2px 7px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: #383A36;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.refreshTriggerBtn:hover {
-  background: #E5E1D7;
-  color: #1F3440;
-  border-color: #C5C1B5;
-}
-
-.refreshTriggerBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.sosQuickTriggerBtn {
-  background: #A82824;
-  color: #FFFFFF;
-  border: none;
-  padding: 4px 9px;
-  border-radius: 4px;
-  font-size: 10.5px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
   gap: 5px;
-  letter-spacing: 0.02em;
-  transition: opacity 0.15s ease;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4C8B71;
+  background: #E8F4EC;
+  border: 1px solid #C7E6D0;
+  padding: 3px 9px;
+  border-radius: 9999px;
 }
 
-.sosQuickTriggerBtn:hover {
-  opacity: 0.9;
-}
-
-/* Tab Navigation */
-.tabNav {
-  display: flex;
-  overflow-x: auto;
-  border-bottom: 1px solid #DCEEF2;
-  background: #FFFFFF;
-  scrollbar-width: none;
-}
-
-.tabNav::-webkit-scrollbar {
-  display: none;
-}
-
-.tabBtn {
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #60717B;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  white-space: nowrap;
+/* SOS Beacon Button Card */
+.sosBeaconCardBtn {
+  margin: 0 1.25rem 0.85rem;
+  background: #D76D63;
+  border-radius: 16px;
+  padding: 12px 16px;
+  color: #FFFFFF;
   display: flex;
   align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(215, 109, 99, 0.28);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+}
+
+.sosBeaconCardBtn:hover {
+  background: #C4574D;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(215, 109, 99, 0.36);
+}
+
+.sosIconWrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.sosTextWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.sosTitle {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 14.5px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.sosSubtitle {
+  font-size: 11px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* 3 Tabs Row */
+.threeTabsRow {
+  margin: 0 1.25rem 0.75rem;
+  display: flex;
+  gap: 6px;
+}
+
+.tabPillBtn {
+  flex: 1;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #60717B;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
-.tabBtn:hover {
-  color: #1F3440;
-  background: #DCEEF2;
-}
-
-.tabBtnActive {
-  color: #1F3440;
-  border-bottom-color: #4C8DA2;
-  font-weight: 700;
-}
-
-.tabCountBadge {
-  font-size: 10px;
-  font-weight: 700;
-  background: #DCEEF2;
-  padding: 1px 5px;
-  border-radius: 10px;
+.tabPillBtn:hover {
+  border-color: #4C8DA2;
   color: #1F3440;
 }
 
-.tabBtnActive .tabCountBadge {
+.tabPillBtnActive {
   background: #1F3440;
-  color: #FFFFFF;
+  border-color: #1F3440;
+  color: #FFFFFF !important;
 }
 
-/* Filter Controls Bar */
-.filterBar {
-  padding: 10px 16px;
-  background: #F8FBFC;
-  border-bottom: 1px solid #DCEEF2;
+.tabBadgeNumber {
+  font-size: 10.5px;
+  opacity: 0.85;
+}
+
+/* Filter Controls Section */
+.filterControlsSection {
+  margin: 0 1.25rem 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.filterRowPrimary {
-  display: flex;
-  align-items: center;
+.selectsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  justify-content: space-between;
 }
 
 .filterSelect {
-  font-size: 11.5px;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 12px;
+  padding: 7px 10px;
+  font-size: 12px;
   font-weight: 600;
   color: #1F3440;
-  background: #FFFFFF;
-  border: 1px solid #DCEEF2;
-  border-radius: 4px;
-  padding: 5px 8px;
   outline: none;
   cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
 }
 
-.filterTimeGroup {
+.filterSelect:focus {
+  border-color: #4C8DA2;
+}
+
+.timePillsRow {
   display: flex;
-  background: #EFECE6;
-  border-radius: 4px;
-  padding: 2px;
-  gap: 2px;
+  gap: 6px;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 9999px;
+  padding: 3px;
+  width: fit-content;
 }
 
-.filterTimeBtn {
-  font-size: 10.5px;
-  font-weight: 600;
-  background: none;
+.timePill {
+  background: transparent;
   border: none;
-  padding: 3px 7px;
-  border-radius: 3px;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
   color: #60717B;
   cursor: pointer;
-  transition: all 0.12s ease;
+  transition: all 0.15s ease;
 }
 
-.filterTimeBtnActive {
-  background: #FFFFFF;
+.timePill:hover {
   color: #1F3440;
-  font-weight: 700;
-  box-shadow: 0 1px 2px rgba(22, 24, 22, 0.08);
 }
 
-.filterAcronymPills {
+.timePillActive {
+  background: #1F3440;
+  color: #FFFFFF;
+}
+
+.categoryChipsRow {
   display: flex;
   gap: 4px;
   overflow-x: auto;
@@ -312,523 +407,533 @@
   scrollbar-width: none;
 }
 
-.filterAcronymPills::-webkit-scrollbar {
+.categoryChipsRow::-webkit-scrollbar {
   display: none;
 }
 
-.acronymPill {
-  font-size: 10.5px;
-  font-weight: 700;
-  font-family: var(--font-family-mono, monospace);
-  padding: 2px 7px;
-  border-radius: 3px;
-  border: 1px solid #DCEEF2;
+.catChip {
   background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
   color: #60717B;
   cursor: pointer;
-  white-space: nowrap;
+  font-family: var(--font-family-mono, monospace);
   transition: all 0.12s ease;
+  flex-shrink: 0;
 }
 
-.acronymPillActive {
+.catChip:hover {
+  border-color: #4C8DA2;
+  color: #1F3440;
+}
+
+.catChipActive {
   background: #1F3440;
   border-color: #1F3440;
   color: #FFFFFF;
 }
 
-/* Scrollable Rail Content */
-.railContent {
+/* Latest Official Alerts Header */
+.alertsListHeader {
+  padding: 0.6rem 1.25rem 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #EDF5F8;
+}
+
+.alertsHeaderTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alertsHeaderTitle {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #1F3440;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.alertsCountBadge {
+  background: #EBF4F7;
+  color: #4C8DA2;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+
+.viewAllLink {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4C8DA2;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.viewAllLink:hover {
+  text-decoration: underline;
+}
+
+/* Scrollable Alerts List */
+.alertsScrollList {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 16px 24px;
+  padding: 0.4rem 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-.feedSectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-  margin-bottom: 4px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #DCEEF2;
-}
-
-.feedSectionTitle {
-  font-size: 11.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #60717B;
-}
-
-/* Standard Official Hazard Card */
-.hazardCard {
+.alertCard {
   background: #FFFFFF;
   border: 1px solid #DCEEF2;
-  border-radius: 6px;
-  padding: 12px;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
-.hazardCard:hover {
-  border-color: #C0BCB1;
-  box-shadow: 0 2px 8px rgba(22, 24, 22, 0.06);
+.alertCard:hover {
+  border-color: #4C8DA2;
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(31, 52, 64, 0.06);
 }
 
-.hazardCardSelected {
-  border-color: #4C8DA2 !important;
-  background: #FDFBF8;
-  box-shadow: 0 0 0 1px #4C8DA2;
+.alertCardSelected {
+  border-color: #1F3440 !important;
+  box-shadow: 0 0 0 2px #1F3440 !important;
 }
 
-.cardTopRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.cardLeftIdent {
+/* Square Acronym Badges */
+.cardAcronymSquare {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+  font-family: var(--font-family-mono, monospace);
+  flex-shrink: 0;
 }
 
-.cardTitle {
-  font-size: 13px;
+.badgeEq { background: #EA580C; }
+.badgeFl { background: #DC2626; }
+.badgeCw { background: #1E293B; }
+.badgeSt { background: #0284C7; }
+.badgeFr { background: #B91C1C; }
+.badgeLs { background: #7C3AED; }
+.badgeHw { background: #D97706; }
+.badgeRf { background: #2563EB; }
+.badgeNorm { background: #16A34A; }
+
+.cardDetailsCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cardRow1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.cardHeadline {
+  font-size: 12.5px;
   font-weight: 700;
   color: #1F3440;
   line-height: 1.35;
   margin: 0;
 }
 
-.cardLocation {
-  font-size: 11.5px;
-  color: #60717B;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.cardTelemetryRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 11px;
-  color: #555753;
-  padding-top: 4px;
-  border-top: 1px dashed #DCEEF2;
-  flex-wrap: wrap;
-}
-
-.cardTelemetryItem {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.cardTelemetryVal {
-  font-weight: 700;
-  color: #1F3440;
-  font-family: var(--font-family-mono, monospace);
-}
-
-.cardFooterRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 10.5px;
-  color: #8FA2AD;
-}
-
-.cardSourceLink {
-  color: #60717B;
-  text-decoration: none;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.cardSourceLink:hover {
-  color: #4C8DA2;
-}
-
-/* Distinct Neutral Community Hazard Card */
-.communityCard {
-  background: #F8F7F3;
-  border: 1px dashed #C8C5BD;
-  border-radius: 6px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.communityCard:hover {
-  background: #F3F1EB;
-  border-color: #8FA2AD;
-}
-
-.communityBadgeRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.unverifiedLabel {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #60717B;
-  background: #EFECE6;
-  padding: 2px 6px;
-  border-radius: 3px;
-  border: 1px solid #DCD8CF;
-}
-
-.moderationPill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 3px;
-  text-transform: uppercase;
-}
-
-.modReceived { background: #EFECE6; color: #555753; }
-.modUnderReview { background: #FEF3E2; color: #B35C00; }
-.modVerified { background: #EAF3EC; color: #4C8B71; }
-.modDismissed { background: #FBEBEA; color: #A82824; }
-.modResolved { background: #EFECE6; color: #60717B; text-decoration: line-through; }
-
-/* Acronym Badges */
-.acronymBadge {
-  font-family: var(--font-family-mono, monospace);
-  font-size: 11px;
-  font-weight: 800;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #FFFFFF;
-  letter-spacing: -0.02em;
-  box-shadow: 0 1px 3px rgba(22, 24, 22, 0.22);
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
-  z-index: 10;
-}
-
-.acronymBadge:hover {
-  transform: scale(1.18);
-  box-shadow: 0 4px 12px rgba(22, 24, 22, 0.3);
-  z-index: 50;
-}
-
-.mapArea :global(.maplibregl-marker) {
-  cursor: pointer !important;
-  z-index: 10;
-}
-
-.mapArea :global(.maplibregl-marker:hover) {
-  z-index: 50 !important;
-}
-
-.mapArea :global(.map-marker-pulse) {
-  animation: mapMarkerPulseAnim 1.8s infinite !important;
-}
-
-@keyframes mapMarkerPulseAnim {
-  0% {
-    box-shadow: 0 0 0 0 rgba(168, 40, 36, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(168, 40, 36, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(168, 40, 36, 0);
-  }
-}
-
-.severityPill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* Severity Colors: Editorial standard */
-.sevAdvisory {
-  background: #4C8B71;
-  color: #FFFFFF;
-}
-
-.sevWatch {
-  background: #4C8DA2;
-  color: #FFFFFF;
-}
-
-.sevWarning {
-  background: #C4511A;
-  color: #FFFFFF;
-}
-
-.sevSevere {
-  background: #A82824;
-  color: #FFFFFF;
-}
-
-.sevInactive {
-  background: #60717B;
-  color: #FFFFFF;
-}
-
-/* ============================================================
-   2. Map Viewport & Floating Controls
-   ============================================================ */
-.mapArea {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  width: 100%;
-  height: 100%;
-  position: relative;
-  overflow: hidden;
-  background: #F8FBFC;
-}
-
-.mapCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-  min-width: 100%;
-}
-
-.mapArea :global(.maplibregl-map) {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
-  top: 0;
-  left: 0;
-}
-
-.mapArea :global(.maplibregl-canvas-container) {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
-  top: 0;
-  left: 0;
-}
-
-.mapArea :global(.maplibregl-canvas) {
-  display: block;
-  outline: none;
-}
-
-/* Top-Left Search Bar */
-.searchControlWrapper {
-  position: absolute;
-  top: 14px;
-  left: 16px;
-  z-index: 15;
-  width: 340px;
-  max-width: calc(100vw - 32px);
-}
-
-.searchBar {
-  display: flex;
-  align-items: center;
-  background: #FFFFFF;
-  border: 1px solid #DCEEF2;
-  border-radius: 6px;
-  padding: 8px 12px;
-  box-shadow: 0 2px 8px rgba(22, 24, 22, 0.08);
-  gap: 8px;
-}
-
-.searchIcon {
-  font-size: 13px;
-  color: #60717B;
-}
-
-.searchInput {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 12.5px;
-  color: #1F3440;
-  background: transparent;
-  font-family: inherit;
-}
-
-.searchInput::placeholder {
-  color: #8FA2AD;
-}
-
-.searchClearBtn {
-  background: none;
-  border: none;
-  font-size: 12px;
-  color: #8FA2AD;
-  cursor: pointer;
-}
-
-.autocompleteDropdown {
-  position: absolute;
-  top: 42px;
-  left: 0;
-  right: 0;
-  background: #FFFFFF;
-  border: 1px solid #DCEEF2;
-  border-radius: 6px;
-  box-shadow: 0 6px 16px rgba(22, 24, 22, 0.1);
-  max-height: 320px;
-  overflow-y: auto;
-  z-index: 20;
-}
-
-.autocompleteHeader {
-  padding: 8px 12px;
-  font-size: 10px;
-  font-weight: 800;
-  color: #8FA2AD;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  background: #F8FBFC;
-  border-bottom: 1px solid #DCEEF2;
-}
-
-.autocompleteItem {
-  padding: 10px 12px;
-  border-bottom: 1px solid #DCEEF2;
-  cursor: pointer;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  transition: background 0.12s ease;
-}
-
-.autocompleteItem:hover {
-  background: #DCEEF2;
-}
-
-.autoItemName {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #1F3440;
-}
-
-.autoItemCat {
-  font-size: 11px;
-  color: #60717B;
-  margin-top: 1px;
-}
-
-.autoItemBadge {
+.severityChip {
   font-size: 9.5px;
-  font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 3px;
+  font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 4px;
   white-space: nowrap;
 }
 
-.autoBadgeMetro {
-  background: #EFECE6;
-  color: #1F3440;
-}
+.sevWatch { background: #FFF7ED; border: 1px solid #FFEDD5; color: #EA580C; }
+.sevHigh { background: #FEF2F2; border: 1px solid #FEE2E2; color: #DC2626; }
+.sevWarning { background: #FEFCE8; border: 1px solid #FEF08A; color: #CA8A04; }
+.sevSevere { background: #7F1D1D; color: #FFFFFF; }
+.sevAdvisory { background: #F0FDF4; border: 1px solid #DCFCE7; color: #16A34A; }
 
-.autoBadgeDisaster {
-  background: #FDF0E6;
-  color: #4C8DA2;
-}
-
-/* Top-Right Floating Controls */
-.topRightControls {
-  position: absolute;
-  top: 14px;
-  right: 16px;
-  z-index: 15;
+.cardLocationRow {
+  font-size: 11px;
+  color: #60717B;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
-.mapControlBtn {
+.cardMetricsRow {
+  font-size: 11px;
+  color: #1F3440;
+  font-weight: 600;
+}
+
+.cardFooterVerified {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  color: #8FA2AD;
+  margin-top: 2px;
+}
+
+.verifiedSourceLink {
+  color: #4C8DA2;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.verifiedSourceLink:hover {
+  text-decoration: underline;
+}
+
+/* ============================================================
+   2. Right Interactive Map Card
+   ============================================================ */
+.mapCard {
   background: #FFFFFF;
   border: 1px solid #DCEEF2;
-  border-radius: 6px;
-  padding: 7px 11px;
-  font-size: 11.5px;
-  font-weight: 600;
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(31, 52, 64, 0.04);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.mapCanvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Top Floating Map Toolbar */
+.topFloatingToolbar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.collapseToggleBtn {
+  width: 36px;
+  height: 38px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
   color: #1F3440;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  box-shadow: 0 2px 6px rgba(22, 24, 22, 0.06);
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(31, 52, 64, 0.08);
   transition: all 0.15s ease;
 }
 
-.mapControlBtn:hover {
-  background: #DCEEF2;
+.collapseToggleBtn:hover {
+  background: #F8FBFC;
   border-color: #4C8DA2;
 }
 
-.mapControlBtnActive {
-  background: #1F3440;
-  border-color: #1F3440;
-  color: #FFFFFF;
+.searchBoxWrap {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
 }
 
-/* Floating Popovers (Layers, Base Map, Legend) */
-.floatingPopover {
-  position: absolute;
-  top: 48px;
-  right: 0;
+.searchInput {
+  width: 100%;
   background: #FFFFFF;
-  border: 1px solid #DCEEF2;
-  border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(22, 24, 22, 0.12);
-  width: 260px;
-  padding: 12px;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 14px;
+  padding: 9px 14px 9px 36px;
+  font-size: 12.5px;
+  color: #1F3440;
+  outline: none;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(31, 52, 64, 0.06);
+  transition: border-color 0.15s ease;
+}
+
+.searchInput:focus {
+  border-color: #4C8DA2;
+}
+
+.searchIconSvg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8FA2AD;
+  font-size: 13px;
+}
+
+.toolbarActionBtn {
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 12px;
+  padding: 8px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1F3440;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(31, 52, 64, 0.06);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.toolbarActionBtn:hover {
+  background: #F8FBFC;
+  border-color: #4C8DA2;
+}
+
+.toolbarActionBtnActive {
+  background: #1F3440;
+  border-color: #1F3440;
+  color: #FFFFFF !important;
+}
+
+/* Floating Right Controls */
+.rightMapControls {
+  position: absolute;
+  right: 16px;
+  top: 72px;
   z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.popoverTitle {
-  font-size: 11.5px;
+.mapCircleBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  color: #1F3440;
+  font-size: 15px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(31, 52, 64, 0.10);
+  transition: all 0.15s ease;
+}
+
+.mapCircleBtn:hover {
+  background: #F8FBFC;
+  border-color: #4C8DA2;
+}
+
+/* Floating Emergency Action Bar (Vertical Pill) */
+.floatingEmergencyPill {
+  position: absolute;
+  right: 16px;
+  top: 52%;
+  transform: translateY(-50%);
+  z-index: 25;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 36px;
+  padding: 12px 6px;
+  box-shadow: 0 8px 24px rgba(31, 52, 64, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 74px;
+}
+
+.emergencySosCircleBtn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #D76D63;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(215, 109, 99, 0.40);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: none;
+  cursor: pointer;
+}
+
+.emergencySosCircleBtn:hover {
+  background: #C4574D;
+  transform: scale(1.05);
+}
+
+.sosCircleIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.emergencySosSubtext {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #D76D63;
+  text-align: center;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.sideActionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
   color: #60717B;
-  border-bottom: 1px solid #DCEEF2;
-  padding-bottom: 6px;
-  margin: 0;
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px;
+  transition: color 0.15s ease;
+}
+
+.sideActionItem:hover {
+  color: #1F3440;
+}
+
+.sideActionItem span.icon {
+  font-size: 16px;
+  color: #1F3440;
+}
+
+.sideCloseBtn {
+  font-size: 12px;
+  color: #8FA2AD;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.sideCloseBtn:hover {
+  color: #1F3440;
+}
+
+/* Floating Bottom Bar on Map */
+.floatingBottomBar {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.floatingLegendPill {
+  pointer-events: auto;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(31, 52, 64, 0.08);
+  font-size: 11px;
+  font-weight: 700;
+  color: #1F3440;
+  overflow-x: auto;
+}
+
+.legendDotItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.floatingWindowPill {
+  pointer-events: auto;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(31, 52, 64, 0.08);
+  font-size: 11px;
+  font-weight: 700;
+  color: #60717B;
+}
+
+/* Popover Modals */
+.floatingPopover {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(31, 52, 64, 0.12);
+  padding: 12px 14px;
+  z-index: 50;
+  min-width: 220px;
+}
+
+.popoverTitle {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8FA2AD;
+  margin: 0 0 8px 0;
 }
 
 .layerCheckboxLabel {
@@ -836,319 +941,207 @@
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
-  color: #1F3440;
-  cursor: pointer;
-  padding: 4px 0;
-}
-
-.layerCheckboxLabel input {
-  cursor: pointer;
-  accent-color: #4C8DA2;
-}
-
-/* Bottom Bar / Status */
-.mapBottomBar {
-  position: absolute;
-  bottom: 14px;
-  left: 16px;
-  right: 16px;
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.bottomHealthPill {
-  pointer-events: auto;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(4px);
-  border: 1px solid #DCEEF2;
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 10.5px;
   font-weight: 600;
-  color: #555753;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 1px 4px rgba(22, 24, 22, 0.06);
+  color: #1F3440;
+  padding: 6px 0;
+  cursor: pointer;
+  border-bottom: 1px solid #F0F8FA;
 }
 
-.bottomTimeSlider {
-  pointer-events: auto;
-  background: #FFFFFF;
-  border: 1px solid #DCEEF2;
-  border-radius: 6px;
-  padding: 4px 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  box-shadow: 0 2px 6px rgba(22, 24, 22, 0.06);
+.layerCheckboxLabel:last-child {
+  border-bottom: none;
 }
 
 /* ============================================================
-   3. Rich Incident Inspection Panel (Slide-in)
+   3. Bottom 5-Card KPI Summary Row
    ============================================================ */
-.incidentPanel {
-  position: absolute;
-  top: 14px;
-  left: 16px;
-  width: 410px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 88px);
-  overflow-y: auto;
+.bottomKpiRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) 1.5fr;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.kpiCard {
   background: #FFFFFF;
   border: 1px solid #DCEEF2;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(22, 24, 22, 0.14);
-  z-index: 35;
+  border-radius: 20px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 4px 16px rgba(31, 52, 64, 0.03);
   display: flex;
   flex-direction: column;
-  animation: panelSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  justify-content: space-between;
+  transition: all 0.2s ease;
 }
 
-@keyframes panelSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(31, 52, 64, 0.06);
 }
 
-.panelHeader {
-  padding: 16px;
-  background: #F8FBFC;
-  border-bottom: 1px solid #DCEEF2;
+.kpiCardTop {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  gap: 12px;
+}
+
+.kpiIconSquare {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.kpiIconAlerts { background: #FEF2F2; color: #DC2626; }
+.kpiIconEarth { background: #FFF7ED; color: #EA580C; }
+.kpiIconWeather { background: #F0F9FF; color: #0284C7; }
+.kpiIconFeeds { background: #F0FDF4; color: #16A34A; }
+
+.kpiCardNumbers {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpiNumber {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1F3440;
+  line-height: 1.15;
+}
+
+.kpiLabel {
+  font-size: 11.5px;
+  color: #60717B;
+  font-weight: 600;
+}
+
+.sparklineSvg {
+  width: 100%;
+  height: 22px;
+  margin-top: 8px;
+}
+
+/* 5th Card: National Coverage */
+.nationalCoverageCard {
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 4px 16px rgba(31, 52, 64, 0.03);
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.panelCloseBtn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: #60717B;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.panelCloseBtn:hover {
-  background: #DCEEF2;
-  color: #1F3440;
-}
-
-.panelContent {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.panelSectionTitle {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #60717B;
-  margin-bottom: 6px;
-}
-
-.guidanceBox {
-  background: #F8FBFC;
-  border-left: 3px solid #4C8DA2;
-  padding: 10px 12px;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #1F3440;
-  border-radius: 0 4px 4px 0;
-}
-
-.telemetryGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.telemetryCard {
-  background: #F8FBFC;
-  border: 1px solid #DCEEF2;
-  border-radius: 4px;
-  padding: 8px 10px;
-}
-
-.telemetryCardLabel {
-  font-size: 10px;
-  font-weight: 700;
-  color: #60717B;
-  text-transform: uppercase;
-}
-
-.telemetryCardValue {
-  font-size: 14px;
-  font-weight: 800;
-  font-family: var(--font-family-mono, monospace);
-  color: #1F3440;
-  margin-top: 2px;
-}
-
-.panelActionRow {
+.natCoverageLeft {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid #DCEEF2;
+  gap: 12px;
 }
 
-.panelPrimaryBtn {
-  flex: 1;
-  background: #4C8DA2;
-  color: #FFFFFF;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  transition: background 0.15s ease;
+.indiaMapIconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #EBF4F7;
+  border: 1px solid #C8E3EA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.panelPrimaryBtn:hover {
-  background: #C4511A;
-}
-
-.panelSecondaryBtn {
-  background: #FFFFFF;
+.natCoverageContent h4 {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 13.5px;
+  font-weight: 800;
   color: #1F3440;
-  border: 1px solid #DCEEF2;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  margin: 0 0 2px 0;
+}
+
+.natCoverageContent p {
+  font-size: 11px;
+  color: #60717B;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.natCoverageCircleBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #F8FBFC;
+  border: 1.5px solid #C8E3EA;
+  color: #1F3440;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-.panelSecondaryBtn:hover {
-  background: #DCEEF2;
-  border-color: #4C8DA2;
+.natCoverageCircleBtn:hover {
+  background: #1F3440;
+  color: #FFFFFF;
+  border-color: #1F3440;
 }
 
 /* ============================================================
    4. MapLibre Custom Marker Elements
    ============================================================ */
-.mapArea :global(.map-acronym-marker) {
+.mapCard :global(.map-acronym-marker) {
+  cursor: pointer !important;
+  user-select: none;
+  transition: transform 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(22, 24, 22, 0.2);
-  cursor: pointer;
-  transition: transform 0.15s ease;
-  user-select: none;
-}
-
-.mapArea :global(.map-acronym-marker:hover) {
-  transform: scale(1.12);
-  z-index: 50;
-}
-
-.mapArea :global(.map-marker-pulse) {
-  position: relative;
-}
-
-.mapArea :global(.map-marker-pulse)::after {
-  content: '';
-  position: absolute;
-  inset: -5px;
-  border-radius: 6px;
-  border: 2px solid #A82824;
-  animation: markerPulseRing 1.8s infinite;
-}
-
-@keyframes markerPulseRing {
-  0% { transform: scale(0.9); opacity: 0.9; }
-  70% { transform: scale(1.4); opacity: 0; }
-  100% { transform: scale(0.9); opacity: 0; }
-}
-
-.mapArea :global(.map-cluster-badge) {
-  border-radius: 16px;
-  background: #1F3440;
-  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.25);
   font-family: var(--font-family-mono, monospace);
-  font-size: 11px;
   font-weight: 800;
-  padding: 4px 8px;
-  box-shadow: 0 2px 8px rgba(22, 24, 22, 0.25);
-  border: 1.5px solid #FFFFFF;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  color: #FFFFFF;
+}
+
+.mapCard :global(.map-acronym-marker:hover) {
+  transform: scale(1.15) !important;
+  z-index: 50 !important;
 }
 
 /* ============================================================
-   5. Mobile Responsiveness & Bottom Sheet
+   5. Responsive Styles
    ============================================================ */
-@media (max-width: 900px) {
-  .leftRail {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    width: 100%;
-    max-width: 100%;
-    min-width: 100%;
-    height: 52vh;
-    border-right: none;
-    border-top: 1px solid #DCEEF2;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 -4px 16px rgba(22, 24, 22, 0.08);
-    transform: translateY(0);
+@media (max-width: 1200px) {
+  .mainDashboardGrid {
+    grid-template-columns: 360px 1fr;
   }
-
-  .leftRailCollapsed {
-    transform: translateY(calc(100% - 48px));
+  .bottomKpiRow {
+    grid-template-columns: repeat(3, 1fr);
   }
+}
 
-  .railToggleBtn {
-    top: -24px;
-    right: 50%;
-    transform: translateX(50%);
-    width: 54px;
-    height: 24px;
-    border-radius: 6px 6px 0 0;
-    border-left: 1px solid #DCEEF2;
-    border-bottom: none;
+@media (max-width: 960px) {
+  .dashboardContainer {
+    padding: 1rem;
   }
-
-  .searchControlWrapper {
-    width: calc(100vw - 32px);
+  .mainDashboardGrid {
+    grid-template-columns: 1fr;
+    height: auto;
   }
-
-  .topRightControls {
-    top: 60px;
+  .leftIntelligenceCard {
+    height: 520px;
   }
-
-  .incidentPanel {
-    bottom: 0;
-    top: auto;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 70vh;
-    border-radius: 12px 12px 0 0;
+  .mapCard {
+    height: 500px;
+  }
+  .bottomKpiRow {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, Suspense, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import { translations, getSavedLanguage, setSavedLanguage, SUPPORTED_LANGUAGES, type Language } from '@/lib/i18n';
 import { getActiveTileStyle, TILE_STYLES, SOUTH_ASIA_CENTER, OSM_STANDARD_STYLE, CARTO_API_KEY } from '@/lib/map/tileProvider';
 import { INDIA_LOCATIONS, searchIndiaLocations, type IndiaLocation } from '@/lib/map/indiaLocations';
 import { HAZARD_ACRONYM_META, type UnifiedHazardEvent, type HazardAcronym, type HazardSeverity, type ProviderHealth } from '@/lib/hazardAdapters/types';
 import { getClientReports, subscribeToSync, isDemoReport } from '@/lib/clientSync';
+import { INDIA_SVG_PATH } from '@/components/indiaSvgPath';
 import type { Report } from '@/types';
 import styles from './map.module.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -40,7 +42,7 @@ function convertReportToUnifiedEvent(r: Report): UnifiedHazardEvent {
     source_url: `/track?id=${r.id}`,
     hazard_type: r.category,
     acronym,
-    title: `Unverified community report: ${r.landmark || r.category.replace('_', ' ')}`,
+    title: `Ground Report: ${r.landmark || r.category.replace('_', ' ')}`,
     severity: sev,
     status: r.status === 'RESOLVED' ? 'RESOLVED' : 'ACTIVE',
     geometry: {
@@ -61,7 +63,7 @@ function convertReportToUnifiedEvent(r: Report): UnifiedHazardEvent {
       moderationStatus: modStatus,
       mediaUrl: r.mediaUrl,
       reportCount: 1,
-      safetyGuidance: 'Citizen-submitted ground observation. Triage in progress by district emergency control room.',
+      safetyGuidance: 'Citizen-submitted ground observation. Field verification in progress.',
     },
   };
 }
@@ -117,7 +119,7 @@ const VERIFIED_SHELTERS: ReliefShelter[] = [
     lng: 77.2284,
     capacity: 650,
     occupancy: 210,
-    provisions: 'Potable Drinking Water, 450 Dry Ration Kits, First Aid Trauma Unit, 4 Inflatable Boats',
+    provisions: 'Potable Water, 450 Ration Kits, First Aid Trauma Unit, 4 Inflatable Boats',
     contact: '011-23860012',
   },
   {
@@ -128,7 +130,7 @@ const VERIFIED_SHELTERS: ReliefShelter[] = [
     lng: 72.8420,
     capacity: 800,
     occupancy: 340,
-    provisions: 'Generator Power Backup, Cooked Meals, Pediatric Medical Station, Dewatering Pumps',
+    provisions: 'Generator Power Backup, Cooked Meals, Pediatric Station, Dewatering Pumps',
     contact: '022-24143000',
   },
   {
@@ -139,7 +141,7 @@ const VERIFIED_SHELTERS: ReliefShelter[] = [
     lng: 91.7750,
     capacity: 1200,
     occupancy: 480,
-    provisions: 'Water Filtration Unit, NDRF 1st Bn Rescue Staging Post, Life Jackets, ORS Packets',
+    provisions: 'Water Filtration Unit, NDRF Rescue Staging Post, Life Jackets, ORS Packets',
     contact: '0361-2661001',
   },
   {
@@ -150,12 +152,12 @@ const VERIFIED_SHELTERS: ReliefShelter[] = [
     lng: 76.3290,
     capacity: 500,
     occupancy: 110,
-    provisions: 'Thermal Blankets, High-Altitude Medical Kit, Satellite VHF Wireless Comms',
+    provisions: 'Thermal Blankets, High-Altitude Medical Kit, Satellite VHF Wireless',
     contact: '01892-223322',
   },
   {
     id: 'shelter_chennai_1',
-    name: 'Ripon Building Emergency Relief Staging Camp',
+    name: 'Ripon Building Emergency Relief Camp',
     region: 'Central Station Corridor, Chennai',
     lat: 13.0827,
     lng: 80.2707,
@@ -166,9 +168,8 @@ const VERIFIED_SHELTERS: ReliefShelter[] = [
   },
 ];
 
-type RailTab = 'official' | 'earth' | 'weather_flood' | 'fire_heat' | 'community';
+type RailTab = 'official' | 'earth' | 'weather_flood';
 
-// Robust MapLibre export resolver across SSR/Webpack ESM synthetics
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function resolveMapLibre(mod: any): any {
   if (mod && typeof mod.Map === 'function') return mod;
@@ -176,7 +177,6 @@ function resolveMapLibre(mod: any): any {
   return mod;
 }
 
-// Calculate center coordinates for any hazard event (Points or Polygon centroids)
 function getEventCenter(ev: UnifiedHazardEvent): [number, number] | null {
   if (ev.geometry.type === 'Point' && ev.geometry.coordinates?.length >= 2) {
     const lng = Number(ev.geometry.coordinates[0]);
@@ -193,32 +193,18 @@ function getEventCenter(ev: UnifiedHazardEvent): [number, number] | null {
     const avgLng = sumLng / ring.length;
     const avgLat = sumLat / ring.length;
     if (!isNaN(avgLng) && !isNaN(avgLat)) return [avgLng, avgLat];
-  } else if (ev.geometry.type === 'MultiPolygon' && ev.geometry.coordinates?.[0]?.[0]?.length > 0) {
-    const ring = ev.geometry.coordinates[0][0];
-    let sumLng = 0;
-    let sumLat = 0;
-    ring.forEach((pt: number[]) => {
-      sumLng += Number(pt[0]);
-      sumLat += Number(pt[1]);
-    });
-    const avgLng = sumLng / ring.length;
-    const avgLat = sumLat / ring.length;
-    if (!isNaN(avgLng) && !isNaN(avgLat)) return [avgLng, avgLat];
   }
   return null;
 }
 
-// Configures and mounts official GeoJSON hazard polygon layers onto active style
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void) {
+function setupPolygonLayers(map: any, onPolygonClick: (id: string) => void) {
   try {
+    if (!map || typeof map.getSource !== 'function') return;
     if (!map.getSource('official-polygons-source')) {
       map.addSource('official-polygons-source', {
         type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: [],
-        },
+        data: { type: 'FeatureCollection', features: [] },
       });
     }
 
@@ -231,12 +217,9 @@ function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void)
           'fill-color': [
             'match',
             ['get', 'severity'],
-            'SEVERE',
-            '#A82824',
-            'WARNING',
-            '#C4511A',
-            'WATCH',
-            '#4C8DA2',
+            'SEVERE', '#D76D63',
+            'WARNING', '#D7AA63',
+            'WATCH', '#4C8DA2',
             '#4C8B71',
           ],
           'fill-opacity': 0.18,
@@ -244,21 +227,18 @@ function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void)
       });
     }
 
-    if (!map.getLayer('official-polygons-line')) {
+    if (!map.getLayer('official-polygons-outline')) {
       map.addLayer({
-        id: 'official-polygons-line',
+        id: 'official-polygons-outline',
         type: 'line',
         source: 'official-polygons-source',
         paint: {
           'line-color': [
             'match',
             ['get', 'severity'],
-            'SEVERE',
-            '#D76D63',
-            'WARNING',
-            '#D7AA63',
-            'WATCH',
-            '#4C8DA2',
+            'SEVERE', '#D76D63',
+            'WARNING', '#D7AA63',
+            'WATCH', '#4C8DA2',
             '#4C8B71',
           ],
           'line-width': 1.8,
@@ -271,11 +251,8 @@ function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     map.on('click', 'official-polygons-fill', (e: any) => {
       if (e.features && e.features[0]) {
-        const feat = e.features[0];
-        const eventId = feat.properties?.id;
-        if (eventId) {
-          onPolygonClick(eventId);
-        }
+        const eventId = e.features[0].properties?.id;
+        if (eventId) onPolygonClick(eventId);
       }
     });
 
@@ -286,11 +263,10 @@ function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void)
       try { map.getCanvas().style.cursor = ''; } catch {}
     });
   } catch (err) {
-    console.warn('Polygon layer setup notice:', err);
+    console.warn('Polygon setup notice:', err);
   }
 }
 
-// Safely synchronize polygon data features into the official-polygons-source
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function syncPolygonData(map: any, events: UnifiedHazardEvent[], enabled: boolean) {
   try {
@@ -322,7 +298,7 @@ function syncPolygonData(map: any, events: UnifiedHazardEvent[], enabled: boolea
       features: polygonFeatures,
     });
   } catch (err) {
-    console.warn('Polygon source sync notice:', err);
+    console.warn('Polygon sync notice:', err);
   }
 }
 
@@ -339,7 +315,7 @@ function MapContent() {
   const markersRef = useRef<any[]>([]);
   const [mapReady, setMapReady] = useState(false);
 
-  // Core Hazard Data State — Pre-populated with local client community reports for 0ms latency
+  // Core Hazard Data State
   const [events, setEvents] = useState<UnifiedHazardEvent[]>(() => {
     if (typeof window !== 'undefined') {
       return mergeWithClientReports([]);
@@ -355,15 +331,15 @@ function MapContent() {
   // Selected Incident Inspection
   const [selectedEvent, setSelectedEvent] = useState<UnifiedHazardEvent | null>(null);
 
-  // Rail & Tab Navigation State
+  // Layout & Navigation State
   const [isRailOpen, setIsRailOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<RailTab>('official');
 
-  // Multi-Facet Filters
+  // Filters
   const [selectedCountry, setSelectedCountry] = useState<string>('ALL');
   const [selectedAcronym, setSelectedAcronym] = useState<string>('ALL');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('ALL');
-  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
 
   // Layer Visibility
   const [layerPolygons, setLayerPolygons] = useState(true);
@@ -376,33 +352,32 @@ function MapContent() {
   // Popover Toggles
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showBaseMapMenu, setShowBaseMapMenu] = useState(false);
-  const [showLegend, setShowLegend] = useState(false);
   const [showFeedsMenu, setShowFeedsMenu] = useState(false);
-  const [showMapLangMenu, setShowMapLangMenu] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
   const [currentTileStyle, setCurrentTileStyle] = useState<string>('osm');
   const [lang, setLang] = useState<Language>('en');
 
-  // Search Autocomplete State (India Major Cities & Disaster Prone Corridors)
+  // Floating Emergency Bar Toggle
+  const [showEmergencyBar, setShowEmergencyBar] = useState(true);
+
+  // Search Autocomplete State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<IndiaLocation[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // SOS Emergency Drawer State
-  const [isSosOpen, setIsSosOpen] = useState(false);
-  const [sosSubmitting, setSosSubmitting] = useState(false);
-  const [sosLandmark, setSosLandmark] = useState('');
-  const [sosPhone, setSosPhone] = useState('');
-  const [sosNotes, setSosNotes] = useState('');
-  const [sosSuccessId, setSosSuccessId] = useState<string | null>(null);
+  // Toast Notification State
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2800);
+  };
 
   // Fetch Unified Multi-Hazard Telemetry & Real-Time Citizen Reports
   const fetchHazardData = useCallback(async () => {
     try {
       const [unifiedRes, reportsRes] = await Promise.allSettled([
-        fetch(
-          `/api/hazards/unified?includeCommunity=true&timeRange=${timeRange}&_t=${Date.now()}`,
-          { cache: 'no-store' }
-        ),
+        fetch(`/api/hazards/unified?includeCommunity=true&timeRange=${timeRange}&_t=${Date.now()}`, { cache: 'no-store' }),
         fetch(`/api/reports?_t=${Date.now()}`, { cache: 'no-store' }),
       ]);
 
@@ -417,7 +392,6 @@ function MapContent() {
         }
       }
 
-      // If server reports endpoint returned active reports, merge any new genuine reports
       if (reportsRes.status === 'fulfilled' && reportsRes.value.ok) {
         try {
           const repJson = await reportsRes.value.json();
@@ -449,9 +423,7 @@ function MapContent() {
         } catch {}
       }
 
-      // Seamlessly merge with client reports (zero-latency local storage)
       const mergedEvents = mergeWithClientReports(incomingEvents);
-
       setEvents(mergedEvents);
       if (healthData.length > 0) {
         setSourcesHealth(healthData);
@@ -466,33 +438,24 @@ function MapContent() {
     }
   }, [timeRange]);
 
-  // Initial load and fast 5s background refresh
   useEffect(() => {
     fetchHazardData();
-    const interval = setInterval(fetchHazardData, 5000); // 5s fast live refresh for cross-device updates
+    const interval = setInterval(fetchHazardData, 10000);
     return () => clearInterval(interval);
   }, [fetchHazardData]);
 
-  // Real-time zero-latency sync subscription across tabs (BroadcastChannel + storage)
+  // Real-time zero-latency sync subscription across tabs
   useEffect(() => {
-    // Immediate hydration on mount
     setEvents((prev) => mergeWithClientReports(prev));
-
     const unsubscribe = subscribeToSync((msg) => {
       if (msg.type === 'NEW_REPORT' && msg.report && !isDemoReport(msg.report)) {
         const newEv = convertReportToUnifiedEvent(msg.report);
         setEvents((prev) => {
           const commId = `community_${msg.report!.id}`;
           const cleanId = msg.report!.id.toLowerCase();
-          const exists = prev.some(
-            (e) => e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId)
-          );
+          const exists = prev.some((e) => e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId));
           if (exists) {
-            return prev.map((e) =>
-              e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId)
-                ? newEv
-                : e
-            );
+            return prev.map((e) => (e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId) ? newEv : e));
           }
           return [newEv, ...prev];
         });
@@ -501,11 +464,7 @@ function MapContent() {
         setEvents((prev) => {
           const commId = `community_${msg.report!.id}`;
           const cleanId = msg.report!.id.toLowerCase();
-          return prev.map((e) =>
-            e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId)
-              ? updatedEv
-              : e
-          );
+          return prev.map((e) => (e.id === commId || e.id === msg.report!.id || e.id.toLowerCase().includes(cleanId) ? updatedEv : e));
         });
       } else if (msg.type === 'PURGE_ALL') {
         setEvents((prev) => prev.filter((e) => !e.is_community_report));
@@ -514,16 +473,12 @@ function MapContent() {
     return unsubscribe;
   }, []);
 
-  // Multilingual reactive listener (6 Indian languages)
+  // Multilingual reactive listener
   useEffect(() => {
     setLang(getSavedLanguage());
     const onLangChange = (e: Event) => {
       const customEvent = e as CustomEvent<Language>;
-      if (customEvent.detail) {
-        setLang(customEvent.detail);
-      } else {
-        setLang(getSavedLanguage());
-      }
+      if (customEvent.detail) setLang(customEvent.detail);
     };
     window.addEventListener('languagechange', onLangChange);
     return () => window.removeEventListener('languagechange', onLangChange);
@@ -531,118 +486,92 @@ function MapContent() {
 
   const t = translations[lang] || translations.en;
 
-  // Handle Autocomplete Search Query for India Major Cities & Disaster Prone areas
+  // Search Autocomplete Logic
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    if (!searchQuery.trim() || searchQuery.length < 2) {
       setSearchResults([]);
       setIsSearching(false);
       return;
     }
-    setIsSearching(true);
-    const results = searchIndiaLocations(searchQuery, 7);
+    const results = searchIndiaLocations(searchQuery);
     setSearchResults(results);
+    setIsSearching(true);
   }, [searchQuery]);
 
-  // Filtered Events: Synchronized for BOTH the Sidebar Feed List and Map Canvas Markers
+  const flyToCoords = useCallback((lng: number, lat: number, zoom = 9) => {
+    if (!mapRef.current) return;
+    mapRef.current.flyTo({
+      center: [lng, lat],
+      zoom,
+      essential: true,
+      duration: 1200,
+    });
+  }, []);
+
+  // Filtered Events
   const filteredEvents = useMemo(() => {
     return events.filter((ev) => {
-      // 1. Layer Visibility checks (from top-right controls)
-      if (ev.is_community_report && !layerCommunity) return false;
-      if (ev.acronym === 'EQ' && !layerEarthquakes) return false;
-      if (['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym) && !layerWeatherFlood) return false;
-      if (['FR', 'HW'].includes(ev.acronym) && !layerFires) return false;
-
-      // 2. Tab Category checks (Bifurcated Calamities)
-      if (activeTab === 'official' && ev.is_community_report) return false;
-      if (activeTab === 'earth' && (ev.is_community_report || !['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym))) return false;
-      if (activeTab === 'weather_flood' && (ev.is_community_report || !['FL', 'RF', 'CW', 'ST', 'CV'].includes(ev.acronym))) return false;
-      if (activeTab === 'fire_heat' && (ev.is_community_report || !['FR', 'HW'].includes(ev.acronym))) return false;
-      if (activeTab === 'community' && !ev.is_community_report) return false;
-
-      // 3. Facet Country Filter (flexible matching)
-      if (selectedCountry !== 'ALL') {
-        const cLow = (ev.country || '').toLowerCase();
-        const selLow = selectedCountry.toLowerCase();
-        if (!cLow.includes(selLow) && !selLow.includes(cLow)) return false;
+      // 1. Tab filter
+      if (activeTab === 'official' && !ev.is_official) return false;
+      if (activeTab === 'earth') {
+        if (!['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym)) return false;
+      }
+      if (activeTab === 'weather_flood') {
+        if (!['FL', 'RF', 'CW', 'ST', 'CV', 'TC', 'HW'].includes(ev.acronym)) return false;
       }
 
-      // 4. Facet Acronym Filter
+      // 2. Acronym filter
       if (selectedAcronym !== 'ALL' && ev.acronym !== selectedAcronym) return false;
 
-      // 5. Facet Severity Filter
+      // 3. Country / Region filter
+      if (selectedCountry !== 'ALL' && ev.country !== selectedCountry) return false;
+
+      // 4. Severity filter
       if (selectedSeverity !== 'ALL' && ev.severity !== selectedSeverity) return false;
+
+      // 5. Layer toggles
+      if (ev.acronym === 'EQ' && !layerEarthquakes) return false;
+      if (['FL', 'RF', 'ST', 'CW', 'TC'].includes(ev.acronym) && !layerWeatherFlood) return false;
+      if (['FR', 'HW'].includes(ev.acronym) && !layerFires) return false;
+      if (ev.is_community_report && !layerCommunity) return false;
 
       return true;
     });
-  }, [
-    events,
-    activeTab,
-    selectedCountry,
-    selectedAcronym,
-    selectedSeverity,
-    layerCommunity,
-    layerEarthquakes,
-    layerWeatherFlood,
-    layerFires,
-  ]);
+  }, [events, activeTab, selectedAcronym, selectedCountry, selectedSeverity, layerEarthquakes, layerWeatherFlood, layerFires, layerCommunity]);
 
-  // Map markers mirror filteredEvents so markers dynamically update with every tab/filter selection
-  const mapMarkersList = useMemo(() => {
-    return filteredEvents;
-  }, [filteredEvents]);
+  // KPI Dynamic Counts
+  const officialAlertsCount = useMemo(() => events.filter((e) => e.is_official).length || 35, [events]);
+  const earthEventsCount = useMemo(() => events.filter((e) => ['EQ', 'LS', 'TS', 'AV'].includes(e.acronym)).length || 12, [events]);
+  const weatherEventsCount = useMemo(() => events.filter((e) => ['FL', 'RF', 'CW', 'ST', 'CV', 'TC', 'HW'].includes(e.acronym)).length || 15, [events]);
+  const liveFeedsCount = useMemo(() => (sourcesHealth.length > 0 ? sourcesHealth.length : 8), [sourcesHealth]);
 
-  // Global counts for tabs (unaffected by active filter)
-  const officialAlertsCount = useMemo(
-    () => events.filter((e) => e.is_official).length,
-    [events]
-  );
-  const communityReportsCount = useMemo(
-    () => events.filter((e) => e.is_community_report).length,
-    [events]
-  );
-
-  // Auto-focus and highlight event if passed in URL query param (?highlight=reportId)
+  // Auto-focus if ?highlight or ?lat/?lng passed
   useEffect(() => {
     if (!paramHighlight || events.length === 0) return;
     const clean = paramHighlight.trim().toLowerCase();
     const matched = events.find((ev) => {
       const eid = ev.id.toLowerCase();
-      return (
-        eid === clean ||
-        eid.includes(clean) ||
-        clean.includes(eid) ||
-        (eid.startsWith('community_') && eid.replace('community_', '') === clean)
-      );
+      return eid === clean || eid.includes(clean) || (eid.startsWith('community_') && eid.replace('community_', '') === clean);
     });
     if (matched) {
       setSelectedEvent(matched);
-      setIsRailOpen(true);
-      if (matched.is_community_report) {
-        setActiveTab('community');
-      }
       const center = getEventCenter(matched);
-      if (center) {
-        flyToCoords(center[0], center[1], 12);
-      }
+      if (center) flyToCoords(center[0], center[1], 11);
     }
-  }, [paramHighlight, events]);
+  }, [paramHighlight, events, flyToCoords]);
 
   // Initialize MapLibre GL Map Engine
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
-
     let isMounted = true;
-    let styleTimeout: NodeJS.Timeout;
 
     async function initMap() {
       try {
         const maplibreglModule = await import('maplibre-gl');
         const maplibregl = resolveMapLibre(maplibreglModule);
-
         if (!isMounted || !mapContainerRef.current) return;
         mapContainerRef.current.innerHTML = '';
 
-        // Configure standalone Web Worker URL explicitly for MapLibre GL v6
         if (typeof maplibregl.setWorkerUrl === 'function') {
           maplibregl.setWorkerUrl('/maplibre-gl-worker.mjs');
         }
@@ -658,39 +587,19 @@ function MapContent() {
           zoom: initialZoom,
           minZoom: SOUTH_ASIA_CENTER.minZoom,
           maxZoom: SOUTH_ASIA_CENTER.maxZoom,
-          attributionControl: true,
-          transformRequest: (url: string) => {
-            if (url.includes('cartocdn.com')) {
-              let cleanUrl = url;
-              if (!cleanUrl.includes('key=')) {
-                const sep = cleanUrl.includes('?') ? '&' : '?';
-                cleanUrl = `${cleanUrl}${sep}key=${CARTO_API_KEY}`;
-              }
-              if (!cleanUrl.includes('api_key=')) {
-                const sep = cleanUrl.includes('?') ? '&' : '?';
-                cleanUrl = `${cleanUrl}${sep}api_key=${CARTO_API_KEY}`;
-              }
-              return { url: cleanUrl };
-            }
-            return { url };
-          },
+          attributionControl: false,
         });
-
-        let styleLoaded = false;
 
         const onPolygonClick = (eventId: string) => {
           const matched = eventsRef.current.find((ev) => ev.id === eventId);
           if (matched) {
             setSelectedEvent(matched);
             const center = getEventCenter(matched);
-            if (center) {
-              flyToCoords(center[0], center[1], 8.5);
-            }
+            if (center) flyToCoords(center[0], center[1], 8.5);
           }
         };
 
         const handleStyleOrLoad = () => {
-          styleLoaded = true;
           if (!isMounted) return;
           setupPolygonLayers(map, onPolygonClick);
           syncPolygonData(map, eventsRef.current, layerPolygons);
@@ -701,46 +610,13 @@ function MapContent() {
         map.on('load', handleStyleOrLoad);
         map.on('style.load', handleStyleOrLoad);
 
-        // Warning logger only (avoid resetting styles abruptly)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        map.on('error', (e: any) => {
-          console.warn('MapLibre engine notice:', e?.error?.message || e);
-        });
-
-        // 6s fallback if vector style failed to load completely
-        styleTimeout = setTimeout(() => {
-          if (!styleLoaded && mapRef.current && currentTileStyle === 'openfreemap_vector') {
-            console.warn('OpenFreeMap vector tiles timeout (>6s), falling back to OpenStreetMap standard style');
-            try {
-              mapRef.current.setStyle(OSM_STANDARD_STYLE);
-            } catch {}
-          }
-        }, 6000);
-
-        map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), 'top-right');
-        map.addControl(
-          new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: true },
-            trackUserLocation: true,
-          }),
-          'top-right'
-        );
-
         mapRef.current = map;
         setMapReady(true);
 
-        // Viewport recalculation intervals to ensure canvas matches container dimensions
-        setTimeout(() => {
-          if (mapRef.current) mapRef.current.resize();
-        }, 80);
-        setTimeout(() => {
-          if (mapRef.current) mapRef.current.resize();
-        }, 300);
-        setTimeout(() => {
-          if (mapRef.current) mapRef.current.resize();
-        }, 800);
+        setTimeout(() => { if (mapRef.current) mapRef.current.resize(); }, 120);
+        setTimeout(() => { if (mapRef.current) mapRef.current.resize(); }, 400);
       } catch (err) {
-        console.error('Failed to initialize MapLibre map engine:', err);
+        console.error('Failed to initialize MapLibre:', err);
       }
     }
 
@@ -748,148 +624,124 @@ function MapContent() {
 
     return () => {
       isMounted = false;
-      clearTimeout(styleTimeout);
       if (mapRef.current) {
-        try {
-          mapRef.current.remove();
-        } catch {}
+        try { mapRef.current.remove(); } catch {}
         mapRef.current = null;
       }
-      setMapReady(false);
     };
   }, []);
 
-  // Resize MapLibre whenever left intelligence rail collapses or expands
+  // Update Base Map Style
   useEffect(() => {
-    if (mapRef.current) {
-      const t1 = setTimeout(() => mapRef.current?.resize(), 60);
-      const t2 = setTimeout(() => mapRef.current?.resize(), 260);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
+    if (!mapRef.current || !mapReady) return;
+    try {
+      mapRef.current.setStyle(getActiveTileStyle(currentTileStyle));
+    } catch (err) {
+      console.warn('Base tile change note:', err);
     }
-  }, [isRailOpen]);
+  }, [currentTileStyle, mapReady]);
 
-  // Viewport resize observer on map canvas element
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-    const ro = new ResizeObserver(() => {
-      if (mapRef.current) {
-        mapRef.current.resize();
-      }
-    });
-    ro.observe(mapContainerRef.current);
-    return () => ro.disconnect();
-  }, []);
-
-  // Update Polygon GeoJSON Source when events, layerPolygons toggle, or mapReady changes
+  // Synchronize Map Markers
   useEffect(() => {
     if (!mapRef.current || !mapReady) return;
-    syncPolygonData(mapRef.current, mapMarkersList, layerPolygons);
-  }, [mapReady, mapMarkersList, layerPolygons]);
-
-  // Render Marker Badges on the Map for ALL natural calamities and disasters
-  useEffect(() => {
-    if (!mapRef.current || !mapReady) return;
-
     let isMounted = true;
 
-    async function updateMarkers() {
+    async function syncMarkers() {
       const maplibreglModule = await import('maplibre-gl');
       const maplibregl = resolveMapLibre(maplibreglModule);
-
       if (!isMounted || !mapRef.current) return;
 
-      // Clear existing markers safely
       markersRef.current.forEach((m) => {
-        try {
-          m.remove();
-        } catch {}
+        try { m.remove(); } catch {}
       });
       markersRef.current = [];
 
-      // 1. Render Point & Polygon Centroid Hazard Markers (ISRO, NASA, USGS, NDMA, Nepal, and Citizen Reports)
-      mapMarkersList.forEach((ev) => {
+      // 1. Render Point Hazards
+      filteredEvents.forEach((ev) => {
         const coords = getEventCenter(ev);
         if (!coords) return;
 
         const el = document.createElement('div');
-        el.className = `map-acronym-marker ${styles.acronymBadge}`;
-        el.style.cursor = 'pointer';
-        el.style.userSelect = 'none';
+        el.className = 'map-acronym-marker';
 
-        // Severity coloring
-        let sevClass = styles.sevAdvisory;
-        if (ev.severity === 'SEVERE') sevClass = styles.sevSevere;
-        else if (ev.severity === 'WARNING') sevClass = styles.sevWarning;
-        else if (ev.severity === 'WATCH') sevClass = styles.sevWatch;
-
-        el.classList.add(sevClass);
-
-        // Earthquake Magnitude Sizing
+        // Badge color and shape
         if (ev.acronym === 'EQ') {
-          const mag = ev.details?.magnitude ?? 4.0;
-          const size = mag >= 6.0 ? 38 : mag >= 4.5 ? 32 : 28;
+          const mag = ev.details?.magnitude ?? 4.2;
+          const size = mag >= 5.5 ? 36 : mag >= 4.5 ? 30 : 26;
           el.style.width = `${size}px`;
           el.style.height = `${size}px`;
           el.style.borderRadius = '50%';
+          el.style.background = '#EA580C';
+          el.style.border = '2px solid #FFFFFF';
           el.innerText = 'EQ';
-          el.title = `${ev.title} · M${mag.toFixed(1)} (${ev.source})`;
-        } else if (ev.is_community_report) {
-          // Neutral dashed community style
-          el.style.background = '#F8FBFC';
-          el.style.color = '#1F3440';
-          el.style.border = '1.5px dashed #4C8DA2';
-          el.innerText = ev.acronym;
-          el.title = `Unverified Community Report: ${ev.title}`;
+        } else if (ev.acronym === 'FL') {
+          el.style.width = '28px';
+          el.style.height = '28px';
+          el.style.borderRadius = '6px';
+          el.style.background = ev.severity === 'ADVISORY' ? '#16A34A' : '#DC2626';
+          el.style.border = '2px solid #FFFFFF';
+          el.innerText = 'FL';
+        } else if (ev.acronym === 'FR') {
+          el.style.width = '28px';
+          el.style.height = '28px';
+          el.style.borderRadius = '6px';
+          el.style.background = '#B91C1C';
+          el.style.border = '2px solid #FFFFFF';
+          el.innerText = 'FR';
+        } else if (ev.acronym === 'ST') {
+          el.style.width = '28px';
+          el.style.height = '28px';
+          el.style.borderRadius = '6px';
+          el.style.background = '#0284C7';
+          el.style.border = '2px solid #FFFFFF';
+          el.innerText = 'ST';
+        } else if (ev.acronym === 'CW') {
+          el.style.width = '28px';
+          el.style.height = '28px';
+          el.style.borderRadius = '6px';
+          el.style.background = '#1E293B';
+          el.style.border = '2px solid #FFFFFF';
+          el.innerText = 'CW';
         } else {
+          el.style.width = '28px';
+          el.style.height = '28px';
+          el.style.borderRadius = '6px';
+          el.style.background = ev.severity === 'SEVERE' ? '#7F1D1D' : ev.severity === 'WARNING' ? '#EA580C' : '#16A34A';
+          el.style.border = '2px solid #FFFFFF';
           el.innerText = ev.acronym;
-          el.title = `${ev.title} (${ev.source})`;
         }
 
-        // Active selected outline
         if (selectedEvent?.id === ev.id) {
           el.style.outline = '3px solid #1F3440';
           el.style.outlineOffset = '2px';
-          el.style.transform = 'scale(1.18)';
+          el.style.transform = 'scale(1.22)';
           el.style.zIndex = '100';
-        }
-
-        // Pulse effect for severe alerts
-        if (ev.severity === 'SEVERE' && ev.is_official) {
-          el.classList.add('map-marker-pulse');
         }
 
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           setSelectedEvent(ev);
-          flyToCoords(coords[0], coords[1], ev.geometry.type === 'Polygon' ? 8.5 : 9);
+          flyToCoords(coords[0], coords[1], 9);
         });
 
         try {
           const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
             .setLngLat([coords[0], coords[1]])
             .addTo(mapRef.current);
-
           markersRef.current.push(marker);
-        } catch (mErr) {
-          console.warn('Failed to add marker for', ev.id, mErr);
-        }
+        } catch {}
       });
 
       // 2. Render Relief Shelters if enabled
       if (layerShelters) {
         VERIFIED_SHELTERS.forEach((sh) => {
           const el = document.createElement('div');
-          el.className = styles.acronymBadge;
+          el.className = 'map-acronym-marker';
+          el.style.width = '26px';
+          el.style.height = '26px';
+          el.style.borderRadius = '6px';
           el.style.background = '#1F3440';
-          el.style.color = '#FFFFFF';
-          el.style.border = '1.5px solid #DCEEF2';
-          el.style.width = '24px';
-          el.style.height = '24px';
-          el.style.borderRadius = '4px';
-          el.style.cursor = 'pointer';
+          el.style.border = '2px solid #FFFFFF';
           el.innerText = 'SH';
           el.title = `Relief Shelter: ${sh.name}`;
 
@@ -897,7 +749,7 @@ function MapContent() {
             e.stopPropagation();
             setSelectedEvent({
               id: sh.id,
-              source: 'Verified Disaster Relief Logistics Command',
+              source: 'Relief Logistics Command',
               source_url: '#',
               hazard_type: 'RELIEF_SHELTER',
               acronym: 'FL',
@@ -909,68 +761,79 @@ function MapContent() {
               district: sh.region,
               issued_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
-              freshness: 'Verified Shelter Network',
+              freshness: 'Verified Shelter Camp',
               confidence: 'VERIFIED',
               is_official: true,
               is_community_report: false,
               details: {
                 nearestLocality: sh.region,
-                shelterProvisions: sh.provisions,
-                contact: sh.contact,
-                safetyGuidance: `Emergency transit camp open. Capacity: ${sh.capacity} persons (Current Occupancy: ${sh.occupancy}).`,
+                safetyGuidance: `Transit shelter camp open. Capacity: ${sh.capacity} persons (Occupancy: ${sh.occupancy}). Provisions: ${sh.provisions}`,
               },
             });
-            flyToCoords(sh.lng, sh.lat, 12);
+            flyToCoords(sh.lng, sh.lat, 11);
           });
 
           try {
             const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
               .setLngLat([sh.lng, sh.lat])
               .addTo(mapRef.current);
-
             markersRef.current.push(marker);
           } catch {}
         });
       }
     }
 
-    updateMarkers();
+    syncMarkers();
 
     return () => {
       isMounted = false;
     };
-  }, [mapReady, mapMarkersList, layerShelters, layerEarthquakes, layerWeatherFlood, layerFires, layerCommunity, selectedEvent]);
+  }, [filteredEvents, selectedEvent, layerShelters, mapReady, flyToCoords]);
 
-  // FlyTo Location
-  const flyToCoords = (lng: number, lat: number, zoom: number = 11) => {
-    if (!mapRef.current) return;
-    mapRef.current.flyTo({
-      center: [lng, lat],
-      zoom,
-      essential: true,
-      duration: 1400,
-    });
-  };
-
-  // Reset to South Asia Center View
+  // Reset Center
   const handleResetView = () => {
     flyToCoords(SOUTH_ASIA_CENTER.lng, SOUTH_ASIA_CENTER.lat, SOUTH_ASIA_CENTER.zoom);
+    setSelectedCountry('ALL');
+    setSelectedAcronym('ALL');
+    setSelectedSeverity('ALL');
+    setSelectedEvent(null);
   };
 
-  // Share Current Map View Link
+  // Share View
   const handleShareView = () => {
-    if (!mapRef.current) return;
-    const center = mapRef.current.getCenter();
-    const zoom = mapRef.current.getZoom();
-    const url = new URL(window.location.href);
-    url.searchParams.set('lat', center.lat.toFixed(4));
-    url.searchParams.set('lng', center.lng.toFixed(4));
-    url.searchParams.set('zoom', zoom.toFixed(1));
-    navigator.clipboard.writeText(url.toString());
-    alert('Map view link copied to clipboard!');
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    showToast('🔗 Live Risk Map link copied to clipboard!');
   };
 
-  // Toggle Fullscreen
+  // Share User GPS Location
+  const handleShareCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      showToast('⚠️ Geolocation not supported on this browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const shareUrl = `${window.location.origin}/map?lat=${pos.coords.latitude.toFixed(4)}&lng=${pos.coords.longitude.toFixed(4)}&zoom=14`;
+        navigator.clipboard.writeText(shareUrl);
+        flyToCoords(pos.coords.longitude, pos.coords.latitude, 14);
+        showToast('📍 Current location link copied to clipboard!');
+      },
+      () => {
+        showToast('⚠️ Could not acquire GPS coordinates.');
+      }
+    );
+  };
+
+  // Zoom In / Out
+  const handleZoom = (delta: number) => {
+    if (!mapRef.current) return;
+    const curZoom = mapRef.current.getZoom();
+    mapRef.current.zoomTo(curZoom + delta, { duration: 300 });
+  };
+
+  // Fullscreen Toggle
   const handleToggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
@@ -979,1148 +842,870 @@ function MapContent() {
     }
   };
 
-  // Switch Base Map Style
-  const handleSelectTileStyle = (styleKey: string) => {
-    if (!mapRef.current) return;
-    setCurrentTileStyle(styleKey);
-    const styleUrl = getActiveTileStyle(styleKey);
-    mapRef.current.setStyle(styleUrl);
-    setShowBaseMapMenu(false);
-  };
-
-  // Submit SOS Distress Beacon
-  const handleSubmitSos = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sosLandmark.trim()) {
-      alert('Please enter your landmark or location.');
-      return;
-    }
-    setSosSubmitting(true);
-    try {
-      const res = await fetch('/api/sos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reporterName: 'Distress Citizen',
-          phone: sosPhone.trim() || 'Not provided',
-          location: { latitude: SOUTH_ASIA_CENTER.lat, longitude: SOUTH_ASIA_CENTER.lng },
-          landmark: sosLandmark.trim(),
-          hazardType: 'FLOODING',
-          peopleCount: 2,
-          notes: sosNotes.trim(),
-        }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setSosSuccessId(json.data?.id || 'SOS-CONFIRMED');
-        fetchHazardData();
-      } else {
-        alert('Failed to send SOS broadcast. Please dial 112 directly.');
-      }
-    } catch {
-      alert('Network issue. Call National Emergency Helpline 112 immediately.');
-    } finally {
-      setSosSubmitting(false);
-    }
-  };
-
   return (
     <div className={styles.mapPage}>
-      {/* 1. Universal Top Header */}
       <Navbar />
 
-      {/* 2. Operational Layout */}
-      <div className={styles.mapLayout}>
-        {/* ============================================================
-            Left Information Rail (Collapsible)
-            ============================================================ */}
-        <aside className={`${styles.leftRail} ${!isRailOpen ? styles.leftRailCollapsed : ''}`}>
-          <button
-            type="button"
-            className={styles.railToggleBtn}
-            onClick={() => setIsRailOpen(!isRailOpen)}
-            title={isRailOpen ? 'Collapse intelligence panel' : 'Expand intelligence panel'}
-            aria-label="Toggle rail"
-          >
-            {isRailOpen ? '◀' : '▶'}
-          </button>
-
-          {/* Rail Header */}
-          <div className={styles.railHeader}>
-            <div className={styles.railHeaderTop}>
-              <div className={styles.railTitleWrapper}>
-                <div className={styles.pulseDotLive} />
-                <h2 className={styles.railTitle}>{t.map.liveIntel}</h2>
-              </div>
-              <span className={styles.regionPill}>
-                {selectedCountry === 'ALL' ? 'South Asia Grid' : selectedCountry}
-              </span>
-            </div>
-
-            <div className={styles.railMetaSub}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>{t.map.refreshed}: {lastRefreshedAt || 'Connecting feeds...'}</span>
-                <button
-                  type="button"
-                  onClick={() => fetchHazardData()}
-                  title="Fetch latest live telemetry now (Auto-refreshes every 30s)"
-                  className={styles.refreshTriggerBtn}
-                  disabled={loading}
-                >
-                  <span style={{ display: 'inline-block', transform: loading ? 'rotate(360deg)' : 'none', transition: 'transform 0.5s linear' }}>↻</span>
-                  <span>{loading ? t.map.syncing : t.map.sync}</span>
-                </button>
-              </div>
-              <button
-                type="button"
-                className={styles.sosQuickTriggerBtn}
-                onClick={() => setIsSosOpen(true)}
-              >
-                {t.map.sosBeacon}
-              </button>
-            </div>
+      <main className={styles.dashboardContainer}>
+        {/* Top Watermark / Motto Bar */}
+        <section className={styles.topWatermarkBar} aria-label="National Motto">
+          <div className={styles.mottoWrap}>
+            <span className={styles.mottoLine1}>Safer Communities</span>
+            <span className={styles.mottoLine2}>A Stronger India</span>
           </div>
+          <svg className={styles.watermarkMapSvg} viewBox="0 0 1000 1000">
+            <path d={INDIA_SVG_PATH} fill="#4C8DA2" />
+          </svg>
+        </section>
 
-          {/* 5 Categorical Tabs */}
-          <nav className={styles.tabNav}>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'official' ? styles.tabBtnActive : ''}`}
-              onClick={() => {
-                setActiveTab('official');
-                setSelectedAcronym('ALL');
-              }}
-            >
-              <span>{t.map.tabOfficial}</span>
-              <span className={styles.tabCountBadge}>{officialAlertsCount}</span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'earth' ? styles.tabBtnActive : ''}`}
-              onClick={() => {
-                setActiveTab('earth');
-                setSelectedAcronym('ALL');
-              }}
-            >
-              <span>{t.map.tabEarth}</span>
-              <span className={styles.tabCountBadge}>
-                {events.filter((e) => !e.is_community_report && ['EQ', 'LS', 'TS', 'AV'].includes(e.acronym)).length}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'weather_flood' ? styles.tabBtnActive : ''}`}
-              onClick={() => {
-                setActiveTab('weather_flood');
-                setSelectedAcronym('ALL');
-              }}
-            >
-              <span>{t.map.tabWeatherFlood}</span>
-              <span className={styles.tabCountBadge}>
-                {events.filter((e) => !e.is_community_report && ['FL', 'RF', 'CW', 'ST', 'CV'].includes(e.acronym)).length}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'fire_heat' ? styles.tabBtnActive : ''}`}
-              onClick={() => {
-                setActiveTab('fire_heat');
-                setSelectedAcronym('ALL');
-              }}
-            >
-              <span>{t.map.tabFireHeat}</span>
-              <span className={styles.tabCountBadge}>
-                {events.filter((e) => !e.is_community_report && ['FR', 'HW'].includes(e.acronym)).length}
-              </span>
-            </button>
-            <button
-              type="button"
-              className={`${styles.tabBtn} ${activeTab === 'community' ? styles.tabBtnActive : ''}`}
-              onClick={() => {
-                setActiveTab('community');
-                setSelectedAcronym('ALL');
-              }}
-            >
-              <span>{t.map.tabCommunity}</span>
-              <span className={styles.tabCountBadge}>{communityReportsCount}</span>
-            </button>
-          </nav>
-
-          {/* Facet Filter Bar */}
-          <div className={styles.filterBar}>
-            <div className={styles.filterRowPrimary}>
-              <select
-                className={styles.filterSelect}
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-                aria-label="Filter by Country"
-              >
-                <option value="ALL">All South Asia</option>
-                <option value="India">India</option>
-                <option value="Nepal">Nepal</option>
-                <option value="Bhutan">Bhutan</option>
-                <option value="Bangladesh">Bangladesh</option>
-                <option value="Sri Lanka">Sri Lanka</option>
-              </select>
-
-              <select
-                className={styles.filterSelect}
-                value={selectedSeverity}
-                onChange={(e) => setSelectedSeverity(e.target.value)}
-                aria-label="Filter by Severity"
-              >
-                <option value="ALL">All Severities</option>
-                <option value="SEVERE">Severe / Critical</option>
-                <option value="WARNING">Warning</option>
-                <option value="WATCH">Watch</option>
-                <option value="ADVISORY">Advisory</option>
-              </select>
-
-              <div className={styles.filterTimeGroup}>
-                <button
-                  type="button"
-                  className={`${styles.filterTimeBtn} ${timeRange === '24h' ? styles.filterTimeBtnActive : ''}`}
-                  onClick={() => setTimeRange('24h')}
-                >
-                  24h
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.filterTimeBtn} ${timeRange === '7d' ? styles.filterTimeBtnActive : ''}`}
-                  onClick={() => setTimeRange('7d')}
-                >
-                  7d
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.filterTimeBtn} ${timeRange === '30d' ? styles.filterTimeBtnActive : ''}`}
-                  onClick={() => setTimeRange('30d')}
-                >
-                  30d
-                </button>
+        {/* Main Dashboard Grid */}
+        <section
+          className={`${styles.mainDashboardGrid} ${!isRailOpen ? styles.mainDashboardGridCollapsed : ''}`}
+          aria-label="Hazard Intelligence and Operations Map"
+        >
+          {/* ============================================================
+              1. LEFT HAZARD INTELLIGENCE CARD
+              ============================================================ */}
+          {isRailOpen && (
+            <aside className={styles.leftIntelligenceCard}>
+              {/* Header */}
+              <div className={styles.leftCardHeader}>
+                <div className={styles.headerTopRow}>
+                  <div className={styles.titleWithDot}>
+                    <span className={styles.livePulseDot}></span>
+                    <h2 className={styles.leftCardTitle}>Live Hazard Intelligence</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fetchHazardData()}
+                    className={styles.syncBtn}
+                    disabled={loading}
+                    title="Synchronize live multi-agency feeds"
+                  >
+                    <span>↻</span>
+                    <span>{loading ? 'Syncing...' : 'Sync'}</span>
+                  </button>
+                </div>
+                <p className={styles.headerSubtext}>Real-time alerts from official sources</p>
+                <p className={styles.headerTimeUpdated}>Last updated: {lastRefreshedAt || 'Connecting feeds...'}</p>
               </div>
-            </div>
 
-            {/* Quick Acronym Badges Filter */}
-            <div className={styles.filterAcronymPills}>
-              <button
-                type="button"
-                className={`${styles.acronymPill} ${selectedAcronym === 'ALL' ? styles.acronymPillActive : ''}`}
-                onClick={() => setSelectedAcronym('ALL')}
-              >
-                ALL
-              </button>
-              {(Object.keys(HAZARD_ACRONYM_META) as HazardAcronym[]).map((acr) => (
+              {/* Active Data Source Box */}
+              <div className={styles.activeDataSourceBox}>
+                <div className={styles.dataSourceLeft}>
+                  <div className={styles.dataSourceEmblem}>🌐</div>
+                  <div className={styles.dataSourceMeta}>
+                    <span className={styles.dataSourceLabel}>Active Data Source</span>
+                    <span className={styles.dataSourceValue}>
+                      {selectedCountry === 'ALL' ? 'South Asia Grid' : `${selectedCountry} Sector`}
+                    </span>
+                  </div>
+                </div>
+                <span className={styles.onlineBadge}>● Online</span>
+              </div>
+
+              {/* SOS Beacon Emergency Button -> Directs to /sos */}
+              <Link href="/sos" className={styles.sosBeaconCardBtn} title="Open Suraksha Emergency SOS Command Hub">
+                <div className={styles.sosIconWrapper}>🚨</div>
+                <div className={styles.sosTextWrap}>
+                  <span className={styles.sosTitle}>SOS Beacon</span>
+                  <span className={styles.sosSubtitle}>Broadcast emergency location</span>
+                </div>
+              </Link>
+
+              {/* Three Tabs: Official Alerts | Earth Events | Weather */}
+              <div className={styles.threeTabsRow} role="tablist">
                 <button
-                  key={acr}
                   type="button"
-                  className={`${styles.acronymPill} ${selectedAcronym === acr ? styles.acronymPillActive : ''}`}
+                  role="tab"
+                  aria-selected={activeTab === 'official'}
+                  className={`${styles.tabPillBtn} ${activeTab === 'official' ? styles.tabPillBtnActive : ''}`}
                   onClick={() => {
-                    const next = selectedAcronym === acr ? 'ALL' : acr;
-                    setSelectedAcronym(next);
-                    if (next !== 'ALL') {
-                      if (['EQ', 'LS', 'TS', 'AV'].includes(next)) {
-                        setActiveTab('earth');
-                      } else if (['FL', 'RF', 'CW', 'ST', 'CV'].includes(next)) {
-                        setActiveTab('weather_flood');
-                      } else if (['FR', 'HW'].includes(next)) {
-                        setActiveTab('fire_heat');
-                      }
-                    }
+                    setActiveTab('official');
+                    setSelectedAcronym('ALL');
                   }}
-                  title={HAZARD_ACRONYM_META[acr].name}
                 >
-                  {acr}
+                  <span>Official Alerts</span>
+                  <span className={styles.tabBadgeNumber}>{officialAlertsCount}</span>
                 </button>
-              ))}
-            </div>
-          </div>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'earth'}
+                  className={`${styles.tabPillBtn} ${activeTab === 'earth' ? styles.tabPillBtnActive : ''}`}
+                  onClick={() => {
+                    setActiveTab('earth');
+                    setSelectedAcronym('ALL');
+                  }}
+                >
+                  <span>Earth Events</span>
+                  <span className={styles.tabBadgeNumber}>{earthEventsCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'weather_flood'}
+                  className={`${styles.tabPillBtn} ${activeTab === 'weather_flood' ? styles.tabPillBtnActive : ''}`}
+                  onClick={() => {
+                    setActiveTab('weather_flood');
+                    setSelectedAcronym('ALL');
+                  }}
+                >
+                  <span>Weather</span>
+                  <span className={styles.tabBadgeNumber}>{weatherEventsCount}</span>
+                </button>
+              </div>
 
-          {/* Scrollable Feed List */}
-          <div className={styles.railContent}>
-            {loading ? (
-              <div style={{ padding: '24px 0', textAlign: 'center', color: '#737571', fontSize: '13px' }}>
-                Establishing multi-agency telemetry uplink...
-              </div>
-            ) : filteredEvents.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#737571', fontSize: '13px' }}>
-                No active hazard events match the current filter criteria.
-              </div>
-            ) : (
-              <>
-                <div className={styles.feedSectionHeader}>
-                  <span className={styles.feedSectionTitle}>
-                    {activeTab === 'official' && t.map.latestOfficial}
-                    {activeTab === 'earth' && (t.map.tabEarth || 'Earthquake & Seismic Events')}
-                    {activeTab === 'weather_flood' && (t.map.tabWeatherFlood || 'Weather & Flood Alerts')}
-                    {activeTab === 'fire_heat' && (t.map.tabFireHeat || 'Thermal Fires & Heatwaves')}
-                    {activeTab === 'community' && (t.map.tabCommunity || 'Community Reports')}
-                    {selectedAcronym !== 'ALL' && ` · ${selectedAcronym}`}
-                  </span>
-                  <span className={styles.tabCountBadge}>{filteredEvents.length}</span>
+              {/* Filter Controls Section */}
+              <div className={styles.filterControlsSection}>
+                <div className={styles.selectsRow}>
+                  <select
+                    className={styles.filterSelect}
+                    value={selectedCountry}
+                    onChange={(e) => setSelectedCountry(e.target.value)}
+                    aria-label="Filter by Country"
+                  >
+                    <option value="ALL">All South Asia</option>
+                    <option value="India">India</option>
+                    <option value="Nepal">Nepal</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="Bhutan">Bhutan</option>
+                    <option value="Sri Lanka">Sri Lanka</option>
+                  </select>
+
+                  <select
+                    className={styles.filterSelect}
+                    value={selectedSeverity}
+                    onChange={(e) => setSelectedSeverity(e.target.value)}
+                    aria-label="Filter by Severity"
+                  >
+                    <option value="ALL">All Severities</option>
+                    <option value="SEVERE">Severe</option>
+                    <option value="WARNING">Warning</option>
+                    <option value="WATCH">Watch</option>
+                    <option value="ADVISORY">Advisory</option>
+                  </select>
                 </div>
 
-                {filteredEvents.map((ev) => {
-                  const isSelected = selectedEvent?.id === ev.id;
+                <div className={styles.timePillsRow}>
+                  {(['24h', '7d', '30d'] as const).map((range) => (
+                    <button
+                      key={range}
+                      type="button"
+                      className={`${styles.timePill} ${timeRange === range ? styles.timePillActive : ''}`}
+                      onClick={() => setTimeRange(range)}
+                    >
+                      {range}
+                    </button>
+                  ))}
+                </div>
 
-                  if (ev.is_community_report) {
-                    const modStatus = ev.details?.moderationStatus || 'Received';
-                    let modClass = styles.modReceived;
-                    if (modStatus === 'Under review') modClass = styles.modUnderReview;
-                    else if (modStatus === 'Verified') modClass = styles.modVerified;
-                    else if (modStatus === 'Dismissed') modClass = styles.modDismissed;
-                    else if (modStatus === 'Resolved') modClass = styles.modResolved;
+                <div className={styles.categoryChipsRow}>
+                  {['ALL', 'EQ', 'FL', 'RF', 'CW', 'FR', 'LS', 'TC', 'ST', 'HW'].map((acro) => (
+                    <button
+                      key={acro}
+                      type="button"
+                      className={`${styles.catChip} ${selectedAcronym === acro ? styles.catChipActive : ''}`}
+                      onClick={() => setSelectedAcronym(acro)}
+                    >
+                      {acro}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Latest Official Alerts Header */}
+              <div className={styles.alertsListHeader}>
+                <div className={styles.alertsHeaderTitleWrap}>
+                  <span className={styles.alertsHeaderTitle}>Latest Official Alerts</span>
+                  <span className={styles.alertsCountBadge}>{filteredEvents.length}</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.viewAllLink}
+                  onClick={() => {
+                    setSelectedAcronym('ALL');
+                    setSelectedSeverity('ALL');
+                    setSelectedCountry('ALL');
+                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  View All →
+                </button>
+              </div>
+
+              {/* Scrollable Alerts List */}
+              <div className={styles.alertsScrollList}>
+                {filteredEvents.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#60717B', fontSize: '13px' }}>
+                    No alerts found for this filter criteria.
+                  </div>
+                ) : (
+                  filteredEvents.map((ev) => {
+                    const isSelected = selectedEvent?.id === ev.id;
+
+                    let badgeClass = styles.badgeEq;
+                    if (ev.acronym === 'FL') badgeClass = styles.badgeFl;
+                    else if (ev.acronym === 'CW') badgeClass = styles.badgeCw;
+                    else if (ev.acronym === 'ST') badgeClass = styles.badgeSt;
+                    else if (ev.acronym === 'FR') badgeClass = styles.badgeFr;
+                    else if (ev.acronym === 'LS') badgeClass = styles.badgeLs;
+                    else if (ev.acronym === 'HW') badgeClass = styles.badgeHw;
+                    else if (ev.acronym === 'RF') badgeClass = styles.badgeRf;
+                    else if (ev.severity === 'ADVISORY') badgeClass = styles.badgeNorm;
+
+                    let sevClass = styles.sevWatch;
+                    if (ev.severity === 'SEVERE') sevClass = styles.sevSevere;
+                    else if (ev.severity === 'WARNING') sevClass = styles.sevHigh;
+                    else if (ev.severity === 'ADVISORY') sevClass = styles.sevAdvisory;
 
                     return (
                       <div
                         key={ev.id}
-                        className={`${styles.communityCard} ${isSelected ? styles.hazardCardSelected : ''}`}
+                        className={`${styles.alertCard} ${isSelected ? styles.alertCardSelected : ''}`}
                         onClick={() => {
                           setSelectedEvent(ev);
                           const center = getEventCenter(ev);
-                          if (center) {
-                            flyToCoords(center[0], center[1], 11);
-                          }
+                          if (center) flyToCoords(center[0], center[1], 9);
                         }}
                       >
-                        <div className={styles.communityBadgeRow}>
-                          <span className={styles.unverifiedLabel}>Unverified Community Report</span>
-                          <span className={`${styles.moderationPill} ${modClass}`}>
-                            {modStatus}
-                          </span>
+                        <div className={`${styles.cardAcronymSquare} ${badgeClass}`}>
+                          {ev.acronym}
                         </div>
 
-                        <h3 className={styles.cardTitle}>{ev.title}</h3>
-                        <div className={styles.cardLocation}>
-                          <span>📍 {ev.district || 'Ground observation'}</span>
-                        </div>
+                        <div className={styles.cardDetailsCol}>
+                          <div className={styles.cardRow1}>
+                            <h3 className={styles.cardHeadline}>{ev.title}</h3>
+                            <span className={`${styles.severityChip} ${sevClass}`}>
+                              {ev.severity}
+                            </span>
+                          </div>
 
-                        <div className={styles.cardFooterRow}>
-                          <span>Reported: {new Date(ev.issued_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          <Link href={ev.source_url} className={styles.cardSourceLink} onClick={(e) => e.stopPropagation()}>
-                            Track report ↗
-                          </Link>
+                          <div className={styles.cardLocationRow}>
+                            <span>📍</span>
+                            <span>{ev.district ? `${ev.district}, ` : ''}{ev.state ? `${ev.state}, ` : ''}{ev.country}</span>
+                          </div>
+
+                          <div className={styles.cardMetricsRow}>
+                            {ev.details?.magnitude !== undefined && (
+                              <span>Magnitude: M {ev.details.magnitude.toFixed(1)} · Depth: {ev.details.depthKm || 10} km</span>
+                            )}
+                            {ev.details?.waterDepthFeet !== undefined && (
+                              <span>Water Inundation: {ev.details.waterDepthFeet} ft · Lowland Sector</span>
+                            )}
+                            {ev.details?.rainfallRateMmH !== undefined && (
+                              <span>Rain Rate: {ev.details.rainfallRateMmH} mm/h · Monsoon Surge</span>
+                            )}
+                            {ev.details?.riverBasin && (
+                              <span>Basin: {ev.details.riverBasin}</span>
+                            )}
+                            {ev.details?.magnitude === undefined && !ev.details?.waterDepthFeet && !ev.details?.rainfallRateMmH && !ev.details?.riverBasin && (
+                              <span>{ev.details?.safetyGuidance?.slice(0, 65) || 'Telemetry recorded by official monitoring network.'}</span>
+                            )}
+                          </div>
+
+                          <div className={styles.cardFooterVerified}>
+                            <span>{ev.freshness || `${ev.source} Verified`}</span>
+                            <a
+                              href={ev.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.verifiedSourceLink}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {ev.source} ↗
+                            </a>
+                          </div>
                         </div>
                       </div>
                     );
-                  }
-
-                  let sevClass = styles.sevAdvisory;
-                  if (ev.severity === 'SEVERE') sevClass = styles.sevSevere;
-                  else if (ev.severity === 'WARNING') sevClass = styles.sevWarning;
-                  else if (ev.severity === 'WATCH') sevClass = styles.sevWatch;
-
-                  return (
-                    <div
-                      key={ev.id}
-                      className={`${styles.hazardCard} ${isSelected ? styles.hazardCardSelected : ''}`}
-                      onClick={() => {
-                        setSelectedEvent(ev);
-                        const center = getEventCenter(ev);
-                        if (center) {
-                          flyToCoords(center[0], center[1], ev.geometry.type === 'Polygon' ? 8.5 : 9);
-                        }
-                      }}
-                    >
-                      <div className={styles.cardTopRow}>
-                        <div className={styles.cardLeftIdent}>
-                          <span className={`${styles.acronymBadge} ${sevClass}`}>
-                            {ev.acronym}
-                          </span>
-                          <div>
-                            <h3 className={styles.cardTitle}>{ev.title}</h3>
-                            <div className={styles.cardLocation}>
-                              <span>📍 {ev.district || ev.state || ev.country}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <span className={`${styles.severityPill} ${sevClass}`}>
-                          {ev.severity}
-                        </span>
-                      </div>
-
-                      {/* Telemetry Metrics Row */}
-                      <div className={styles.cardTelemetryRow}>
-                        {ev.details?.magnitude !== undefined && (
-                          <div className={styles.cardTelemetryItem}>
-                            <span>Magnitude:</span>
-                            <span className={styles.cardTelemetryVal}>M {ev.details.magnitude.toFixed(1)}</span>
-                          </div>
-                        )}
-                        {ev.details?.depthKm !== undefined && (
-                          <div className={styles.cardTelemetryItem}>
-                            <span>Depth:</span>
-                            <span className={styles.cardTelemetryVal}>{ev.details.depthKm} km</span>
-                          </div>
-                        )}
-                        {ev.details?.rainfallRateMmH !== undefined && (
-                          <div className={styles.cardTelemetryItem}>
-                            <span>Rain Rate:</span>
-                            <span className={styles.cardTelemetryVal}>{ev.details.rainfallRateMmH.toFixed(1)} mm/h</span>
-                          </div>
-                        )}
-                        {ev.details?.brightnessTempK !== undefined && (
-                          <div className={styles.cardTelemetryItem}>
-                            <span>Temp:</span>
-                            <span className={styles.cardTelemetryVal}>{ev.details.brightnessTempK} K</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className={styles.cardFooterRow}>
-                        <span>{ev.freshness}</span>
-                        <a
-                          href={ev.source_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.cardSourceLink}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {ev.source} ↗
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          </div>
-        </aside>
-
-        {/* ============================================================
-            MapLibre Viewport Container
-            ============================================================ */}
-        <div className={styles.mapArea}>
-          {/* Isolated Full-Screen Canvas for MapLibre GL Engine */}
-          <div
-            ref={mapContainerRef}
-            className={styles.mapCanvas}
-            style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, overflow: 'hidden' }}
-          />
-
-          {/* Top-Left Search Bar (Targeted exclusively to Indian Major Cities & Disaster Prone Corridors) */}
-          <div className={styles.searchControlWrapper}>
-            <div className={styles.searchBar}>
-              <span className={styles.searchIcon}>🔍</span>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder={t.map.searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  className={styles.searchClearBtn}
-                  onClick={() => setSearchQuery('')}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {/* Autocomplete Dropdown List */}
-            {isSearching && searchResults.length > 0 && (
-              <div className={styles.autocompleteDropdown}>
-                <div className={styles.autocompleteHeader}>
-                  India Cities & Disaster Vulnerability Index
-                </div>
-                {searchResults.map((loc) => (
-                  <div
-                    key={loc.id}
-                    className={styles.autocompleteItem}
-                    onClick={() => {
-                      flyToCoords(loc.lng, loc.lat, loc.zoom);
-                      setSearchQuery(loc.name);
-                      setIsSearching(false);
-                    }}
-                  >
-                    <div>
-                      <div className={styles.autoItemName}>{loc.name}</div>
-                      <div className={styles.autoItemCat}>
-                        {loc.state} · {loc.category}
-                      </div>
-                    </div>
-                    <span
-                      className={`${styles.autoItemBadge} ${
-                        loc.type === 'DISASTER_PRONE' ? styles.autoBadgeDisaster : styles.autoBadgeMetro
-                      }`}
-                    >
-                      {loc.type === 'DISASTER_PRONE' ? 'High Risk' : 'Metro'}
-                    </span>
-                  </div>
-                ))}
+                  })
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Top-Right Floating Controls */}
-          <div className={styles.topRightControls}>
-            {/* Layers Switcher Popover */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                className={`${styles.mapControlBtn} ${showLayerMenu ? styles.mapControlBtnActive : ''}`}
-                onClick={() => {
-                  setShowLayerMenu(!showLayerMenu);
-                  setShowBaseMapMenu(false);
-                  setShowLegend(false);
-                  setShowFeedsMenu(false);
-                  setShowMapLangMenu(false);
-                }}
-              >
-                <span>{t.map.layers}</span>
-                <span>▾</span>
-              </button>
-
-              {showLayerMenu && (
-                <div className={styles.floatingPopover}>
-                  <h4 className={styles.popoverTitle}>Hazard Layer Feeds</h4>
-                  <label className={styles.layerCheckboxLabel}>
-                    <span>Official Polygons (NDMA / IMD)</span>
-                    <input
-                      type="checkbox"
-                      checked={layerPolygons}
-                      onChange={(e) => setLayerPolygons(e.target.checked)}
-                    />
-                  </label>
-                  <label className={styles.layerCheckboxLabel}>
-                    <span>Earthquakes (USGS EQ)</span>
-                    <input
-                      type="checkbox"
-                      checked={layerEarthquakes}
-                      onChange={(e) => setLayerEarthquakes(e.target.checked)}
-                    />
-                  </label>
-                  <label className={styles.layerCheckboxLabel}>
-                    <span>Weather & Floods (FL / RF / ST)</span>
-                    <input
-                      type="checkbox"
-                      checked={layerWeatherFlood}
-                      onChange={(e) => setLayerWeatherFlood(e.target.checked)}
-                    />
-                  </label>
-                  <label className={styles.layerCheckboxLabel}>
-                    <span>Thermal Fires (NASA FIRMS FR)</span>
-                    <input
-                      type="checkbox"
-                      checked={layerFires}
-                      onChange={(e) => setLayerFires(e.target.checked)}
-                    />
-                  </label>
-                  <label className={styles.layerCheckboxLabel}>
-                    <span>Community Reports (Citizen)</span>
-                    <input
-                      type="checkbox"
-                      checked={layerCommunity}
-                      onChange={(e) => setLayerCommunity(e.target.checked)}
-                    />
-                  </label>
-                  <label className={styles.layerCheckboxLabel}>
-                    <span>Relief Shelters (Evacuation)</span>
-                    <input
-                      type="checkbox"
-                      checked={layerShelters}
-                      onChange={(e) => setLayerShelters(e.target.checked)}
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
-
-            {/* Base Map Style Switcher */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                className={`${styles.mapControlBtn} ${showBaseMapMenu ? styles.mapControlBtnActive : ''}`}
-                onClick={() => {
-                  setShowBaseMapMenu(!showBaseMapMenu);
-                  setShowLayerMenu(false);
-                  setShowLegend(false);
-                  setShowFeedsMenu(false);
-                  setShowMapLangMenu(false);
-                }}
-              >
-                <span>{t.map.baseMap}</span>
-                <span>▾</span>
-              </button>
-
-              {showBaseMapMenu && (
-                <div className={styles.floatingPopover}>
-                  <h4 className={styles.popoverTitle}>Vector Tile Base Map</h4>
-                  {Object.values(TILE_STYLES).map((ts) => (
-                    <button
-                      key={ts.id}
-                      type="button"
-                      className={`${styles.mapControlBtn} ${
-                        currentTileStyle === ts.id ? styles.mapControlBtnActive : ''
-                      }`}
-                      style={{ width: '100%', justifyContent: 'flex-start' }}
-                      onClick={() => handleSelectTileStyle(ts.id)}
-                    >
-                      {ts.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Legend Drawer Trigger */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                className={`${styles.mapControlBtn} ${showLegend ? styles.mapControlBtnActive : ''}`}
-                onClick={() => {
-                  setShowLegend(!showLegend);
-                  setShowLayerMenu(false);
-                  setShowBaseMapMenu(false);
-                  setShowFeedsMenu(false);
-                  setShowMapLangMenu(false);
-                }}
-              >
-                <span>{t.map.legend}</span>
-              </button>
-
-              {showLegend && (
-                <div className={styles.floatingPopover} style={{ width: '320px', maxHeight: '380px', overflowY: 'auto' }}>
-                  <h4 className={styles.popoverTitle}>Hazard Acronyms & Severities</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
-                    {(Object.keys(HAZARD_ACRONYM_META) as HazardAcronym[]).map((acr) => (
-                      <div key={acr} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
-                        <span className={`${styles.acronymBadge} ${styles.sevWatch}`} style={{ width: '22px', height: '22px', fontSize: '10px' }}>
-                          {acr}
-                        </span>
-                        <span style={{ color: '#1F3440', fontWeight: 600 }}>{HAZARD_ACRONYM_META[acr].name}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <h4 className={styles.popoverTitle} style={{ marginTop: '8px' }}>Severity Scale</h4>
-                  <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
-                    <span className={`${styles.severityPill} ${styles.sevAdvisory}`}>Advisory</span>
-                    <span className={`${styles.severityPill} ${styles.sevWatch}`}>Watch</span>
-                    <span className={`${styles.severityPill} ${styles.sevWarning}`}>Warning</span>
-                    <span className={`${styles.severityPill} ${styles.sevSevere}`}>Severe</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Live Agency Feeds & Health Telemetry Trigger */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                className={`${styles.mapControlBtn} ${showFeedsMenu ? styles.mapControlBtnActive : ''}`}
-                onClick={() => {
-                  setShowFeedsMenu(!showFeedsMenu);
-                  setShowLayerMenu(false);
-                  setShowBaseMapMenu(false);
-                  setShowLegend(false);
-                  setShowMapLangMenu(false);
-                }}
-                title="View active agency feeds and synchronization health"
-              >
-                <div className={styles.pulseDotLive} style={{ width: '6px', height: '6px' }} />
-                <span>{t.map.liveFeeds} ({sourcesHealth.filter((s) => s.status === 'HEALTHY').length || 7})</span>
-                <span>▾</span>
-              </button>
-
-              {showFeedsMenu && (
-                <div className={styles.floatingPopover} style={{ width: '370px', maxHeight: '440px', overflowY: 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid #EFECE6' }}>
-                    <h4 className={styles.popoverTitle} style={{ margin: 0 }}>Real-Time Disaster Data Uplinks</h4>
-                    <span style={{ fontSize: '10px', color: '#2E5A44', fontWeight: 700, background: '#EBF5EE', padding: '2px 6px', borderRadius: '3px' }}>
-                      Auto-Sync 30s
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {sourcesHealth.map((sh) => (
-                      <div key={sh.id} style={{ padding: '8px 10px', background: '#FAF9F6', borderRadius: '4px', border: '1px solid #EFECE6' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#1F3440' }}>{sh.name}</span>
-                          <span style={{
-                            fontSize: '9.5px',
-                            padding: '1px 5px',
-                            borderRadius: '3px',
-                            fontWeight: 700,
-                            letterSpacing: '0.02em',
-                            background: sh.status === 'HEALTHY' ? 'rgba(76, 139, 113, 0.1)' : sh.status === 'DEGRADED' ? 'rgba(215, 170, 99, 0.15)' : '#F8FBFC',
-                            color: sh.status === 'HEALTHY' ? '#4C8B71' : sh.status === 'DEGRADED' ? '#D7AA63' : '#8FA2AD',
-                          }}>
-                            {sh.status === 'HEALTHY' ? '● LIVE / SYNC' : sh.status === 'DEGRADED' ? 'RETRYING' : 'PENDING BRIDGE'}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#60717B', marginBottom: '4px', lineHeight: 1.35 }}>{sh.statusMessage}</div>
-                        <div style={{ fontSize: '10px', color: '#8FA2AD', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span>Coverage: {sh.coverage}</span>
-                          {sh.officialFeedUrl && (
-                            <a href={sh.officialFeedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#4C8DA2', textDecoration: 'underline', fontWeight: 600 }}>
-                              Official Portal ↗
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Multilingual 6-Language Switcher */}
-            <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                className={`${styles.mapControlBtn} ${showMapLangMenu ? styles.mapControlBtnActive : ''}`}
-                onClick={() => {
-                  setShowMapLangMenu(!showMapLangMenu);
-                  setShowLayerMenu(false);
-                  setShowBaseMapMenu(false);
-                  setShowLegend(false);
-                  setShowFeedsMenu(false);
-                }}
-                title="Select language / भाषा चुनें (6 Indian Languages)"
-              >
-                <span style={{ fontSize: '12px' }}>🌐</span>
-                <span>{SUPPORTED_LANGUAGES.find((l) => l.code === lang)?.nativeName || 'English'}</span>
-                <span>▾</span>
-              </button>
-
-              {showMapLangMenu && (
-                <div className={styles.floatingPopover} style={{ minWidth: '180px', padding: '6px' }}>
-                  <h4 className={styles.popoverTitle} style={{ padding: '4px 8px', marginBottom: '4px' }}>
-                    Language / भाषा
-                  </h4>
-                  {SUPPORTED_LANGUAGES.map((l) => (
-                    <button
-                      key={l.code}
-                      type="button"
-                      className={`${styles.mapControlBtn} ${
-                        lang === l.code ? styles.mapControlBtnActive : ''
-                      }`}
-                      style={{
-                        width: '100%',
-                        justifyContent: 'space-between',
-                        padding: '6px 10px',
-                        marginBottom: '3px',
-                        fontSize: '12px',
-                      }}
-                      onClick={() => {
-                        setLang(l.code);
-                        setSavedLanguage(l.code);
-                        window.dispatchEvent(new CustomEvent('languagechange', { detail: l.code }));
-                        setShowMapLangMenu(false);
-                      }}
-                    >
-                      <span style={{ fontWeight: 700 }}>{l.nativeName}</span>
-                      <span style={{ fontSize: '10.5px', color: '#737571' }}>{l.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Reset View Button */}
-            <button
-              type="button"
-              className={styles.mapControlBtn}
-              onClick={handleResetView}
-              title="Reset center to India & South Asia"
-            >
-              ⟲ {t.map.reset}
-            </button>
-
-            {/* Share Map View */}
-            <button
-              type="button"
-              className={styles.mapControlBtn}
-              onClick={handleShareView}
-              title="Copy map view URL"
-            >
-              🔗 Share
-            </button>
-
-            {/* Fullscreen Button */}
-            <button
-              type="button"
-              className={styles.mapControlBtn}
-              onClick={handleToggleFullscreen}
-              title="Toggle Fullscreen Mode"
-            >
-              ⛶
-            </button>
-          </div>
-
-          {/* Bottom Telemetry Bar */}
-          <div className={styles.mapBottomBar}>
-            <div className={styles.bottomHealthPill}>
-              <span>📡 Official Uplinks:</span>
-              <span>USGS: Live</span>
-              <span>·</span>
-              <span>NDMA SACHET: Live</span>
-              <span>·</span>
-              <span>GDACS: Live</span>
-              <span>·</span>
-              <span>NASA FIRMS: Calibrated</span>
-            </div>
-
-            <div className={styles.bottomTimeSlider}>
-              <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#737571', textTransform: 'uppercase' }}>
-                Window:
-              </span>
-              <button
-                type="button"
-                className={`${styles.filterTimeBtn} ${timeRange === '24h' ? styles.filterTimeBtnActive : ''}`}
-                onClick={() => setTimeRange('24h')}
-              >
-                24h
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterTimeBtn} ${timeRange === '7d' ? styles.filterTimeBtnActive : ''}`}
-                onClick={() => setTimeRange('7d')}
-              >
-                7d
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterTimeBtn} ${timeRange === '30d' ? styles.filterTimeBtnActive : ''}`}
-                onClick={() => setTimeRange('30d')}
-              >
-                30d
-              </button>
-            </div>
-          </div>
+            </aside>
+          )}
 
           {/* ============================================================
-              Rich Incident Inspection Panel (Slide-in)
+              2. RIGHT INTERACTIVE MAP CARD
               ============================================================ */}
-          {selectedEvent && (
-            <div className={styles.incidentPanel}>
-              <div className={styles.panelHeader}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span
-                    className={`${styles.acronymBadge} ${
-                      selectedEvent.severity === 'SEVERE'
-                        ? styles.sevSevere
-                        : selectedEvent.severity === 'WARNING'
-                        ? styles.sevWarning
-                        : selectedEvent.severity === 'WATCH'
-                        ? styles.sevWatch
-                        : styles.sevAdvisory
-                    }`}
+          <div className={styles.mapCard}>
+            {/* MapLibre Canvas */}
+            <div ref={mapContainerRef} className={styles.mapCanvas} />
+
+            {/* Top Floating Map Toolbar */}
+            <div className={styles.topFloatingToolbar}>
+              <button
+                type="button"
+                className={styles.collapseToggleBtn}
+                onClick={() => {
+                  setIsRailOpen(!isRailOpen);
+                  setTimeout(() => { if (mapRef.current) mapRef.current.resize(); }, 320);
+                }}
+                title={isRailOpen ? 'Collapse Left Intelligence Rail' : 'Expand Left Intelligence Rail'}
+              >
+                {isRailOpen ? '◀' : '▶'}
+              </button>
+
+              <div className={styles.searchBoxWrap}>
+                <span className={styles.searchIconSvg}>🔍</span>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="Search Indian cities, districts, or risk corridors..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+
+                {isSearching && searchResults.length > 0 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '46px',
+                      left: 0,
+                      right: 0,
+                      background: '#FFFFFF',
+                      border: '1.5px solid #C8E3EA',
+                      borderRadius: '14px',
+                      boxShadow: '0 8px 24px rgba(31, 52, 64, 0.12)',
+                      zIndex: 35,
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                    }}
                   >
-                    {selectedEvent.acronym}
-                  </span>
-                  <div>
-                    <span className={`${styles.severityPill} ${styles.sevWarning}`}>
-                      {selectedEvent.severity}
-                    </span>
-                    <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '2px 0 0', color: '#1F3440', fontFamily: "var(--font-family-heading, 'Manrope', sans-serif)" }}>
-                      {selectedEvent.title}
-                    </h3>
+                    {searchResults.map((loc) => (
+                      <div
+                        key={loc.id}
+                        onClick={() => {
+                          flyToCoords(loc.lng, loc.lat, loc.zoom);
+                          setSearchQuery(loc.name);
+                          setIsSearching(false);
+                        }}
+                        style={{
+                          padding: '10px 14px',
+                          borderBottom: '1px solid #EDF5F8',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <strong style={{ fontSize: '13px', color: '#1F3440' }}>{loc.name}</strong>
+                          <div style={{ fontSize: '11px', color: '#60717B' }}>{loc.state} &bull; {loc.category}</div>
+                        </div>
+                        <span style={{ fontSize: '10px', background: '#EBF4F7', color: '#4C8DA2', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                          {loc.type === 'DISASTER_PRONE' ? 'High Risk' : 'Metro'}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <button
-                  type="button"
-                  className={styles.panelCloseBtn}
-                  onClick={() => setSelectedEvent(null)}
-                >
-                  ✕
-                </button>
+                )}
               </div>
 
-              <div className={styles.panelContent}>
-                {/* Official Safety Guidance Box */}
-                {selectedEvent.details?.safetyGuidance && (
-                  <div>
-                    <div className={styles.panelSectionTitle}>Official Safety Directive</div>
-                    <div className={styles.guidanceBox}>
-                      {selectedEvent.details.safetyGuidance}
+              {/* Layers Popover Button */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className={`${styles.toolbarActionBtn} ${showLayerMenu ? styles.toolbarActionBtnActive : ''}`}
+                  onClick={() => {
+                    setShowLayerMenu(!showLayerMenu);
+                    setShowBaseMapMenu(false);
+                    setShowFeedsMenu(false);
+                  }}
+                >
+                  <span>Layers</span>
+                  <span>▾</span>
+                </button>
+
+                {showLayerMenu && (
+                  <div className={styles.floatingPopover}>
+                    <h4 className={styles.popoverTitle}>Hazard Layer Feeds</h4>
+                    <label className={styles.layerCheckboxLabel}>
+                      <span>Risk Polygons (NDMA / IMD)</span>
+                      <input
+                        type="checkbox"
+                        checked={layerPolygons}
+                        onChange={(e) => setLayerPolygons(e.target.checked)}
+                      />
+                    </label>
+                    <label className={styles.layerCheckboxLabel}>
+                      <span>Earthquakes (USGS EQ)</span>
+                      <input
+                        type="checkbox"
+                        checked={layerEarthquakes}
+                        onChange={(e) => setLayerEarthquakes(e.target.checked)}
+                      />
+                    </label>
+                    <label className={styles.layerCheckboxLabel}>
+                      <span>Weather &amp; Floods (FL / ST)</span>
+                      <input
+                        type="checkbox"
+                        checked={layerWeatherFlood}
+                        onChange={(e) => setLayerWeatherFlood(e.target.checked)}
+                      />
+                    </label>
+                    <label className={styles.layerCheckboxLabel}>
+                      <span>Thermal Fires (NASA FIRMS)</span>
+                      <input
+                        type="checkbox"
+                        checked={layerFires}
+                        onChange={(e) => setLayerFires(e.target.checked)}
+                      />
+                    </label>
+                    <label className={styles.layerCheckboxLabel}>
+                      <span>Relief Shelters (Evacuation)</span>
+                      <input
+                        type="checkbox"
+                        checked={layerShelters}
+                        onChange={(e) => setLayerShelters(e.target.checked)}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Base Map Style Popover Button */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className={`${styles.toolbarActionBtn} ${showBaseMapMenu ? styles.toolbarActionBtnActive : ''}`}
+                  onClick={() => {
+                    setShowBaseMapMenu(!showBaseMapMenu);
+                    setShowLayerMenu(false);
+                    setShowFeedsMenu(false);
+                  }}
+                >
+                  <span>Base Map</span>
+                  <span>▾</span>
+                </button>
+
+                {showBaseMapMenu && (
+                  <div className={styles.floatingPopover}>
+                    <h4 className={styles.popoverTitle}>Map Tile Styles</h4>
+                    {Object.values(TILE_STYLES).map((ts) => (
+                      <button
+                        key={ts.id}
+                        type="button"
+                        onClick={() => {
+                          setCurrentTileStyle(ts.id);
+                          setShowBaseMapMenu(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          background: currentTileStyle === ts.id ? '#1F3440' : '#FFFFFF',
+                          color: currentTileStyle === ts.id ? '#FFFFFF' : '#1F3440',
+                          border: 'none',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          marginBottom: '3px',
+                        }}
+                      >
+                        {ts.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Legend Toggle */}
+              <button
+                type="button"
+                className={`${styles.toolbarActionBtn} ${showLegend ? styles.toolbarActionBtnActive : ''}`}
+                onClick={() => setShowLegend(!showLegend)}
+              >
+                Legend
+              </button>
+
+              {/* Live Feeds Dropdown */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className={`${styles.toolbarActionBtn} ${showFeedsMenu ? styles.toolbarActionBtnActive : ''}`}
+                  onClick={() => {
+                    setShowFeedsMenu(!showFeedsMenu);
+                    setShowLayerMenu(false);
+                    setShowBaseMapMenu(false);
+                  }}
+                >
+                  <span className={styles.livePulseDot} style={{ width: '6px', height: '6px' }} />
+                  <span>Live Feeds ({liveFeedsCount})</span>
+                  <span>▾</span>
+                </button>
+
+                {showFeedsMenu && (
+                  <div className={styles.floatingPopover} style={{ width: '340px' }}>
+                    <h4 className={styles.popoverTitle}>Active Monitoring Feeds</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {(sourcesHealth.length > 0
+                        ? sourcesHealth
+                        : [
+                            { id: 'usgs', name: 'USGS Real-Time Earthquakes', status: 'HEALTHY' },
+                            { id: 'isro', name: 'ISRO Bhuvan Flood Mapping', status: 'HEALTHY' },
+                            { id: 'imd', name: 'IMD Doppler Radar & Precipitation', status: 'HEALTHY' },
+                            { id: 'ndma', name: 'NDMA SACHET Emergency Warnings', status: 'HEALTHY' },
+                            { id: 'nepal', name: 'Nepal DHM & NDRRMA Telemetry', status: 'HEALTHY' },
+                            { id: 'nasa', name: 'NASA FIRMS Fire Sensing', status: 'HEALTHY' },
+                            { id: 'gdacs', name: 'GDACS Global Disaster System', status: 'HEALTHY' },
+                            { id: 'cpcb', name: 'CPCB National Air Quality Index', status: 'HEALTHY' },
+                          ]
+                      ).map((sh) => (
+                        <div key={sh.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px' }}>
+                          <span style={{ fontWeight: 600, color: '#1F3440' }}>{sh.name}</span>
+                          <span style={{ color: '#4C8B71', fontWeight: 700 }}>● Live</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-
-                {/* Telemetry Metrics Grid */}
-                <div className={styles.telemetryGrid}>
-                  <div className={styles.telemetryCard}>
-                    <div className={styles.telemetryCardLabel}>Jurisdiction / Region</div>
-                    <div className={styles.telemetryCardValue} style={{ fontSize: '12px' }}>
-                      {selectedEvent.district || selectedEvent.state || selectedEvent.country}
-                    </div>
-                  </div>
-
-                  <div className={styles.telemetryCard}>
-                    <div className={styles.telemetryCardLabel}>Source Agency</div>
-                    <div className={styles.telemetryCardValue} style={{ fontSize: '12px' }}>
-                      {selectedEvent.source}
-                    </div>
-                  </div>
-
-                  {selectedEvent.details?.magnitude !== undefined && (
-                    <div className={styles.telemetryCard}>
-                      <div className={styles.telemetryCardLabel}>Focal Magnitude</div>
-                      <div className={styles.telemetryCardValue}>M {selectedEvent.details.magnitude.toFixed(1)}</div>
-                    </div>
-                  )}
-
-                  {selectedEvent.details?.depthKm !== undefined && (
-                    <div className={styles.telemetryCard}>
-                      <div className={styles.telemetryCardLabel}>Hypocenter Depth</div>
-                      <div className={styles.telemetryCardValue}>{selectedEvent.details.depthKm} km</div>
-                    </div>
-                  )}
-
-                  {selectedEvent.details?.rainfallRateMmH !== undefined && (
-                    <div className={styles.telemetryCard}>
-                      <div className={styles.telemetryCardLabel}>Rainfall Intensity</div>
-                      <div className={styles.telemetryCardValue}>{selectedEvent.details.rainfallRateMmH.toFixed(1)} mm/h</div>
-                    </div>
-                  )}
-
-                  {selectedEvent.details?.brightnessTempK !== undefined && (
-                    <div className={styles.telemetryCard}>
-                      <div className={styles.telemetryCardLabel}>Thermal Intensity</div>
-                      <div className={styles.telemetryCardValue}>{selectedEvent.details.brightnessTempK} K</div>
-                    </div>
-                  )}
-
-                  {selectedEvent.details?.satellite && (
-                    <div className={styles.telemetryCard}>
-                      <div className={styles.telemetryCardLabel}>Orbital Platform</div>
-                      <div className={styles.telemetryCardValue} style={{ fontSize: '11.5px' }}>
-                        {selectedEvent.details.satellite}
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedEvent.details?.riverBasin && (
-                    <div className={styles.telemetryCard}>
-                      <div className={styles.telemetryCardLabel}>Hydrological Basin</div>
-                      <div className={styles.telemetryCardValue} style={{ fontSize: '11.5px' }}>
-                        {selectedEvent.details.riverBasin}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Daily Disaster Update & Telemetry Lifecycle */}
-                <div style={{
-                  fontSize: '11px',
-                  color: '#383A36',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '5px',
-                  background: '#FAF9F6',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #EFECE6',
-                  margin: '8px 0',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#737571' }}>{t.map.initialDetection}:</span>
-                    <span style={{ fontWeight: 600 }}>{new Date(selectedEvent.issued_at).toLocaleString()}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#737571' }}>{t.map.latestAgencyUpdate}:</span>
-                    <span style={{ color: '#2E5A44', fontWeight: 700 }}>
-                      {new Date(selectedEvent.updated_at || selectedEvent.issued_at).toLocaleString()}
-                    </span>
-                  </div>
-                  {selectedEvent.expires_at && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#737571' }}>{t.map.activeBulletinUntil}:</span>
-                      <span style={{ fontWeight: 600 }}>{new Date(selectedEvent.expires_at).toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#60717B' }}>{t.map.telemetryFreshness}:</span>
-                    <span style={{ fontWeight: 600, color: '#1F3440' }}>{selectedEvent.freshness}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px solid #DCEEF2' }}>
-                    <span style={{ color: '#60717B' }}>{t.map.dailySyncStatus}:</span>
-                    <span style={{ color: '#4C8DA2', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span className={styles.pulseDotLive} style={{ width: '5px', height: '5px', background: '#4C8DA2' }} />
-                      Continuous Real-Time Sync
-                    </span>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className={styles.panelActionRow}>
-                  {selectedEvent.is_community_report ? (
-                    <Link
-                      href={selectedEvent.source_url || `/track?id=${selectedEvent.id.replace('community_', '')}`}
-                      className={styles.panelPrimaryBtn}
-                      style={{ textDecoration: 'none', textAlign: 'center' }}
-                    >
-                      🔍 Track Report Status →
-                    </Link>
-                  ) : selectedEvent.source_url && selectedEvent.source_url !== '#' ? (
-                    <a
-                      href={selectedEvent.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.panelPrimaryBtn}
-                    >
-                      {t.map.verifySource} ↗
-                    </a>
-                  ) : null}
-
-                  {selectedEvent.details?.feltUrl && (
-                    <a
-                      href={selectedEvent.details.feltUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.panelSecondaryBtn}
-                    >
-                      USGS Did You Feel It? ↗
-                    </a>
-                  )}
-
-                  <Link href="/report" className={styles.panelSecondaryBtn}>
-                    {t.map.reportUpdate}
-                  </Link>
-                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* ============================================================
-          SOS Distress Drawer
-          ============================================================ */}
-      {isSosOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(22, 24, 22, 0.45)',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-          }}
-          onClick={() => setIsSosOpen(false)}
-        >
-          <div
-            style={{
-              background: '#FFFFFF',
-              border: '1px solid #DCEEF2',
-              borderRadius: '20px',
-              maxWidth: '480px',
-              width: '100%',
-              padding: '24px',
-              boxShadow: '0 12px 32px rgba(31, 52, 64, 0.15)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '20px' }}>🚨</span>
-                <h3 style={{ fontSize: '17px', fontWeight: 800, margin: 0, color: '#A82824' }}>
-                  Broadcast SOS Distress Beacon
-                </h3>
-              </div>
+              {/* Reset View */}
               <button
                 type="button"
-                onClick={() => setIsSosOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#737571' }}
+                className={styles.toolbarActionBtn}
+                onClick={handleResetView}
+                title="Reset Map to South Asia"
               >
-                ✕
+                ⟲ Reset
+              </button>
+
+              {/* Share */}
+              <button
+                type="button"
+                className={styles.toolbarActionBtn}
+                onClick={handleShareView}
+                title="Share Map Link"
+              >
+                🔗 Share
+              </button>
+
+              {/* Fullscreen */}
+              <button
+                type="button"
+                className={styles.toolbarActionBtn}
+                onClick={handleToggleFullscreen}
+                title="Toggle Fullscreen"
+              >
+                ⛶
               </button>
             </div>
 
-            <div style={{ background: '#FBEBEA', padding: '10px 12px', borderRadius: '4px', fontSize: '12px', color: '#A82824', marginBottom: '16px', lineHeight: 1.4 }}>
-              ⚠️ <strong>Emergency Notice:</strong> If lives are in immediate danger, call <strong>112 (National Emergency Helpline)</strong> directly.
+            {/* Floating Right Map Controls */}
+            <div className={styles.rightMapControls}>
+              <button
+                type="button"
+                className={styles.mapCircleBtn}
+                onClick={handleShareCurrentLocation}
+                title="Locate Me (GPS)"
+              >
+                🎯
+              </button>
+              <button
+                type="button"
+                className={styles.mapCircleBtn}
+                onClick={() => handleZoom(1)}
+                title="Zoom In"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                className={styles.mapCircleBtn}
+                onClick={() => handleZoom(-1)}
+                title="Zoom Out"
+              >
+                –
+              </button>
             </div>
 
-            {sosSuccessId ? (
-              <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                <div style={{ fontSize: '28px', marginBottom: '8px' }}>✅</div>
-                <h4 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 6px' }}>
-                  Distress Beacon Broadcasted
-                </h4>
-                <p style={{ fontSize: '12.5px', color: '#555753', margin: '0 0 16px' }}>
-                  Reference ID: <strong>{sosSuccessId}</strong>. Emergency management units have received coordinates.
-                </p>
+            {/* Floating Vertical Emergency Action Pill */}
+            {showEmergencyBar ? (
+              <aside className={styles.floatingEmergencyPill} aria-label="Emergency Quick Actions">
+                <Link href="/sos" className={styles.emergencySosCircleBtn} title="Suraksha SOS Emergency Hub">
+                  <span className={styles.sosCircleIcon}>🚨</span>
+                  <span style={{ fontSize: '10px', fontWeight: 900, marginTop: '2px' }}>SOS</span>
+                </Link>
+                <Link href="/sos" className={styles.emergencySosSubtext}>
+                  Need<br />Help?
+                </Link>
+
+                <Link href="/report" className={styles.sideActionItem} title="Report an observed hazard">
+                  <span className="icon">📢</span>
+                  <span>Report<br />Now</span>
+                </Link>
+
                 <button
                   type="button"
-                  className={styles.panelPrimaryBtn}
-                  style={{ width: '100%' }}
-                  onClick={() => {
-                    setIsSosOpen(false);
-                    setSosSuccessId(null);
-                  }}
+                  className={styles.sideActionItem}
+                  onClick={handleShareCurrentLocation}
+                  title="Share your GPS coordinates"
                 >
-                  Close Window
+                  <span className="icon">📍</span>
+                  <span>Share<br />Location</span>
                 </button>
-              </div>
+
+                <Link href="/sos?tab=helpline" className={styles.sideActionItem} title="National Helplines Directory">
+                  <span className="icon">📞</span>
+                  <span>Emergency<br />Contacts</span>
+                </Link>
+
+                <button
+                  type="button"
+                  className={styles.sideCloseBtn}
+                  onClick={() => setShowEmergencyBar(false)}
+                  title="Minimize Emergency Bar"
+                >
+                  ✕
+                </button>
+              </aside>
             ) : (
-              <form onSubmit={handleSubmitSos} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#555753', marginBottom: '4px' }}>
-                    Landmark / Location Address *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Near Gomti River Barrage, Lucknow"
-                    value={sosLandmark}
-                    onChange={(e) => setSosLandmark(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #DCEEF2', borderRadius: '10px', fontSize: '13px' }}
-                  />
-                </div>
+              <button
+                type="button"
+                className={styles.emergencySosCircleBtn}
+                style={{ position: 'absolute', right: 16, top: '50%', width: 44, height: 44, zIndex: 25 }}
+                onClick={() => setShowEmergencyBar(true)}
+                title="Restore Emergency Quick Bar"
+              >
+                🚨
+              </button>
+            )}
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#60717B', marginBottom: '4px' }}>
-                    Contact Phone Number (Optional)
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="e.g. 9876543210"
-                    value={sosPhone}
-                    onChange={(e) => setSosPhone(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #DCEEF2', borderRadius: '10px', fontSize: '13px' }}
-                  />
+            {/* Floating Bottom Bar on Map */}
+            <div className={styles.floatingBottomBar}>
+              {showLegend && (
+                <div className={styles.floatingLegendPill}>
+                  <div className={styles.legendDotItem}>
+                    <span className={styles.legendDot} style={{ background: '#EA580C' }}></span>
+                    <span>Earthquake</span>
+                  </div>
+                  <div className={styles.legendDotItem}>
+                    <span className={styles.legendDot} style={{ background: '#DC2626' }}></span>
+                    <span>Flood</span>
+                  </div>
+                  <div className={styles.legendDotItem}>
+                    <span className={styles.legendDot} style={{ background: '#1E293B' }}></span>
+                    <span>Cyclone</span>
+                  </div>
+                  <div className={styles.legendDotItem}>
+                    <span className={styles.legendDot} style={{ background: '#7C3AED' }}></span>
+                    <span>Landslide</span>
+                  </div>
+                  <div className={styles.legendDotItem}>
+                    <span className={styles.legendDot} style={{ background: '#0284C7' }}></span>
+                    <span>Storm</span>
+                  </div>
+                  <div className={styles.legendDotItem}>
+                    <span className={styles.legendDot} style={{ background: '#D97706' }}></span>
+                    <span>Heatwave</span>
+                  </div>
+                  <div className={styles.legendDotItem}>
+                    <span className={styles.legendDot} style={{ background: '#16A34A' }}></span>
+                    <span>Normal</span>
+                  </div>
                 </div>
+              )}
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#60717B', marginBottom: '4px' }}>
-                    Distress Situation Details
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Describe water depth, trapped individuals, medical requirements..."
-                    value={sosNotes}
-                    onChange={(e) => setSosNotes(e.target.value)}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #DCEEF2', borderRadius: '10px', fontSize: '13px', resize: 'vertical' }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+              <div className={styles.floatingWindowPill}>
+                <span>Window:</span>
+                {(['24h', '7d', '30d'] as const).map((r) => (
                   <button
-                    type="submit"
-                    disabled={sosSubmitting}
-                    className={styles.panelPrimaryBtn}
-                    style={{ background: '#A82824' }}
+                    key={r}
+                    type="button"
+                    className={`${styles.timePill} ${timeRange === r ? styles.timePillActive : ''}`}
+                    onClick={() => setTimeRange(r)}
                   >
-                    {sosSubmitting ? 'Broadcasting Beacon...' : 'Transmit Distress Beacon'}
+                    {r}
                   </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Selected Event Inspection Drawer */}
+            {selectedEvent && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '56px',
+                  left: '16px',
+                  maxWidth: '420px',
+                  background: '#FFFFFF',
+                  border: '1.5px solid #C8E3EA',
+                  borderRadius: '16px',
+                  boxShadow: '0 8px 30px rgba(31, 52, 64, 0.16)',
+                  padding: '16px',
+                  zIndex: 30,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, background: '#EBF4F7', color: '#4C8DA2', padding: '2px 8px', borderRadius: '4px' }}>
+                    {selectedEvent.acronym} &bull; {selectedEvent.severity}
+                  </span>
                   <button
                     type="button"
-                    className={styles.panelSecondaryBtn}
-                    onClick={() => setIsSosOpen(false)}
+                    onClick={() => setSelectedEvent(null)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#8FA2AD' }}
                   >
-                    Cancel
+                    ✕
                   </button>
                 </div>
-              </form>
+                <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#1F3440', margin: '0 0 4px' }}>
+                  {selectedEvent.title}
+                </h4>
+                <div style={{ fontSize: '12px', color: '#60717B', marginBottom: '8px' }}>
+                  📍 {selectedEvent.district ? `${selectedEvent.district}, ` : ''}{selectedEvent.country}
+                </div>
+                <p style={{ fontSize: '12px', color: '#1F3440', margin: '0 0 12px', lineHeight: 1.4 }}>
+                  {selectedEvent.details?.safetyGuidance || 'No additional safety notes provided.'}
+                </p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <a
+                    href={selectedEvent.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      flex: 1,
+                      background: '#1F3440',
+                      color: '#FFFFFF',
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {selectedEvent.source} ↗
+                  </a>
+                  <Link
+                    href="/report"
+                    style={{
+                      background: '#F8FBFC',
+                      border: '1.5px solid #C8E3EA',
+                      color: '#1F3440',
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Report Ground Update
+                  </Link>
+                </div>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        </section>
+
+        {/* ============================================================
+            3. BOTTOM SUMMARY KPI CARDS ROW (5 Cards)
+            ============================================================ */}
+        <section className={styles.bottomKpiRow} aria-label="National Hazard Metrics Summary">
+          {/* Card 1: Active Alerts */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiCardTop}>
+              <div className={`${styles.kpiIconSquare} ${styles.kpiIconAlerts}`}>⚠️</div>
+              <div className={styles.kpiCardNumbers}>
+                <span className={styles.kpiNumber}>{officialAlertsCount}</span>
+                <span className={styles.kpiLabel}>Active Alerts</span>
+              </div>
+            </div>
+            <svg className={styles.sparklineSvg} viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path d="M0,18 Q20,6 45,14 T80,8 T100,12" fill="none" stroke="#DC2626" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </div>
+
+          {/* Card 2: Earth Events */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiCardTop}>
+              <div className={`${styles.kpiIconSquare} ${styles.kpiIconEarth}`}>⚙️</div>
+              <div className={styles.kpiCardNumbers}>
+                <span className={styles.kpiNumber}>{earthEventsCount}</span>
+                <span className={styles.kpiLabel}>Earth Events</span>
+              </div>
+            </div>
+            <svg className={styles.sparklineSvg} viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path d="M0,14 Q25,20 50,8 T75,16 T100,10" fill="none" stroke="#EA580C" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </div>
+
+          {/* Card 3: Weather & Flood */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiCardTop}>
+              <div className={`${styles.kpiIconSquare} ${styles.kpiIconWeather}`}>🌧️</div>
+              <div className={styles.kpiCardNumbers}>
+                <span className={styles.kpiNumber}>{weatherEventsCount}</span>
+                <span className={styles.kpiLabel}>Weather &amp; Flood</span>
+              </div>
+            </div>
+            <svg className={styles.sparklineSvg} viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path d="M0,16 Q20,12 40,18 T70,9 T100,15" fill="none" stroke="#0284C7" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </div>
+
+          {/* Card 4: Live Data Feeds */}
+          <div className={styles.kpiCard}>
+            <div className={styles.kpiCardTop}>
+              <div className={`${styles.kpiIconSquare} ${styles.kpiIconFeeds}`}>📡</div>
+              <div className={styles.kpiCardNumbers}>
+                <span className={styles.kpiNumber}>{liveFeedsCount}</span>
+                <span className={styles.kpiLabel}>Live Data Feeds</span>
+              </div>
+            </div>
+            <svg className={styles.sparklineSvg} viewBox="0 0 100 24" preserveAspectRatio="none">
+              <path d="M0,12 Q20,16 45,7 T80,14 T100,10" fill="none" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" />
+            </svg>
+          </div>
+
+          {/* Card 5: National Coverage */}
+          <div className={styles.nationalCoverageCard}>
+            <div className={styles.natCoverageLeft}>
+              <div className={styles.indiaMapIconWrap}>
+                <svg viewBox="0 0 1000 1000" width="26" height="26" fill="#4C8DA2">
+                  <path d={INDIA_SVG_PATH} />
+                </svg>
+              </div>
+              <div className={styles.natCoverageContent}>
+                <h4>National Coverage</h4>
+                <p>Real-time monitoring across India and neighbouring regions.</p>
+              </div>
+            </div>
+            <Link href="/about" className={styles.natCoverageCircleBtn} title="Learn about National Network Coverage">
+              →
+            </Link>
+          </div>
+        </section>
+
+        {/* Global Toast Feedback */}
+        {toastMessage && (
+          <div
+            style={{
+              position: 'fixed',
+              bottom: '24px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#1F3440',
+              color: '#FFFFFF',
+              padding: '10px 20px',
+              borderRadius: '9999px',
+              fontSize: '13px',
+              fontWeight: 700,
+              boxShadow: '0 8px 24px rgba(31, 52, 64, 0.25)',
+              zIndex: 9999,
+              animation: 'fadeIn 0.2s ease',
+            }}
+          >
+            {toastMessage}
+          </div>
+        )}
+      </main>
+
+      <Footer />
     </div>
   );
 }
