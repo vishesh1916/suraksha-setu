@@ -51,22 +51,6 @@
   gap: 5px;
 }
 
-.topBarDot {
-  color: #C8E3EA;
-}
-
-.topBarStatusPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #4C8B71;
-  background: #E8F4EC;
-  border: 1px solid #C7E6D0;
-  padding: 1px 7px;
-  border-radius: 9999px;
-}
 
 .mottoClean {
   display: flex;

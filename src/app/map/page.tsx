@@ -1459,8 +1459,6 @@ function MapContent() {
         <section className={styles.topWatermarkBar} aria-label="National Operations Vision">
           <div className={styles.topBarLeft}>
             <span className={styles.topBarGridLabel}>🌐 National Operations GIS Grid</span>
-            <span className={styles.topBarDot}>•</span>
-            <span className={styles.topBarStatusPill}>● Live Multi-Agency Telemetry</span>
           </div>
 
           <div className={styles.mottoClean}>
