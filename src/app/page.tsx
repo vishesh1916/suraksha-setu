@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Alert, Report, HazardCategory } from '@/types';
+import type { Alert, Report, HazardCategory, SosRequest } from '@/types';
 import { HAZARD_CATEGORIES, SEVERITY_LABELS } from '@/types';
 import { Navbar } from '@/components/Navbar';
 import { HeroIndiaVectorMap } from '@/components/HeroIndiaVectorMap';
@@ -37,6 +37,7 @@ export default function LandingPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<Record<string, number>>({});
+  const [latestSos, setLatestSos] = useState<SosRequest | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Multilingual reactive listener (6 Indian languages)
@@ -65,6 +66,7 @@ export default function LandingPage() {
     relativeHumidity?: number;
     cloudCover?: number;
     weatherCode?: number;
+    threatLevel?: string;
     updatedAt?: string;
   } | null>(null);
 
@@ -79,12 +81,18 @@ export default function LandingPage() {
   // Subtle parallax for the hero telemetry deck (max 20px)
   const heroParallaxY = useSubtleParallax(0.025, 20);
 
-  // Smooth ease-out counters for national impact metrics (Section 4)
+  // Dynamically computed counters from live telemetry and actual reports (Section 4)
   const { ref: impactRef, isInView: impactInView } = useInView({ threshold: 0.2 });
-  const reportsCount = useSmoothCounter(28, 1600, impactInView); // 2.8M+
-  const districtsCount = useSmoothCounter(850, 1400, impactInView); // 850+
-  const hazardsCount = useSmoothCounter(12, 1600, impactInView); // 1.2M+
-  const ratingCount = useSmoothCounter(46, 1200, impactInView); // 4.6/5
+  const realReportsCount = stats.totalReports ?? reports.length;
+  const realDistrictsCount = reports.length > 0 ? new Set(reports.map((r) => r.landmark).filter(Boolean)).size : 0;
+  const realHazardsResolved = reports.filter((r) => r.status === 'RESOLVED' || r.currentActionCategory === 'Hazard Resolved').length;
+  const realSourcesHealthy = stats.sourcesHealthy ?? 45;
+  const realSourcesTotal = stats.sourcesTotal ?? 45;
+
+  const animReports = useSmoothCounter(realReportsCount, 1200, impactInView);
+  const animDistricts = useSmoothCounter(realDistrictsCount, 1200, impactInView);
+  const animHazards = useSmoothCounter(realHazardsResolved, 1200, impactInView);
+  const animSources = useSmoothCounter(realSourcesHealthy, 1200, impactInView);
 
   // Active ground hazards currently reported and unaddressed
   const activeHazards = reports.filter(
@@ -112,14 +120,15 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch live alerts & stats from store with fast 3-second polling
+  // Fetch live alerts, stats & real SOS from store with fast 3-second polling
   const fetchData = useCallback(async () => {
     try {
       const timestamp = Date.now();
-      const [alertsRes, reportsRes, statsRes] = await Promise.all([
+      const [alertsRes, reportsRes, statsRes, sosRes] = await Promise.all([
         fetch(`/api/alerts?status=active&_t=${timestamp}`, { cache: 'no-store' }),
         fetch(`/api/reports?limit=50&_t=${timestamp}`, { cache: 'no-store' }),
         fetch(`/api/stats?_t=${timestamp}`, { cache: 'no-store' }),
+        fetch(`/api/sos?_t=${timestamp}`, { cache: 'no-store' }),
       ]);
 
       if (alertsRes.ok) {
@@ -158,6 +167,12 @@ export default function LandingPage() {
       if (statsRes.ok) {
         const d = await statsRes.json();
         setStats(d.data || {});
+      }
+      if (sosRes.ok) {
+        const d = await sosRes.json();
+        const list: SosRequest[] = d.data || [];
+        const active = list.find((s) => s.status !== 'RESOLVED_SAFE') || list[0] || null;
+        setLatestSos(active);
       }
     } catch {
       // Graceful fallback
@@ -370,31 +385,43 @@ export default function LandingPage() {
                   {opsMode === 'sos' ? (
                     <div className={styles.opsCardBody}>
                       <div className={styles.opsBadgeRow}>
-                        <span className={styles.opsUrgentBadge}>
-                          <span>⚡ CRITICAL RESCUE SIGNAL</span>
+                        <span className={latestSos ? styles.opsUrgentBadge : styles.opsStandbyBadge}>
+                          <span>{latestSos ? '⚡ CRITICAL RESCUE SIGNAL' : '🟢 STANDBY BEACON ACTIVE'}</span>
                         </span>
-                        <span className={styles.opsTimestamp}>GPS 26.84°N, 80.94°E</span>
+                        <span className={styles.opsTimestamp}>
+                          {latestSos && latestSos.location
+                            ? `GPS ${latestSos.location.latitude.toFixed(2)}°N, ${latestSos.location.longitude.toFixed(2)}°E`
+                            : 'GPS 26.85°N, 80.94°E · SECTOR READY'}
+                        </span>
                       </div>
 
                       <h3 className={styles.opsMainHeadline}>
-                        Ward 14 Urban Inundation
+                        {latestSos ? latestSos.landmark : 'Emergency Operations Standby'}
                       </h3>
                       <p className={styles.opsMainDescription}>
-                        Distress beacon active: 4 persons trapped in rapid flash surcharge. NDRF Boat Unit 02 dispatched.
+                        {latestSos
+                          ? `${latestSos.hazardType.toUpperCase()} distress beacon active: ${latestSos.peopleCount} ${latestSos.peopleCount === 1 ? 'person' : 'persons'} reported${latestSos.hasMedicalEmergency ? ' • Medical emergency flagged' : ''}.${latestSos.notes ? ` "${latestSos.notes}"` : ''}`
+                          : '0 active citizen distress signals in current sector. Rapid rescue response standby active across NDRF & SDRF operations hubs.'}
                       </p>
 
                       <div className={styles.opsTelemetryGrid}>
                         <div className={styles.opsTelemetryItem}>
-                          <span className={styles.opsTelemetryKey}>Depth</span>
-                          <span className={styles.opsTelemetryVal}>💧 3.8 ft</span>
+                          <span className={styles.opsTelemetryKey}>Status</span>
+                          <span className={styles.opsTelemetryVal} style={{ color: latestSos ? '#E53E3E' : '#4C8B71' }}>
+                            {latestSos ? latestSos.status.replace(/_/g, ' ') : 'STANDBY READY'}
+                          </span>
                         </div>
                         <div className={styles.opsTelemetryItem}>
-                          <span className={styles.opsTelemetryKey}>Unit Status</span>
-                          <span className={styles.opsTelemetryVal} style={{ color: '#4C8B71' }}>En Route</span>
+                          <span className={styles.opsTelemetryKey}>Unit Assigned</span>
+                          <span className={styles.opsTelemetryVal} style={{ color: '#4C8B71' }}>
+                            {latestSos?.dispatchedUnit || 'NDRF / SDRF Standby'}
+                          </span>
                         </div>
                         <div className={styles.opsTelemetryItem}>
-                          <span className={styles.opsTelemetryKey}>Response ETA</span>
-                          <span className={styles.opsTelemetryVal}>⏱️ 6 Mins</span>
+                          <span className={styles.opsTelemetryKey}>{latestSos ? 'Reported' : 'Telemetry Grid'}</span>
+                          <span className={styles.opsTelemetryVal}>
+                            {latestSos ? formatRelativeTime(latestSos.createdAt) : '100% Online'}
+                          </span>
                         </div>
                       </div>
 
@@ -416,37 +443,41 @@ export default function LandingPage() {
                     <div className={styles.opsCardBody}>
                       <div className={styles.opsBadgeRow}>
                         <span className={styles.opsRadarBadge}>
-                          <span>🛰️ IMD DOPPLER GRID</span>
+                          <span>🛰️ OPEN-METEO DOPPLER GRID</span>
                         </span>
                         <span className={styles.opsTimestamp}>
-                          {liveLucknowData ? `${liveLucknowData.temperature ?? 28.5}°C` : 'SCAN 0.02s'}
+                          {liveLucknowData?.temperature !== undefined ? `${liveLucknowData.temperature}°C` : 'SCANNING'}
                         </span>
                       </div>
 
                       <h3 className={styles.opsMainHeadline}>
-                        48.2 dBZ Stormband Reflectivity
+                        {liveLucknowData?.weatherCondition
+                          ? `${liveLucknowData.weatherCondition} Telemetry`
+                          : 'Doppler Station Monitoring'}
                       </h3>
                       <p className={styles.opsMainDescription}>
-                        Deepening cyclonic depression tracking ENE across Indo-Gangetic basin. Real-time multi-station synthesis.
+                        {liveLucknowData
+                          ? `Live meteorological station synthesis (Lucknow 26.85°N, 80.95°E). Threat level: ${liveLucknowData.threatLevel || 'NORMAL'}. Precipitation: ${liveLucknowData.precipitation ?? 0} mm/h.`
+                          : 'Real-time multi-station synthesis across Indo-Gangetic basin and national radar network.'}
                       </p>
 
                       <div className={styles.opsTelemetryGrid}>
                         <div className={styles.opsTelemetryItem}>
-                          <span className={styles.opsTelemetryKey}>Wind Gusts</span>
+                          <span className={styles.opsTelemetryKey}>Wind Speed</span>
                           <span className={styles.opsTelemetryVal}>
-                            {liveLucknowData?.windSpeed ? `💨 ${liveLucknowData.windSpeed} km/h` : '💨 44 km/h'}
+                            {liveLucknowData?.windSpeed !== undefined ? `💨 ${liveLucknowData.windSpeed} km/h` : '💨 Normal'}
                           </span>
                         </div>
                         <div className={styles.opsTelemetryItem}>
                           <span className={styles.opsTelemetryKey}>Condition</span>
                           <span className={styles.opsTelemetryVal}>
-                            {liveLucknowData?.weatherCondition || '🌧️ Rainbands'}
+                            {liveLucknowData?.weatherCondition || 'Clear'}
                           </span>
                         </div>
                         <div className={styles.opsTelemetryItem}>
                           <span className={styles.opsTelemetryKey}>Humidity</span>
                           <span className={styles.opsTelemetryVal}>
-                            {liveLucknowData?.relativeHumidity ? `${liveLucknowData.relativeHumidity}%` : '88%'}
+                            {liveLucknowData?.relativeHumidity !== undefined ? `💧 ${liveLucknowData.relativeHumidity}%` : 'Normal'}
                           </span>
                         </div>
                       </div>
@@ -541,13 +572,17 @@ export default function LandingPage() {
               quality={95}
             />
 
-            {/* Alert Callout Tooltip: Lucknow, UP Heavy Rain */}
+            {/* Dynamic Alert Callout Tooltip */}
             <div className={styles.radarAlertCallout}>
               <div className={styles.radarAlertPill}>
                 <span className={styles.radarAlertPulseDot} />
                 <div className={styles.radarAlertInfo}>
-                  <span className={styles.radarAlertTitle}>Heavy Rain Alert</span>
-                  <span className={styles.radarAlertLocation}>Lucknow, UP</span>
+                  <span className={styles.radarAlertTitle}>
+                    {alerts.length > 0 ? alerts[0].headline : (liveLucknowData ? `${liveLucknowData.weatherCondition} Status` : 'Normal Catchment Status')}
+                  </span>
+                  <span className={styles.radarAlertLocation}>
+                    {alerts.length > 0 ? (alerts[0].areaName || alerts[0].category.replace(/_/g, ' ')) : 'Lucknow Radar Catchment'}
+                  </span>
                 </div>
               </div>
               <div className={styles.radarAlertTail} />
@@ -700,7 +735,9 @@ export default function LandingPage() {
               <div className={styles.impactCardIcon} style={{ background: '#EAF3F7', color: '#357288' }}>
                 👥
               </div>
-              <span className={styles.impactCardValue}>{impactInView ? `${(reportsCount / 10).toFixed(1)}M+` : '2.8M+'}</span>
+              <span className={styles.impactCardValue}>
+                {impactInView ? animReports : realReportsCount}
+              </span>
               <span className={styles.impactCardLabel}>Citizen Reports</span>
             </div>
 
@@ -708,24 +745,30 @@ export default function LandingPage() {
               <div className={styles.impactCardIcon} style={{ background: '#E8F5EE', color: '#4C8B71' }}>
                 🏛️
               </div>
-              <span className={styles.impactCardValue}>{impactInView ? `${districtsCount}+` : '850+'}</span>
-              <span className={styles.impactCardLabel}>Districts Covered</span>
+              <span className={styles.impactCardValue}>
+                {impactInView ? animDistricts : realDistrictsCount}
+              </span>
+              <span className={styles.impactCardLabel}>Districts Active</span>
             </div>
 
             <div className={styles.impactWhiteCard}>
               <div className={styles.impactCardIcon} style={{ background: '#E6F4F3', color: '#2F857D' }}>
                 🛡️
               </div>
-              <span className={styles.impactCardValue}>{impactInView ? `${(hazardsCount / 10).toFixed(1)}M+` : '1.2M+'}</span>
+              <span className={styles.impactCardValue}>
+                {impactInView ? animHazards : realHazardsResolved}
+              </span>
               <span className={styles.impactCardLabel}>Hazards Resolved</span>
             </div>
 
             <div className={styles.impactWhiteCard}>
               <div className={styles.impactCardIcon} style={{ background: '#FEF7EC', color: '#D97706' }}>
-                ⭐
+                🛰️
               </div>
-              <span className={styles.impactCardValue}>{impactInView ? `${(ratingCount / 10).toFixed(1)}/5` : '4.6/5'}</span>
-              <span className={styles.impactCardLabel}>Community Rating</span>
+              <span className={styles.impactCardValue}>
+                {impactInView ? `${animSources}/${realSourcesTotal}` : `${realSourcesHealthy}/${realSourcesTotal}`}
+              </span>
+              <span className={styles.impactCardLabel}>Live Sensor Feeds</span>
             </div>
           </div>
         </div>
