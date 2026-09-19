@@ -807,18 +807,21 @@ function MapContent() {
     setIsSearching(true);
   }, [searchQuery]);
 
-  const flyToCoords = useCallback((lng: number, lat: number, zoom = 9) => {
+  const flyToCoords = useCallback((lng: number, lat: number, zoom?: number) => {
     if (!mapRef.current) return;
+    const currentZoom = mapRef.current.getZoom();
+    const finalZoom = zoom !== undefined ? zoom : Math.max(10, currentZoom);
     mapRef.current.flyTo({
       center: [lng, lat],
-      zoom,
+      zoom: finalZoom,
       essential: true,
-      duration: 1200,
+      duration: 600,
     });
   }, []);
 
   const handleSelectBadge = useCallback((acro: string) => {
-    setSelectedAcronym(acro);
+    const nextAcro = selectedAcronym === acro && acro !== 'ALL' ? 'ALL' : acro;
+    setSelectedAcronym(nextAcro);
 
     // Close any currently open popups first so nothing remains orphaned
     markersRef.current.forEach((m) => {
@@ -829,30 +832,19 @@ function MapContent() {
     });
 
     // 1. If SH (Relief Shelters), activate layer and focus first shelter
-    if (acro === 'SH') {
+    if (nextAcro === 'SH') {
       setLayerShelters(true);
       const firstShelter = VERIFIED_SHELTERS[0];
       if (firstShelter) {
         const shelterEv = convertShelterToUnifiedEvent(firstShelter);
         setSelectedEvent(shelterEv);
         flyToCoords(firstShelter.lng, firstShelter.lat, 11);
-        setTimeout(() => {
-          const m = markersMapRef.current.get(firstShelter.id);
-          if (m && mapRef.current) {
-            markersRef.current.forEach((other) => {
-              const p = (other as any).getPopup?.();
-              if (p && p.isOpen()) p.remove();
-            });
-            const p = (m as any).getPopup?.();
-            if (p) p.setLngLat([firstShelter.lng, firstShelter.lat]).addTo(mapRef.current);
-          }
-        }, 300);
       }
       return;
     }
 
     // 2. If CR (Citizen Ground Report), switch to community tab
-    if (acro === 'CR') {
+    if (nextAcro === 'CR') {
       setActiveTab('community');
       const allEvents = eventsRef.current.length > 0 ? eventsRef.current : events;
       const firstCommunity = allEvents.find((e) => e.is_community_report);
@@ -861,17 +853,6 @@ function MapContent() {
         const center = getEventCenter(firstCommunity);
         if (center) {
           flyToCoords(center[0], center[1], 11);
-          setTimeout(() => {
-            const m = markersMapRef.current.get(firstCommunity.id);
-            if (m && mapRef.current) {
-              markersRef.current.forEach((other) => {
-                const p = (other as any).getPopup?.();
-                if (p && p.isOpen()) p.remove();
-              });
-              const p = (m as any).getPopup?.();
-              if (p) p.setLngLat(center).addTo(mapRef.current);
-            }
-          }, 300);
         }
       } else {
         setSelectedEvent(null);
@@ -880,34 +861,23 @@ function MapContent() {
     }
 
     // 3. For hazard acronyms, auto-switch activeTab
-    if (['EQ', 'LS', 'TS', 'AV'].includes(acro)) {
+    if (['EQ', 'LS', 'TS', 'AV'].includes(nextAcro)) {
       setActiveTab('earth');
-    } else if (['FL', 'RF', 'CW', 'ST', 'CV', 'TC', 'HW', 'AQ'].includes(acro)) {
+    } else if (['FL', 'RF', 'CW', 'ST', 'CV', 'TC', 'HW', 'AQ'].includes(nextAcro)) {
       setActiveTab('weather_flood');
-    } else if (acro === 'FR') {
+    } else if (nextAcro === 'FR') {
       setActiveTab('official');
     }
 
     // 4. Find matching event
-    if (acro !== 'ALL') {
+    if (nextAcro !== 'ALL') {
       const allEvents = eventsRef.current.length > 0 ? eventsRef.current : events;
-      const match = allEvents.find((e) => (acro === 'CR' ? e.is_community_report : e.acronym === acro));
+      const match = allEvents.find((e) => (nextAcro === 'CR' ? e.is_community_report : e.acronym === nextAcro));
       if (match) {
         setSelectedEvent(match);
         const center = getEventCenter(match);
         if (center) {
           flyToCoords(center[0], center[1], 10);
-          setTimeout(() => {
-            const m = markersMapRef.current.get(match.id);
-            if (m && mapRef.current) {
-              markersRef.current.forEach((other) => {
-                const p = (other as any).getPopup?.();
-                if (p && p.isOpen()) p.remove();
-              });
-              const p = (m as any).getPopup?.();
-              if (p) p.setLngLat(center).addTo(mapRef.current);
-            }
-          }, 300);
         }
       } else {
         // No active incidents right now in live feed: clear selected event so SOP card displays!
@@ -916,7 +886,7 @@ function MapContent() {
     } else {
       setSelectedEvent(null);
     }
-  }, [events, flyToCoords]);
+  }, [selectedAcronym, events, flyToCoords]);
 
   // 1. All events rendered on the GIS map canvas (driven by layers and global filters)
   const mapEvents = useMemo(() => {
@@ -1167,75 +1137,88 @@ function MapContent() {
         const coords = getEventCenter(ev);
         if (!coords) return;
 
-        const el = document.createElement('div');
+        // Outer wrapper handled exclusively by MapLibre for coordinate positioning (translate)
+        const wrapper = document.createElement('div');
+        wrapper.className = 'map-marker-container';
+
+        // Inner badge element that can scale, animate, and receive clicks safely
+        const pin = document.createElement('div');
+        pin.className = 'map-acronym-marker';
 
         // Distinct styling for Community Reports vs Official Hazards
         if (ev.is_community_report) {
-          el.className = 'map-acronym-marker map-citizen-marker';
-          el.style.width = '30px';
-          el.style.height = '30px';
-          el.style.borderRadius = '8px';
-          el.style.background = '#D97706';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = 'CR';
-          el.title = `Citizen Ground Report: ${ev.title}`;
+          pin.className = 'map-acronym-marker map-citizen-marker';
+          pin.style.width = '30px';
+          pin.style.height = '30px';
+          pin.style.borderRadius = '8px';
+          pin.style.background = '#D97706';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = 'CR';
+          pin.title = `Citizen Ground Report: ${ev.title}`;
         } else if (ev.acronym === 'EQ') {
-          el.className = 'map-acronym-marker';
+          pin.className = 'map-acronym-marker';
           const mag = ev.details?.magnitude ?? 4.2;
           const size = mag >= 5.5 ? 36 : mag >= 4.5 ? 30 : 26;
-          el.style.width = `${size}px`;
-          el.style.height = `${size}px`;
-          el.style.borderRadius = '50%';
-          el.style.background = '#EA580C';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = 'EQ';
-          el.title = `USGS Earthquake: ${ev.title}`;
+          pin.style.width = `${size}px`;
+          pin.style.height = `${size}px`;
+          pin.style.borderRadius = '50%';
+          pin.style.background = '#EA580C';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = 'EQ';
+          pin.title = `USGS Earthquake: ${ev.title}`;
         } else if (ev.acronym === 'FL') {
-          el.className = 'map-acronym-marker';
-          el.style.width = '28px';
-          el.style.height = '28px';
-          el.style.borderRadius = '6px';
-          el.style.background = ev.severity === 'ADVISORY' ? '#16A34A' : '#DC2626';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = 'FL';
-          el.title = `Flood Hazard: ${ev.title}`;
+          pin.className = 'map-acronym-marker';
+          pin.style.width = '28px';
+          pin.style.height = '28px';
+          pin.style.borderRadius = '6px';
+          pin.style.background = ev.severity === 'ADVISORY' ? '#16A34A' : '#DC2626';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = 'FL';
+          pin.title = `Flood Hazard: ${ev.title}`;
         } else if (ev.acronym === 'FR') {
-          el.className = 'map-acronym-marker';
-          el.style.width = '28px';
-          el.style.height = '28px';
-          el.style.borderRadius = '6px';
-          el.style.background = '#B91C1C';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = 'FR';
-          el.title = `NASA Hotspot: ${ev.title}`;
+          pin.className = 'map-acronym-marker';
+          pin.style.width = '28px';
+          pin.style.height = '28px';
+          pin.style.borderRadius = '6px';
+          pin.style.background = '#B91C1C';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = 'FR';
+          pin.title = `NASA Hotspot: ${ev.title}`;
         } else if (ev.acronym === 'ST') {
-          el.className = 'map-acronym-marker';
-          el.style.width = '28px';
-          el.style.height = '28px';
-          el.style.borderRadius = '6px';
-          el.style.background = '#0284C7';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = 'ST';
-          el.title = `Severe Squall / Storm: ${ev.title}`;
+          pin.className = 'map-acronym-marker';
+          pin.style.width = '28px';
+          pin.style.height = '28px';
+          pin.style.borderRadius = '6px';
+          pin.style.background = '#0284C7';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = 'ST';
+          pin.title = `Severe Squall / Storm: ${ev.title}`;
         } else if (ev.acronym === 'CW') {
-          el.className = 'map-acronym-marker';
-          el.style.width = '28px';
-          el.style.height = '28px';
-          el.style.borderRadius = '6px';
-          el.style.background = '#1E293B';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = 'CW';
-          el.title = `Cyclone Warning: ${ev.title}`;
+          pin.className = 'map-acronym-marker';
+          pin.style.width = '28px';
+          pin.style.height = '28px';
+          pin.style.borderRadius = '6px';
+          pin.style.background = '#1E293B';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = 'CW';
+          pin.title = `Cyclone Warning: ${ev.title}`;
         } else {
-          el.className = 'map-acronym-marker';
-          el.style.width = '28px';
-          el.style.height = '28px';
-          el.style.borderRadius = '6px';
-          el.style.background = ev.severity === 'SEVERE' ? '#7F1D1D' : ev.severity === 'WARNING' ? '#EA580C' : '#16A34A';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = ev.acronym;
-          el.title = `${ev.acronym} Hazard: ${ev.title}`;
+          pin.className = 'map-acronym-marker';
+          pin.style.width = '28px';
+          pin.style.height = '28px';
+          pin.style.borderRadius = '6px';
+          pin.style.background = ev.severity === 'SEVERE' ? '#7F1D1D' : ev.severity === 'WARNING' ? '#EA580C' : '#16A34A';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = ev.acronym;
+          pin.title = `${ev.acronym} Hazard: ${ev.title}`;
         }
+
+        // Highlight if currently selected
+        if (selectedEvent && ev.id === selectedEvent.id) {
+          pin.classList.add('map-acronym-marker-selected');
+        }
+
+        wrapper.appendChild(pin);
 
         // Attach Rich Interactive Native Popup to Pin
         const popup = new maplibregl.Popup({
@@ -1248,24 +1231,20 @@ function MapContent() {
         }).setHTML(createHazardPopupHtml(ev));
 
         try {
-          const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+          const marker = new maplibregl.Marker({ element: wrapper, anchor: 'center' })
             .setLngLat([coords[0], coords[1]])
             .addTo(mapRef.current);
 
           (marker as any).getPopup = () => popup;
 
-          el.style.cursor = 'pointer';
           const onMarkerClick = (e: Event) => {
             e.stopPropagation();
             e.preventDefault();
 
-            // 1. Select the event for deep inspection
+            // 1. Select the event for deep inspection & details drawer
             setSelectedEvent(ev);
 
-            // 2. Reset acronym filter so card is guaranteed visible in sidebar
-            setSelectedAcronym('ALL');
-
-            // 3. Automatically sync activeTab so card shows in sidebar list
+            // 2. Automatically sync activeTab so card shows in sidebar list
             if (ev.is_community_report) {
               setActiveTab('community');
             } else if (['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym)) {
@@ -1276,10 +1255,10 @@ function MapContent() {
               setActiveTab('official');
             }
 
-            // 4. Smooth camera pan
-            flyToCoords(coords[0], coords[1], 10.5);
+            // 3. Smooth camera pan
+            flyToCoords(coords[0], coords[1]);
 
-            // 5. Close all other popups
+            // 4. Close all other popups
             markersRef.current.forEach((m) => {
               const p = m.getPopup();
               if (p && p.isOpen() && m !== marker) {
@@ -1287,14 +1266,19 @@ function MapContent() {
               }
             });
 
-            // 6. Open this marker's popup directly on map
+            // 5. Open this marker's popup directly on map
             if (mapRef.current) {
               popup.setLngLat([coords[0], coords[1]]).addTo(mapRef.current);
             }
           };
 
-          el.addEventListener('click', onMarkerClick);
-          el.addEventListener('touchend', onMarkerClick);
+          wrapper.addEventListener('click', onMarkerClick);
+          wrapper.addEventListener('touchend', onMarkerClick);
+
+          // If this event was already selected, open its popup
+          if (selectedEvent && selectedEvent.id === ev.id && mapRef.current) {
+            popup.setLngLat([coords[0], coords[1]]).addTo(mapRef.current);
+          }
 
           markersRef.current.push(marker);
           markersMapRef.current.set(ev.id, marker);
@@ -1304,15 +1288,24 @@ function MapContent() {
       // 2. Render Relief Shelters if enabled
       if (layerShelters) {
         VERIFIED_SHELTERS.forEach((sh) => {
-          const el = document.createElement('div');
-          el.className = 'map-acronym-marker';
-          el.style.width = '26px';
-          el.style.height = '26px';
-          el.style.borderRadius = '6px';
-          el.style.background = '#1F3440';
-          el.style.border = '2px solid #FFFFFF';
-          el.innerText = 'SH';
-          el.title = `Relief Shelter Camp: ${sh.name}`;
+          const wrapper = document.createElement('div');
+          wrapper.className = 'map-marker-container';
+
+          const pin = document.createElement('div');
+          pin.className = 'map-acronym-marker';
+          pin.style.width = '26px';
+          pin.style.height = '26px';
+          pin.style.borderRadius = '6px';
+          pin.style.background = '#1F3440';
+          pin.style.border = '2px solid #FFFFFF';
+          pin.innerText = 'SH';
+          pin.title = `Relief Shelter Camp: ${sh.name}`;
+
+          if (selectedEvent && selectedEvent.id === sh.id) {
+            pin.classList.add('map-acronym-marker-selected');
+          }
+
+          wrapper.appendChild(pin);
 
           const popup = new maplibregl.Popup({
             offset: [0, -16],
@@ -1324,13 +1317,12 @@ function MapContent() {
           }).setHTML(createShelterPopupHtml(sh));
 
           try {
-            const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+            const marker = new maplibregl.Marker({ element: wrapper, anchor: 'center' })
               .setLngLat([sh.lng, sh.lat])
               .addTo(mapRef.current);
 
             (marker as any).getPopup = () => popup;
 
-            el.style.cursor = 'pointer';
             const onShelterClick = (e: Event) => {
               e.stopPropagation();
               e.preventDefault();
@@ -1339,7 +1331,7 @@ function MapContent() {
 
               setSelectedEvent(shelterEvent);
               setSelectedAcronym('SH');
-              flyToCoords(sh.lng, sh.lat, 11);
+              flyToCoords(sh.lng, sh.lat);
 
               markersRef.current.forEach((m) => {
                 const p = m.getPopup();
@@ -1353,8 +1345,12 @@ function MapContent() {
               }
             };
 
-            el.addEventListener('click', onShelterClick);
-            el.addEventListener('touchend', onShelterClick);
+            wrapper.addEventListener('click', onShelterClick);
+            wrapper.addEventListener('touchend', onShelterClick);
+
+            if (selectedEvent && selectedEvent.id === sh.id && mapRef.current) {
+              popup.setLngLat([sh.lng, sh.lat]).addTo(mapRef.current);
+            }
 
             markersRef.current.push(marker);
             markersMapRef.current.set(sh.id, marker);
@@ -1373,27 +1369,30 @@ function MapContent() {
   // Synchronize Active Selected Marker Styling in-place (without rebuilding markers)
   useEffect(() => {
     markersMapRef.current.forEach((marker, id) => {
-      const el = marker.getElement();
-      if (!el) return;
+      const wrapper = marker.getElement();
+      if (!wrapper) return;
+      const pin = wrapper.querySelector('.map-acronym-marker') as HTMLElement | null;
+      if (!pin) return;
       if (selectedEvent && id === selectedEvent.id) {
-        el.style.transform = 'scale(1.28)';
-        el.style.zIndex = '999';
-        el.style.boxShadow = '0 0 0 3px #1F3440, 0 8px 24px rgba(0,0,0,0.35)';
+        pin.classList.add('map-acronym-marker-selected');
+        wrapper.style.zIndex = '999';
       } else {
-        el.style.transform = 'scale(1)';
-        el.style.zIndex = '10';
-        el.style.boxShadow = '';
+        pin.classList.remove('map-acronym-marker-selected');
+        wrapper.style.zIndex = '10';
       }
     });
   }, [selectedEvent]);
 
-  // Smoothly scroll sidebar alerts list to the active card
+  // Smoothly scroll sidebar alerts list to the active card without jumping the page
   useEffect(() => {
     if (!selectedEvent) return;
     const timeoutId = setTimeout(() => {
       const cardEl = document.getElementById(`alert-card-${selectedEvent.id}`);
-      if (cardEl) {
-        cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (!cardEl) return;
+      const scrollParent = cardEl.parentElement;
+      if (scrollParent) {
+        const topPos = cardEl.offsetTop - scrollParent.offsetTop;
+        scrollParent.scrollTo({ top: Math.max(0, topPos - 12), behavior: 'smooth' });
       }
     }, 120);
     return () => clearTimeout(timeoutId);
