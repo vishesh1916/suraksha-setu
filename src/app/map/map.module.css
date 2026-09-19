@@ -16,7 +16,7 @@
 .dashboardContainer {
   max-width: 1560px;
   margin: 0 auto;
-  padding: 1.25rem 2rem 2.5rem;
+  padding: 0.5rem 1.5rem 2rem;
   width: 100%;
   box-sizing: border-box;
   display: flex;
@@ -24,48 +24,70 @@
   flex: 1;
 }
 
-/* Top Subtle Watermark Banner */
+/* Top Subtle Watermark & Operational Status Bar */
 .topWatermarkBar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  position: relative;
-  margin-bottom: 0.85rem;
-  min-height: 38px;
+  margin-bottom: 0.5rem;
+  min-height: 26px;
+  padding: 0 4px;
 }
 
-.mottoWrap {
+.topBarLeft {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  position: relative;
-  z-index: 2;
-}
-
-.mottoLine1 {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #4C8DA2;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-}
-
-.mottoLine2 {
-  font-size: 12.5px;
-  font-weight: 600;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
   color: #60717B;
-  line-height: 1.25;
+  font-weight: 600;
 }
 
-.watermarkMapSvg {
-  position: absolute;
-  right: -10px;
-  top: -15px;
-  width: 100px;
-  height: 90px;
-  opacity: 0.14;
-  pointer-events: none;
-  z-index: 1;
+.topBarGridLabel {
+  color: #1F3440;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.topBarDot {
+  color: #C8E3EA;
+}
+
+.topBarStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #4C8B71;
+  background: #E8F4EC;
+  border: 1px solid #C7E6D0;
+  padding: 1px 7px;
+  border-radius: 9999px;
+}
+
+.mottoClean {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4C8DA2;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.mottoMapIcon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.mottoSub {
+  color: #60717B;
+  font-weight: 600;
 }
 
 /* ============================================================

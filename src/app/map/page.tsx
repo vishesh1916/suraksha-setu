@@ -978,33 +978,57 @@ function MapContent() {
           el.title = `${ev.acronym} Hazard: ${ev.title}`;
         }
 
-        if (selectedEvent?.id === ev.id) {
-          el.style.outline = '3px solid #1F3440';
-          el.style.outlineOffset = '2px';
-          el.style.transform = 'scale(1.22)';
-          el.style.zIndex = '100';
-        }
-
         // Attach Rich Interactive Native Popup to Pin
         const popup = new maplibregl.Popup({
-          offset: [0, -14],
+          offset: [0, -16],
           closeButton: true,
           closeOnClick: false,
-          maxWidth: '320px',
+          closeOnMove: false,
+          maxWidth: '340px',
           className: 'suraksha-popup',
         }).setHTML(createHazardPopupHtml(ev));
-
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          setSelectedEvent(ev);
-          flyToCoords(coords[0], coords[1], 10);
-        });
 
         try {
           const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
             .setLngLat([coords[0], coords[1]])
             .setPopup(popup)
             .addTo(mapRef.current);
+
+          el.style.cursor = 'pointer';
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            // 1. Select the event for deep inspection
+            setSelectedEvent(ev);
+
+            // 2. Automatically sync activeTab so card shows in sidebar list
+            if (ev.is_community_report) {
+              setActiveTab('community');
+            } else if (ev.acronym === 'EQ' || ev.acronym === 'LS') {
+              setActiveTab('earth');
+            } else if (['FL', 'RF', 'ST', 'CW', 'HW'].includes(ev.acronym)) {
+              setActiveTab('weather_flood');
+            } else {
+              setActiveTab('official');
+            }
+
+            // 3. Smooth flyTo
+            flyToCoords(coords[0], coords[1], 10.5);
+
+            // 4. Close all other popups so only the active one is open
+            markersRef.current.forEach((m) => {
+              const p = m.getPopup();
+              if (p && p.isOpen() && m !== marker) {
+                p.remove();
+              }
+            });
+
+            // 5. Open this marker's popup
+            if (!popup.isOpen()) {
+              marker.togglePopup();
+            }
+          });
 
           markersRef.current.push(marker);
           markersMapRef.current.set(ev.id, marker);
@@ -1025,50 +1049,64 @@ function MapContent() {
           el.title = `Relief Shelter Camp: ${sh.name}`;
 
           const popup = new maplibregl.Popup({
-            offset: [0, -14],
+            offset: [0, -16],
             closeButton: true,
             closeOnClick: false,
-            maxWidth: '320px',
+            closeOnMove: false,
+            maxWidth: '340px',
             className: 'suraksha-popup',
           }).setHTML(createShelterPopupHtml(sh));
-
-          el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            setSelectedEvent({
-              id: sh.id,
-              source: 'Relief Logistics Command',
-              source_url: '#',
-              hazard_type: 'RELIEF_SHELTER',
-              acronym: 'SH' as any,
-              title: sh.name,
-              severity: 'ADVISORY',
-              status: 'ACTIVE',
-              geometry: { type: 'Point', coordinates: [sh.lng, sh.lat] },
-              country: 'India',
-              district: sh.region,
-              issued_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              freshness: 'Verified Shelter Camp',
-              confidence: 'VERIFIED',
-              is_official: true,
-              is_community_report: false,
-              details: {
-                nearestLocality: sh.region,
-                safetyGuidance: `Transit shelter camp open. Capacity: ${sh.capacity} persons (Occupancy: ${sh.occupancy}). Provisions: ${sh.provisions}. Emergency Desk: ${sh.contact}`,
-                contact: sh.contact,
-              },
-            });
-            flyToCoords(sh.lng, sh.lat, 11);
-            if (!popup.isOpen()) {
-              popup.addTo(mapRef.current);
-            }
-          });
 
           try {
             const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
               .setLngLat([sh.lng, sh.lat])
               .setPopup(popup)
               .addTo(mapRef.current);
+
+            el.style.cursor = 'pointer';
+            el.addEventListener('click', (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+
+              const shelterEvent: UnifiedHazardEvent = {
+                id: sh.id,
+                source: 'Relief Logistics Command',
+                source_url: '#',
+                hazard_type: 'RELIEF_SHELTER',
+                acronym: 'SH' as any,
+                title: sh.name,
+                severity: 'ADVISORY',
+                status: 'ACTIVE',
+                geometry: { type: 'Point', coordinates: [sh.lng, sh.lat] },
+                country: 'India',
+                district: sh.region,
+                issued_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                freshness: 'Verified Shelter Camp',
+                confidence: 'VERIFIED',
+                is_official: true,
+                is_community_report: false,
+                details: {
+                  nearestLocality: sh.region,
+                  safetyGuidance: `Transit shelter camp open. Capacity: ${sh.capacity} persons (Occupancy: ${sh.occupancy}). Provisions: ${sh.provisions}. Emergency Desk: ${sh.contact}`,
+                  contact: sh.contact,
+                },
+              };
+
+              setSelectedEvent(shelterEvent);
+              flyToCoords(sh.lng, sh.lat, 11);
+
+              markersRef.current.forEach((m) => {
+                const p = m.getPopup();
+                if (p && p.isOpen() && m !== marker) {
+                  p.remove();
+                }
+              });
+
+              if (!popup.isOpen()) {
+                marker.togglePopup();
+              }
+            });
 
             markersRef.current.push(marker);
             markersMapRef.current.set(sh.id, marker);
@@ -1082,7 +1120,36 @@ function MapContent() {
     return () => {
       isMounted = false;
     };
-  }, [mapEvents, selectedEvent, layerShelters, mapReady, flyToCoords]);
+  }, [mapEvents, layerShelters, mapReady, flyToCoords]);
+
+  // Synchronize Active Selected Marker Styling in-place (without rebuilding markers)
+  useEffect(() => {
+    markersMapRef.current.forEach((marker, id) => {
+      const el = marker.getElement();
+      if (!el) return;
+      if (selectedEvent && id === selectedEvent.id) {
+        el.style.transform = 'scale(1.28)';
+        el.style.zIndex = '999';
+        el.style.boxShadow = '0 0 0 3px #1F3440, 0 8px 24px rgba(0,0,0,0.35)';
+      } else {
+        el.style.transform = 'scale(1)';
+        el.style.zIndex = '10';
+        el.style.boxShadow = '';
+      }
+    });
+  }, [selectedEvent]);
+
+  // Smoothly scroll sidebar alerts list to the active card
+  useEffect(() => {
+    if (!selectedEvent) return;
+    const timeoutId = setTimeout(() => {
+      const cardEl = document.getElementById(`alert-card-${selectedEvent.id}`);
+      if (cardEl) {
+        cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 120);
+    return () => clearTimeout(timeoutId);
+  }, [selectedEvent, activeTab]);
 
   // Reset Center
   const handleResetView = () => {
@@ -1141,15 +1208,20 @@ function MapContent() {
       <Navbar />
 
       <main className={styles.dashboardContainer}>
-        {/* Top Watermark / Motto Bar */}
-        <section className={styles.topWatermarkBar} aria-label="National Motto">
-          <div className={styles.mottoWrap}>
-            <span className={styles.mottoLine1}>Safer Communities</span>
-            <span className={styles.mottoLine2}>A Stronger India</span>
+        {/* Top Subtle Watermark & Operations Status Bar */}
+        <section className={styles.topWatermarkBar} aria-label="National Operations Vision">
+          <div className={styles.topBarLeft}>
+            <span className={styles.topBarGridLabel}>🌐 National Operations GIS Grid</span>
+            <span className={styles.topBarDot}>•</span>
+            <span className={styles.topBarStatusPill}>● Live Multi-Agency Telemetry</span>
           </div>
-          <svg className={styles.watermarkMapSvg} viewBox="0 0 1000 1000">
-            <path d={INDIA_SVG_PATH} fill="#4C8DA2" />
-          </svg>
+
+          <div className={styles.mottoClean}>
+            <svg className={styles.mottoMapIcon} viewBox="0 0 1000 1000">
+              <path d={INDIA_SVG_PATH} fill="#4C8DA2" />
+            </svg>
+            <span>Safer Communities <span className={styles.mottoSub}>· A Stronger India</span></span>
+          </div>
         </section>
 
         {/* Main Dashboard Grid */}
@@ -1384,6 +1456,7 @@ function MapContent() {
                     return (
                       <div
                         key={ev.id}
+                        id={`alert-card-${ev.id}`}
                         className={`${styles.alertCard} ${isSelected ? styles.alertCardSelected : ''}`}
                         onClick={() => {
                           setSelectedEvent(ev);
@@ -1919,112 +1992,252 @@ function MapContent() {
             </div>
 
             {/* Selected Event Inspection Drawer */}
-            {selectedEvent && (
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '56px',
-                  left: '16px',
-                  maxWidth: '420px',
-                  background: '#FFFFFF',
-                  border: '1.5px solid #C8E3EA',
-                  borderRadius: '16px',
-                  boxShadow: '0 8px 30px rgba(31, 52, 64, 0.16)',
-                  padding: '16px',
-                  zIndex: 30,
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 800,
-                      background: selectedEvent.acronym === 'SH' ? '#E8F5EE' : selectedEvent.is_community_report ? '#FEF3C7' : '#EBF4F7',
-                      color: selectedEvent.acronym === 'SH' ? '#2E7D32' : selectedEvent.is_community_report ? '#D97706' : '#4C8DA2',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                    }}
-                  >
-                    {selectedEvent.acronym === 'SH'
-                      ? 'SH • ACTIVE RELIEF CAMP'
-                      : selectedEvent.is_community_report
-                      ? 'CR • CITIZEN GROUND REPORT'
-                      : `${selectedEvent.acronym} • ${selectedEvent.severity}`}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedEvent(null)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '15px', color: '#8FA2AD' }}
-                  >
-                    ✕
-                  </button>
-                </div>
-                <h4 style={{ fontSize: '14px', fontWeight: 800, color: '#1F3440', margin: '0 0 4px' }}>
-                  {selectedEvent.title}
-                </h4>
-                <div style={{ fontSize: '12px', color: '#60717B', marginBottom: '8px' }}>
-                  📍 {selectedEvent.district ? `${selectedEvent.district}, ` : ''}{selectedEvent.country}
-                </div>
-                <p style={{ fontSize: '12px', color: '#1F3440', margin: '0 0 12px', lineHeight: 1.4 }}>
-                  {selectedEvent.details?.safetyGuidance || 'No additional safety notes provided.'}
-                </p>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {selectedEvent.acronym === 'SH' ? (
-                    <a
-                      href={`tel:${selectedEvent.details?.contact || '112'}`}
+            {selectedEvent && (() => {
+              const center = getEventCenter(selectedEvent);
+              return (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '56px',
+                    left: '16px',
+                    maxWidth: '430px',
+                    width: 'calc(100% - 32px)',
+                    background: '#FFFFFF',
+                    border: '1.5px solid #C8E3EA',
+                    borderRadius: '16px',
+                    boxShadow: '0 12px 36px rgba(31, 52, 64, 0.18)',
+                    padding: '16px 18px',
+                    zIndex: 30,
+                    animation: 'fadeIn 0.2s ease-out',
+                  }}
+                >
+                  {/* Top Bar: Acronym Badge, Source & Close */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          background: selectedEvent.acronym === 'SH' ? '#E8F5EE' : selectedEvent.is_community_report ? '#FEF3C7' : '#EBF4F7',
+                          color: selectedEvent.acronym === 'SH' ? '#2E7D32' : selectedEvent.is_community_report ? '#D97706' : '#4C8DA2',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        {selectedEvent.acronym === 'SH'
+                          ? 'SH • ACTIVE RELIEF CAMP'
+                          : selectedEvent.is_community_report
+                          ? 'CR • CITIZEN GROUND REPORT'
+                          : `${selectedEvent.acronym} • ${selectedEvent.severity}`}
+                      </span>
+
+                      <span
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          background: '#F0F4F7',
+                          color: '#60717B',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        {selectedEvent.confidence === 'VERIFIED' ? '✓ VERIFIED' : selectedEvent.status}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedEvent(null)}
                       style={{
-                        flex: 1,
-                        background: '#1F3440',
-                        color: '#FFFFFF',
-                        padding: '7px 12px',
-                        borderRadius: '8px',
+                        background: '#F0F4F7',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        cursor: 'pointer',
                         fontSize: '12px',
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        textDecoration: 'none',
+                        color: '#60717B',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
+                      title="Close inspection"
                     >
-                      📞 Call Desk ({selectedEvent.details?.contact || '112'})
-                    </a>
-                  ) : (
-                    <a
-                      href={selectedEvent.source_url}
-                      target={selectedEvent.source_url.startsWith('http') ? '_blank' : undefined}
-                      rel={selectedEvent.source_url.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      style={{
-                        flex: 1,
-                        background: '#1F3440',
-                        color: '#FFFFFF',
-                        padding: '7px 12px',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        textDecoration: 'none',
-                      }}
-                    >
-                      {selectedEvent.is_community_report ? 'Track Ground Report ↗' : `${selectedEvent.source} ↗`}
-                    </a>
-                  )}
-                  <Link
-                    href="/report"
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Title & Coordinates */}
+                  <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#1F3440', margin: '0 0 4px', lineHeight: 1.3 }}>
+                    {selectedEvent.title}
+                  </h4>
+                  <div style={{ fontSize: '12px', color: '#60717B', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                    <span>📍 {selectedEvent.district ? `${selectedEvent.district}, ` : ''}{selectedEvent.state ? `${selectedEvent.state}, ` : ''}{selectedEvent.country}</span>
+                    {center && (
+                      <span style={{ fontSize: '11px', color: '#4C8DA2', fontWeight: 600 }}>
+                        • ({center[1].toFixed(3)}°N, {center[0].toFixed(3)}°E)
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Problem & Telemetry Highlight Box */}
+                  <div
                     style={{
                       background: '#F8FBFC',
-                      border: '1.5px solid #C8E3EA',
-                      color: '#1F3440',
-                      padding: '7px 12px',
-                      borderRadius: '8px',
+                      border: '1px solid #E2EFF3',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                      marginBottom: '10px',
                       fontSize: '12px',
-                      fontWeight: 600,
-                      textAlign: 'center',
-                      textDecoration: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '5px',
                     }}
                   >
-                    Report Ground Update
-                  </Link>
+                    {selectedEvent.details?.magnitude !== undefined && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#60717B', fontWeight: 600 }}>⚡ Seismic Magnitude:</span>
+                        <span style={{ color: '#EA580C', fontWeight: 800 }}>M {selectedEvent.details.magnitude.toFixed(1)} (Depth: {selectedEvent.details.depthKm || 10} km)</span>
+                      </div>
+                    )}
+                    {selectedEvent.details?.waterDepthFeet !== undefined && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#60717B', fontWeight: 600 }}>🌊 Inundation Depth:</span>
+                        <span style={{ color: '#DC2626', fontWeight: 800 }}>{selectedEvent.details.waterDepthFeet} ft ({Math.round(selectedEvent.details.waterDepthFeet * 30.48)} cm)</span>
+                      </div>
+                    )}
+                    {selectedEvent.details?.riverBasin && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#60717B', fontWeight: 600 }}>🌊 River Basin:</span>
+                        <span style={{ color: '#0284C7', fontWeight: 800 }}>{selectedEvent.details.riverBasin}</span>
+                      </div>
+                    )}
+                    {selectedEvent.details?.windSpeedKmh !== undefined && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#60717B', fontWeight: 600 }}>💨 Wind Velocity:</span>
+                        <span style={{ color: '#0284C7', fontWeight: 800 }}>{selectedEvent.details.windSpeedKmh} km/h</span>
+                      </div>
+                    )}
+                    {selectedEvent.details?.rainfallRateMmH !== undefined && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#60717B', fontWeight: 600 }}>🌧️ Rainfall Surge:</span>
+                        <span style={{ color: '#0284C7', fontWeight: 800 }}>{selectedEvent.details.rainfallRateMmH} mm/h</span>
+                      </div>
+                    )}
+                    {selectedEvent.details?.moderationStatus && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#60717B', fontWeight: 600 }}>🛡️ Tactical Verification:</span>
+                        <span style={{ color: selectedEvent.confidence === 'VERIFIED' ? '#2E7D32' : '#D97706', fontWeight: 800 }}>● {selectedEvent.details.moderationStatus}</span>
+                      </div>
+                    )}
+                    {selectedEvent.details?.actionCategory && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#60717B', fontWeight: 600 }}>🚨 Deployment:</span>
+                        <span style={{ color: '#1F3440', fontWeight: 700 }}>{selectedEvent.details.actionCategory}</span>
+                      </div>
+                    )}
+                    {selectedEvent.freshness && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#8FA2AD', fontSize: '11px' }}>🕒 Telemetry Freshness:</span>
+                        <span style={{ color: '#60717B', fontSize: '11px', fontWeight: 600 }}>{selectedEvent.freshness}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Safety Guidance */}
+                  <p style={{ fontSize: '12px', color: '#1F3440', margin: '0 0 12px', lineHeight: 1.45 }}>
+                    <strong style={{ color: '#D76D63' }}>Directives: </strong>
+                    {selectedEvent.details?.safetyGuidance || 'Follow local district disaster management guidelines and keep emergency communications clear.'}
+                  </p>
+
+                  {/* Actions Row */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {selectedEvent.acronym === 'SH' ? (
+                      <a
+                        href={`tel:${selectedEvent.details?.contact || '112'}`}
+                        style={{
+                          flex: 1,
+                          background: '#1F3440',
+                          color: '#FFFFFF',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        📞 Call Desk ({selectedEvent.details?.contact || '112'})
+                      </a>
+                    ) : (
+                      <a
+                        href={selectedEvent.source_url}
+                        target={selectedEvent.source_url.startsWith('http') ? '_blank' : undefined}
+                        rel={selectedEvent.source_url.startsWith('http') ? 'noopener noreferrer' : undefined}
+                        style={{
+                          flex: 1,
+                          background: '#1F3440',
+                          color: '#FFFFFF',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        {selectedEvent.is_community_report ? 'Track Report ↗' : `${selectedEvent.source} ↗`}
+                      </a>
+                    )}
+
+                    {center && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          flyToCoords(center[0], center[1], 11);
+                          const targetMarker = markersMapRef.current.get(selectedEvent.id);
+                          if (targetMarker) {
+                            const p = targetMarker.getPopup();
+                            if (p && !p.isOpen()) targetMarker.togglePopup();
+                          }
+                        }}
+                        style={{
+                          background: '#EEF5F8',
+                          border: '1.5px solid #C8E3EA',
+                          color: '#1F3440',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                        title="Center map on this incident"
+                      >
+                        🎯 Center
+                      </button>
+                    )}
+
+                    <Link
+                      href="/report"
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1.5px solid #C8E3EA',
+                        color: '#1F3440',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Update
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </section>
 
