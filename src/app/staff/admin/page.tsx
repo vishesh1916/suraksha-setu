@@ -907,7 +907,15 @@ export default function AdminPage() {
     const stageInfo = getReportStageInfo(report);
 
     return (
-      <div key={report.id} className={styles.escalationCard} style={{ marginBottom: '18px', border: '1px solid rgba(255,255,255,0.12)' }}>
+      <div key={report.id} className={styles.escalationCard} style={{
+        marginBottom: '22px',
+        background: '#0B1926',
+        border: '1px solid #1E3A5F',
+        borderRadius: '12px',
+        padding: '22px',
+        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.35)',
+        color: '#FFFFFF'
+      }}>
         {/* Card Header with Category, Severity & Live Stage */}
         <div className={styles.escalationHeader}>
           <div>
@@ -933,11 +941,11 @@ export default function AdminPage() {
               )}
 
               <span style={{
-                background: `${stageInfo.badgeColor}20`,
+                background: `${stageInfo.badgeColor}25`,
                 border: `1px solid ${stageInfo.badgeColor}`,
                 color: stageInfo.badgeColor,
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 800,
                 padding: '3px 10px',
                 borderRadius: '999px',
                 display: 'flex',
@@ -948,21 +956,21 @@ export default function AdminPage() {
                 {stageInfo.label}
               </span>
 
-              <span style={{ fontSize: '11px', color: '#8A99A8', fontFamily: 'monospace' }}>
+              <span style={{ fontSize: '11px', color: '#94A3B8', fontFamily: 'monospace', fontWeight: 600 }}>
                 ID: {report.id}
               </span>
             </div>
 
-            <h4 style={{ margin: 0, fontSize: '1.2rem', color: '#F7F6F2' }}>
+            <h4 style={{ margin: '8px 0 4px', fontSize: '1.25rem', color: '#FFFFFF', fontWeight: 800, letterSpacing: '-0.01em' }}>
               {hazard.icon} {report.landmark || `${hazard.label} near ${report.location?.latitude != null ? report.location.latitude.toFixed(3) : 'Regional'}°N, ${report.location?.longitude != null ? report.location.longitude.toFixed(3) : 'Sector'}°E`}
             </h4>
-            <p style={{ margin: '4px 0', fontSize: '0.84rem', color: '#CBD5E1' }}>
-              GPS: <strong>{report.location?.latitude != null ? `${report.location.latitude.toFixed(4)}°N, ${report.location.longitude?.toFixed(4)}°E` : 'GPS Coordinates Registered'}</strong> · Reported by <strong>{report.reporterPseudonym || 'Citizen'}</strong>
+            <p style={{ margin: '4px 0', fontSize: '0.86rem', color: '#CBD5E1' }}>
+              GPS: <strong style={{ color: '#38BDF8' }}>{report.location?.latitude != null ? `${report.location.latitude.toFixed(4)}°N, ${report.location.longitude?.toFixed(4)}°E` : 'GPS Coordinates Registered'}</strong> · Reported by <strong style={{ color: '#FFFFFF' }}>{report.reporterPseudonym || 'Citizen'}</strong>
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.75rem', color: '#8A99A8' }}>Reported:</div>
-            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#E2E8F0' }}>
+            <div style={{ fontSize: '0.78rem', color: '#94A3B8', fontWeight: 600 }}>Reported:</div>
+            <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#FFFFFF' }}>
               {report.createdAt ? new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
             </div>
           </div>
@@ -973,16 +981,16 @@ export default function AdminPage() {
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: 6,
-          margin: '12px 0',
-          background: 'rgba(11, 31, 51, 0.7)',
-          padding: '8px 12px',
+          margin: '14px 0',
+          background: '#0F253B',
+          padding: '10px 14px',
           borderRadius: 8,
-          border: '1px solid rgba(138, 153, 168, 0.2)'
+          border: '1px solid #1E3A5F'
         }}>
           <div style={{
             textAlign: 'center',
             fontSize: '11px',
-            fontWeight: stageInfo.stageNum >= 1 ? 700 : 500,
+            fontWeight: 700,
             color: stageInfo.stageNum >= 1 ? '#38BDF8' : '#64748B',
             borderBottom: `2px solid ${stageInfo.stageNum >= 1 ? '#38BDF8' : 'rgba(255,255,255,0.1)'}`,
             paddingBottom: 4
@@ -992,9 +1000,9 @@ export default function AdminPage() {
           <div style={{
             textAlign: 'center',
             fontSize: '11px',
-            fontWeight: stageInfo.stageNum >= 2 ? 700 : 500,
-            color: stageInfo.stageNum >= 2 ? '#10B981' : '#64748B',
-            borderBottom: `2px solid ${stageInfo.stageNum >= 2 ? '#10B981' : 'rgba(255,255,255,0.1)'}`,
+            fontWeight: 700,
+            color: stageInfo.stageNum >= 2 ? '#34D399' : '#64748B',
+            borderBottom: `2px solid ${stageInfo.stageNum >= 2 ? '#34D399' : 'rgba(255,255,255,0.1)'}`,
             paddingBottom: 4
           }}>
             2. Ground Verified
@@ -1002,9 +1010,9 @@ export default function AdminPage() {
           <div style={{
             textAlign: 'center',
             fontSize: '11px',
-            fontWeight: stageInfo.stageNum >= 3 ? 700 : 500,
-            color: stageInfo.stageNum >= 3 ? '#F59E0B' : '#64748B',
-            borderBottom: `2px solid ${stageInfo.stageNum >= 3 ? '#F59E0B' : 'rgba(255,255,255,0.1)'}`,
+            fontWeight: 700,
+            color: stageInfo.stageNum >= 3 ? '#FBBF24' : '#64748B',
+            borderBottom: `2px solid ${stageInfo.stageNum >= 3 ? '#FBBF24' : 'rgba(255,255,255,0.1)'}`,
             paddingBottom: 4
           }}>
             3. Tactical Deployed
@@ -1012,9 +1020,9 @@ export default function AdminPage() {
           <div style={{
             textAlign: 'center',
             fontSize: '11px',
-            fontWeight: stageInfo.stageNum >= 4 ? 700 : 500,
-            color: stageInfo.stageNum >= 4 ? '#34D399' : '#64748B',
-            borderBottom: `2px solid ${stageInfo.stageNum >= 4 ? '#34D399' : 'rgba(255,255,255,0.1)'}`,
+            fontWeight: 700,
+            color: stageInfo.stageNum >= 4 ? '#4ADE80' : '#64748B',
+            borderBottom: `2px solid ${stageInfo.stageNum >= 4 ? '#4ADE80' : 'rgba(255,255,255,0.1)'}`,
             paddingBottom: 4
           }}>
             4. Hazard Resolved
@@ -1035,8 +1043,8 @@ export default function AdminPage() {
               width: 130,
               height: 85,
               borderRadius: 6,
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px dashed rgba(138,153,168,0.3)',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px dashed rgba(138,153,168,0.4)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1047,61 +1055,66 @@ export default function AdminPage() {
           )}
 
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1 }}>
-            <div style={{ background: 'rgba(11,31,51,0.8)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(138,153,168,0.2)' }}>
-              <span style={{ fontSize: '0.7rem', color: '#8A99A8', display: 'block' }}>WATER DEPTH</span>
-              <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#38BDF8' }}>
+            <div style={{ background: '#0F253B', padding: '8px 14px', borderRadius: '6px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+              <span style={{ fontSize: '0.72rem', color: '#93C5FD', display: 'block', fontWeight: 700, letterSpacing: '0.04em' }}>WATER DEPTH</span>
+              <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#38BDF8' }}>
                 {report.waterDepthFeet ? `${report.waterDepthFeet} ft` : 'Estimated 2.0 ft'}
               </span>
             </div>
-            <div style={{ background: 'rgba(11,31,51,0.8)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(138,153,168,0.2)' }}>
-              <span style={{ fontSize: '0.7rem', color: '#8A99A8', display: 'block' }}>CURRENT WORKFLOW</span>
-              <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#34D399' }}>
+            <div style={{ background: '#0F253B', padding: '8px 14px', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <span style={{ fontSize: '0.72rem', color: '#86EFAC', display: 'block', fontWeight: 700, letterSpacing: '0.04em' }}>CURRENT WORKFLOW</span>
+              <span style={{ fontSize: '1rem', fontWeight: 800, color: '#34D399' }}>
                 {report.currentActionCategory || 'Pending Verification'}
               </span>
             </div>
-            <div style={{ background: 'rgba(11,31,51,0.8)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(138,153,168,0.2)' }}>
-              <span style={{ fontSize: '0.7rem', color: '#8A99A8', display: 'block' }}>DOPPLER AWS CORROBORATION</span>
-              <span style={{ fontSize: '1rem', fontWeight: 700, color: '#F59E0B' }}>
+            <div style={{ background: '#0F253B', padding: '8px 14px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+              <span style={{ fontSize: '0.72rem', color: '#FDE68A', display: 'block', fontWeight: 700, letterSpacing: '0.04em' }}>DOPPLER AWS CORROBORATION</span>
+              <span style={{ fontSize: '1rem', fontWeight: 800, color: '#FBBF24' }}>
                 {report.severity >= 4 ? '52.0 dBZ Echo (Severe)' : '42.5 dBZ Echo (Moderate)'}
               </span>
             </div>
           </div>
         </div>
 
-        <p style={{
-          margin: '0 0 12px',
-          fontSize: '0.84rem',
-          color: '#F1F5F9',
-          background: 'rgba(11,31,51,0.5)',
-          padding: '10px 14px',
+        <div style={{
+          margin: '0 0 14px',
+          fontSize: '0.92rem',
+          fontWeight: 600,
+          color: '#FFFFFF',
+          background: '#152538',
+          padding: '12px 16px',
           borderRadius: '8px',
-          border: '1px solid rgba(138,153,168,0.15)'
+          border: '1px solid rgba(56, 189, 248, 0.25)',
+          borderLeft: '4px solid #38BDF8',
+          lineHeight: 1.55
         }}>
           &ldquo;{report.description}&rdquo;
-        </p>
+        </div>
 
         {/* Prominent Action Performed & Live Audit History Trail */}
         <div style={{
-          padding: '12px 16px',
+          padding: '14px 18px',
           background: report.currentActionCategory && report.currentActionCategory !== 'Pending Verification' 
-            ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(11, 31, 51, 0.9) 100%)' 
-            : 'rgba(245, 158, 11, 0.08)',
+            ? '#08251B' 
+            : '#261B07',
           border: report.currentActionCategory && report.currentActionCategory !== 'Pending Verification'
-            ? '1px solid rgba(16, 185, 129, 0.4)'
-            : '1px solid rgba(245, 158, 11, 0.3)',
-          borderRadius: '8px',
-          marginBottom: '14px',
-          fontSize: '0.84rem'
+            ? '2px solid #10B981'
+            : '2px solid #F59E0B',
+          borderRadius: '10px',
+          marginBottom: '16px',
+          fontSize: '0.86rem',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: '1.1rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>
                 {report.status === 'RESOLVED' ? '🏁' : report.currentActionCategory?.includes('Evacuation') ? '🚨' : report.currentActionCategory?.includes('Dewatering') ? '🚒' : report.currentActionCategory?.includes('Verified') ? '✅' : '⏳'}
               </span>
               <span style={{
-                color: report.status === 'RESOLVED' ? '#34D399' : report.currentActionCategory && report.currentActionCategory !== 'Pending Verification' ? '#10B981' : '#F59E0B',
+                color: report.status === 'RESOLVED' ? '#34D399' : report.currentActionCategory && report.currentActionCategory !== 'Pending Verification' ? '#34D399' : '#FBBF24',
                 fontWeight: 800,
-                fontSize: '0.9rem'
+                fontSize: '0.96rem',
+                letterSpacing: '0.01em'
               }}>
                 {report.currentActionCategory && report.currentActionCategory !== 'Pending Verification' 
                   ? `⚡ Action Performed: ${report.currentActionCategory}` 
@@ -1109,31 +1122,69 @@ export default function AdminPage() {
               </span>
             </div>
             {report.actionHistory && report.actionHistory[0] && (
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8', fontFamily: 'monospace' }}>
+              <span style={{
+                fontSize: '0.8rem',
+                color: '#E2E8F0',
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                background: 'rgba(0,0,0,0.45)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
                 Executed: {new Date(report.actionHistory[0].timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · {report.actionHistory[0].actorName}
               </span>
             )}
           </div>
 
           {report.actionHistory && report.actionHistory[0]?.notes && (
-            <p style={{ margin: '4px 0 6px', color: '#E2E8F0', fontSize: '0.8rem', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '6px' }}>
-              <strong>Operational Directive:</strong> &ldquo;{report.actionHistory[0].notes}&rdquo;
+            <p style={{
+              margin: '8px 0 10px',
+              color: '#FFFFFF',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              background: '#0B1724',
+              padding: '10px 14px',
+              borderRadius: '6px',
+              border: '1px solid rgba(56, 189, 248, 0.35)',
+              lineHeight: 1.55
+            }}>
+              <strong style={{ color: '#38BDF8', fontWeight: 800 }}>Operational Directive:</strong> &ldquo;{report.actionHistory[0].notes}&rdquo;
             </p>
           )}
 
           {/* Chronological Action History Trail if multiple actions exist */}
           {report.actionHistory && report.actionHistory.length > 1 && (
-            <div style={{ marginTop: 8, paddingTop: 6, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-              <span style={{ fontSize: '0.72rem', color: '#8A99A8', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: 4 }}>
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed rgba(255,255,255,0.18)' }}>
+              <span style={{ fontSize: '0.78rem', color: '#38BDF8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 8 }}>
                 Workflow Action Trail ({report.actionHistory.length} Steps Recorded):
               </span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {report.actionHistory.map((item, idx) => (
-                  <div key={item.id || idx} style={{ fontSize: '0.76rem', color: idx === 0 ? '#38BDF8' : '#94A3B8', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>{idx === 0 ? '▶' : '•'}</span>
-                    <span style={{ fontFamily: 'monospace' }}>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    <strong style={{ color: idx === 0 ? '#F7F6F2' : '#CBD5E1' }}>{item.action}</strong>
-                    <span>({item.actorName})</span>
+                  <div
+                    key={item.id || idx}
+                    style={{
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      background: idx === 0 ? 'rgba(56, 189, 248, 0.18)' : 'rgba(0, 0, 0, 0.35)',
+                      border: idx === 0 ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.12)',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <span style={{ color: idx === 0 ? '#38BDF8' : '#FBBF24', fontWeight: 800, fontSize: '0.9rem' }}>{idx === 0 ? '▶' : '•'}</span>
+                    <span style={{ fontFamily: 'monospace', color: '#93C5FD', fontWeight: 700, fontSize: '0.82rem' }}>
+                      {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <strong style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '0.86rem' }}>
+                      {item.action}
+                    </strong>
+                    <span style={{ color: '#CBD5E1', fontSize: '0.82rem', fontWeight: 500 }}>
+                      ({item.actorName})
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1144,24 +1195,25 @@ export default function AdminPage() {
         {/* Real-Time Action Confirmation Banner */}
         {recentlyActionedReports[report.id] && (
           <div style={{
-            margin: '0 0 14px',
-            padding: '10px 14px',
-            background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.2) 0%, rgba(15, 23, 42, 0.95) 100%)',
-            border: '1px solid #10B981',
-            borderRadius: '8px',
+            margin: '0 0 16px',
+            padding: '14px 18px',
+            background: '#062B1D',
+            border: '2px solid #10B981',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '12px',
-            flexWrap: 'wrap'
+            flexWrap: 'wrap',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.35)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.2rem' }}>✅</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.4rem' }}>✅</span>
               <div>
-                <strong style={{ color: '#34D399', fontSize: '0.86rem' }}>
+                <strong style={{ color: '#4ADE80', fontSize: '0.96rem', fontWeight: 800, display: 'block', letterSpacing: '0.01em' }}>
                   Action Synchronized: {recentlyActionedReports[report.id].action}
                 </strong>
-                <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: '#CBD5E1' }}>
+                <p style={{ margin: '3px 0 0', fontSize: '0.88rem', color: '#FFFFFF', fontWeight: 600 }}>
                   {recentlyActionedReports[report.id].message}
                 </p>
               </div>
@@ -1171,7 +1223,16 @@ export default function AdminPage() {
                 type="button"
                 className="btn btn-primary"
                 onClick={() => setActiveTab(recentlyActionedReports[report.id].targetTab)}
-                style={{ fontSize: '0.78rem', padding: '4px 10px', fontWeight: 700 }}
+                style={{
+                  fontSize: '0.82rem',
+                  padding: '6px 14px',
+                  fontWeight: 800,
+                  background: '#10B981',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
               >
                 View in Dedicated Tab →
               </button>
