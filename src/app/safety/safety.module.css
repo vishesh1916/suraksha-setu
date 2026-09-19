@@ -4,8 +4,8 @@
 
 .page {
   min-height: 100dvh;
-  background-color: var(--color-bg-primary, #F7F5F0);
-  color: var(--color-charcoal, #161816);
+  background-color: var(--color-bg-primary, #F8FBFC);
+  color: var(--color-charcoal, #1F3440);
   display: flex;
   flex-direction: column;
 }
@@ -31,9 +31,9 @@
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 999px;
-  background: #FAF7F2;
-  border: 1px solid var(--color-accent, #D67A20);
-  color: var(--color-accent, #D67A20);
+  background: #DCEEF2;
+  border: 1px solid var(--color-accent, #4C8DA2);
+  color: var(--color-accent, #4C8DA2);
   margin-bottom: 1rem;
 }
 
@@ -41,14 +41,14 @@
   font-family: var(--font-family-sans);
   font-size: 2.25rem;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
   letter-spacing: -0.02em;
   margin-bottom: 0.75rem;
 }
 
 .pageDesc {
   font-size: 1rem;
-  color: var(--color-text-secondary, #474946);
+  color: var(--color-text-secondary, #60717B);
   max-width: 620px;
   margin: 0 auto;
   line-height: 1.6;
@@ -64,7 +64,7 @@
   gap: 12px;
   margin-bottom: 1.5rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border, #E5E2D9);
+  border-bottom: 1px solid var(--color-border, #DCEEF2);
 }
 
 .sectionIcon {
@@ -74,7 +74,7 @@
 .sectionHeading {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -87,16 +87,16 @@
 
 .guidelineCard {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-md, 6px);
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1px solid var(--color-border, #DCEEF2);
+  border-radius: 20px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 20px rgba(31, 52, 64, 0.04);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .guidelineCard:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 28px rgba(31, 52, 64, 0.08);
 }
 
 .cardCategory {
@@ -111,14 +111,15 @@
   font-family: var(--font-family-mono, monospace);
 }
 
-.catBefore { color: var(--color-eucalyptus, #2E5A44); }
-.catDuring { color: var(--color-accent, #D67A20); }
-.catAfter { color: var(--color-charcoal, #161816); }
+.catBefore { color: var(--color-eucalyptus, #4C8B71); }
+.catDuring { color: var(--color-accent, #4C8DA2); }
+.catAfter { color: var(--color-charcoal, #1F3440); }
 
 .cardHeading {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-charcoal, #1F3440);
   margin-bottom: 0.85rem;
 }
 
@@ -132,8 +133,8 @@
 }
 
 .cardListItem {
-  font-size: 0.86rem;
-  color: var(--color-text-secondary, #474946);
+  font-size: 0.88rem;
+  color: var(--color-text-secondary, #60717B);
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -141,38 +142,40 @@
 }
 
 .checkIcon {
-  color: var(--color-accent, #D67A20);
+  color: var(--color-accent, #4C8DA2);
   font-weight: 700;
   font-family: var(--font-family-mono, monospace);
 }
 
 .emergencyBanner {
-  background: #FFF7ED;
-  border: 1px solid #FDBA74;
-  border-left: 5px solid var(--color-accent, #D67A20);
-  border-radius: var(--radius-md, 6px);
-  padding: 2rem;
-  margin-top: 2.5rem;
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-left: 5px solid #D7AA63;
+  border-radius: 20px;
+  padding: 2.25rem 2.5rem;
+  margin-top: 3rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(31, 52, 64, 0.05);
 }
 
 .bannerText h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #7C2D12;
-  margin: 0 0 0.35rem 0;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1F3440;
+  margin: 0 0 0.4rem 0;
 }
 
 .bannerText p {
-  font-size: 0.9rem;
-  color: #9A3412;
+  font-size: 0.95rem;
+  color: #60717B;
   margin: 0;
-  max-width: 540px;
-  line-height: 1.5;
+  max-width: 560px;
+  line-height: 1.6;
 }
 
 @media (max-width: 640px) {

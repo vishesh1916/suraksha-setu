@@ -317,7 +317,7 @@ export default function AllIndiaWeatherPage() {
                     className={styles.metricTileValue}
                     style={{
                       color:
-                        weather.telemetry.precipitationRate > 12 ? '#EF4444' : '#38BDF8',
+                        weather.telemetry.precipitationRate > 12 ? '#D76D63' : '#4C8DA2',
                     }}
                   >
                     {weather.telemetry.precipitationRate} mm/h

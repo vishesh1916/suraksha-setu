@@ -4,8 +4,8 @@
 
 .page {
   min-height: 100vh;
-  background: #F7F5F0;
-  color: #161816;
+  background: #F8FBFC;
+  color: #1F3440;
   font-family: var(--font-family-sans);
 }
 
@@ -23,7 +23,7 @@
 
 .header {
   margin-bottom: 2.5rem;
-  border-bottom: 1px solid #E5E2D9;
+  border-bottom: 1px solid #DCEEF2;
   padding-bottom: 2rem;
 }
 
@@ -40,7 +40,7 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
-  color: #D67A20;
+  color: #4C8DA2;
 }
 
 .protocolBadge {
@@ -48,19 +48,19 @@
   font-size: 10px;
   font-weight: 700;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   padding: 2px 7px;
   border-radius: 4px;
-  color: #161816;
+  color: #1F3440;
 }
 
 .stationBadge {
   font-family: var(--font-family-mono, monospace);
   font-size: 10px;
   font-weight: 700;
-  background: rgba(46, 90, 68, 0.08);
-  border: 1px solid rgba(46, 90, 68, 0.22);
-  color: #2E5A44;
+  background: rgba(76, 139, 113, 0.08);
+  border: 1px solid rgba(76, 139, 113, 0.22);
+  color: #4C8B71;
   padding: 2px 7px;
   border-radius: 4px;
 }
@@ -69,14 +69,14 @@
   font-size: clamp(2rem, 3.5vw, 2.75rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: #161816;
+  color: #1F3440;
   line-height: 1.15;
   margin-bottom: 10px;
 }
 
 .subtitle {
   font-size: 1.05rem;
-  color: #737571;
+  color: #60717B;
   max-width: 720px;
   line-height: 1.6;
 }
@@ -103,8 +103,8 @@
 
 .statCard {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
   padding: 18px 20px;
   box-shadow: 0 1px 3px rgba(22, 24, 22, 0.04);
 }
@@ -115,7 +115,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #9B9D98;
+  color: #8FA2AD;
   margin-bottom: 6px;
 }
 
@@ -123,7 +123,7 @@
   display: block;
   font-size: 1.75rem;
   font-weight: 800;
-  color: #161816;
+  color: #1F3440;
   line-height: 1.1;
   margin-bottom: 4px;
 }
@@ -131,7 +131,7 @@
 .statMeta {
   display: block;
   font-size: 11.5px;
-  color: #737571;
+  color: #60717B;
 }
 
 /* Main Split Grid */
@@ -158,7 +158,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  border-bottom: 1px solid #E5E2D9;
+  border-bottom: 1px solid #DCEEF2;
   padding-bottom: 12px;
   flex-wrap: wrap;
   gap: 12px;
@@ -167,13 +167,13 @@
 .sectionTitle {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #161816;
+  color: #1F3440;
 }
 
 .sectionSubtitle {
   display: block;
   font-size: 12.5px;
-  color: #737571;
+  color: #60717B;
   margin-top: 2px;
 }
 
@@ -184,10 +184,10 @@
 }
 
 .primaryActionBtn {
-  background: #161816;
+  background: #1F3440;
   color: #FFFFFF;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 16px;
   font-size: 12.5px;
   font-weight: 600;
   text-decoration: none;
@@ -200,10 +200,10 @@
 
 .secondaryActionBtn {
   background: #FFFFFF;
-  color: #161816;
-  border: 1px solid #E5E2D9;
+  color: #1F3440;
+  border: 1px solid #DCEEF2;
   padding: 8px 14px;
-  border-radius: 6px;
+  border-radius: 16px;
   font-size: 12.5px;
   font-weight: 600;
   text-decoration: none;
@@ -222,16 +222,16 @@
 .loadingPlaceholder {
   padding: 3rem;
   text-align: center;
-  color: #737571;
+  color: #60717B;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
 }
 
 .emptyCard {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
   padding: 2rem;
   display: flex;
   gap: 16px;
@@ -241,20 +241,20 @@
 .emptyCard strong {
   display: block;
   font-size: 14px;
-  color: #161816;
+  color: #1F3440;
   margin-bottom: 4px;
 }
 
 .emptyCard p {
   font-size: 12.5px;
-  color: #737571;
+  color: #60717B;
   margin: 0;
 }
 
 .incidentRow {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -283,7 +283,7 @@
 .hazardCategory {
   font-size: 13.5px;
   font-weight: 700;
-  color: #161816;
+  color: #1F3440;
 }
 
 .hazardSeverity {
@@ -292,14 +292,14 @@
   padding: 2px 7px;
   border-radius: 4px;
   background: rgba(214, 122, 32, 0.08);
-  color: #D67A20;
+  color: #4C8DA2;
   border: 1px solid rgba(214, 122, 32, 0.25);
 }
 
 .hazardCoords {
   font-family: var(--font-family-mono, monospace);
   font-size: 11px;
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .statusChip {
@@ -310,20 +310,20 @@
 }
 
 .statusVerified {
-  background: rgba(46, 90, 68, 0.08);
-  color: #2E5A44;
-  border: 1px solid rgba(46, 90, 68, 0.25);
+  background: rgba(76, 139, 113, 0.08);
+  color: #4C8B71;
+  border: 1px solid rgba(76, 139, 113, 0.25);
 }
 
 .statusDismissed {
-  background: #F0EDE6;
-  color: #737571;
-  border: 1px solid #E5E2D9;
+  background: #DCEEF2;
+  color: #60717B;
+  border: 1px solid #C8E3EA;
 }
 
 .statusPending {
   background: rgba(214, 122, 32, 0.08);
-  color: #D67A20;
+  color: #4C8DA2;
   border: 1px solid rgba(214, 122, 32, 0.25);
 }
 
@@ -338,13 +338,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #F0EDE6;
+  border-top: 1px solid #DCEEF2;
   padding-top: 10px;
   font-size: 12px;
 }
 
 .incidentLandmark {
-  color: #737571;
+  color: #60717B;
   font-weight: 500;
 }
 
@@ -355,7 +355,7 @@
 }
 
 .inspectMapLink {
-  color: #161816;
+  color: #1F3440;
   text-decoration: none;
   font-weight: 600;
 }
@@ -365,7 +365,7 @@
 }
 
 .takeActionLink {
-  color: #D67A20;
+  color: #4C8DA2;
   text-decoration: none;
   font-weight: 700;
 }
@@ -383,8 +383,8 @@
 
 .cardPanel {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
   padding: 22px;
   box-shadow: 0 1px 3px rgba(22, 24, 22, 0.04);
 }
@@ -394,8 +394,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #161816;
-  border-bottom: 1px solid #E5E2D9;
+  color: #1F3440;
+  border-bottom: 1px solid #DCEEF2;
   padding-bottom: 10px;
   margin-bottom: 14px;
 }
@@ -421,21 +421,21 @@
 .telemetryName {
   font-size: 13px;
   font-weight: 600;
-  color: #161816;
+  color: #1F3440;
 }
 
 .telemetryStatusNominal {
   font-size: 11px;
   font-weight: 700;
-  color: #2E5A44;
-  background: rgba(46, 90, 68, 0.08);
+  color: #4C8B71;
+  background: rgba(76, 139, 113, 0.08);
   padding: 2px 6px;
   border-radius: 3px;
 }
 
 .telemetrySub {
   font-size: 11.5px;
-  color: #737571;
+  color: #60717B;
   line-height: 1.4;
 }
 
@@ -447,12 +447,12 @@
   flex-direction: column;
   gap: 12px;
   font-size: 12.5px;
-  color: #737571;
+  color: #60717B;
   line-height: 1.55;
 }
 
 .protocolList strong {
-  color: #161816;
+  color: #1F3440;
   display: block;
   margin-bottom: 2px;
 }
@@ -474,7 +474,7 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  color: #737571;
+  color: #60717B;
   font-size: 0.95rem;
 }
 
@@ -482,8 +482,8 @@
   width: 100%;
   max-width: 440px;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 8px;
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
   padding: 2.75rem 2.25rem;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 }
@@ -496,9 +496,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #D67A20;
-  background: #FAF7F2;
-  border: 1px solid #D67A20;
+  color: #4C8DA2;
+  background: #DCEEF2;
+  border: 1px solid #C8E3EA;
   padding: 0.25rem 0.65rem;
   border-radius: 9999px;
   margin-bottom: 1.25rem;
@@ -509,7 +509,7 @@
   font-family: var(--font-family-sans);
   font-size: 1.625rem;
   font-weight: 800;
-  color: #161816;
+  color: #1F3440;
   letter-spacing: -0.01em;
   margin: 0 0 0.5rem 0;
   line-height: 1.2;
@@ -517,7 +517,7 @@
 
 .authSubtitle {
   font-size: 0.875rem;
-  color: #737571;
+  color: #60717B;
   line-height: 1.5;
   margin: 0 0 1.75rem 0;
 }
@@ -552,7 +552,7 @@
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #161816;
+  color: #1F3440;
   text-transform: uppercase;
   font-family: var(--font-family-mono, monospace);
 }
@@ -566,10 +566,10 @@
 .authInput {
   width: 100%;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 4px;
   padding: 0.8rem 1rem;
-  color: #161816;
+  color: #1F3440;
   font-size: 0.95rem;
   font-family: inherit;
   transition: border-color 0.15s ease;
@@ -577,7 +577,7 @@
 }
 
 .authInput:focus {
-  border-color: #D67A20;
+  border-color: #4C8DA2;
   box-shadow: 0 0 0 3px rgba(214, 122, 32, 0.12);
 }
 
@@ -586,7 +586,7 @@
   right: 0.85rem;
   background: transparent;
   border: none;
-  color: #737571;
+  color: #60717B;
   cursor: pointer;
   padding: 0.25rem;
   display: flex;
@@ -597,7 +597,7 @@
 .authSubmitBtn {
   margin-top: 0.5rem;
   width: 100%;
-  background: #161816;
+  background: #1F3440;
   color: #FFFFFF;
   border: none;
   border-radius: 4px;
@@ -622,9 +622,9 @@
 }
 
 .autoFillBtn {
-  background: #FAF7F2;
-  border: 1px dashed #E5E2D9;
-  color: #161816;
+  background: #F8FBFC;
+  border: 1px dashed #C8E3EA;
+  color: #1F3440;
   font-size: 12px;
   padding: 9px 12px;
   border-radius: 4px;
@@ -640,15 +640,15 @@
 
 .autoFillBtn:hover {
   background: #F3EFE8;
-  border-color: #D67A20;
+  border-color: #4C8DA2;
 }
 
 .authCardFooter {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #E5E2D9;
+  border-top: 1px solid #DCEEF2;
   font-size: 0.775rem;
-  color: #737571;
+  color: #60717B;
   text-align: center;
   line-height: 1.4;
 }
@@ -661,8 +661,8 @@
   align-items: center;
   justify-content: space-between;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
   padding: 10px 16px;
   margin-bottom: 2rem;
   gap: 12px;
@@ -682,15 +682,15 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2E5A44;
-  box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.15);
+  background: #4C8B71;
+  box-shadow: 0 0 0 3px rgba(76, 139, 113, 0.15);
   display: inline-block;
 }
 
 .clearanceCode {
   font-family: var(--font-family-mono, monospace);
   font-weight: 700;
-  color: #161816;
+  color: #1F3440;
   background: #F4F1EB;
   padding: 1px 5px;
   border-radius: 3px;
@@ -703,9 +703,9 @@
 }
 
 .syncBtn {
-  background: #FAF8F5;
-  border: 1px solid #E5E2D9;
-  color: #161816;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  color: #1F3440;
   font-size: 12px;
   font-weight: 600;
   padding: 6px 12px;
@@ -719,12 +719,12 @@
 
 .syncBtn:hover:not(:disabled) {
   background: #F0ECE3;
-  border-color: #D67A20;
+  border-color: #4C8DA2;
 }
 
 .syncTimestamp {
   font-size: 11px;
-  color: #737571;
+  color: #60717B;
   font-weight: 400;
 }
 
@@ -789,27 +789,27 @@
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid #E5E2D9;
-  background: #FAF8F5;
-  color: #161816;
+  border: 1px solid #DCEEF2;
+  background: #F8FBFC;
+  color: #1F3440;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
 .quickActionBtn:hover {
-  background: #161816;
+  background: #1F3440;
   color: #FFFFFF;
-  border-color: #161816;
+  border-color: #1F3440;
 }
 
 .quickActionBtnSuccess {
-  border-color: rgba(46, 90, 68, 0.3);
-  color: #2E5A44;
-  background: rgba(46, 90, 68, 0.05);
+  border-color: rgba(76, 139, 113, 0.3);
+  color: #4C8B71;
+  background: rgba(76, 139, 113, 0.05);
 }
 
 .quickActionBtnSuccess:hover {
-  background: #2E5A44;
+  background: #4C8B71;
   color: #FFFFFF;
 }
 

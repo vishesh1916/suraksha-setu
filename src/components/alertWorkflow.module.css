@@ -1,21 +1,20 @@
 /* ============================================================
-   Alert Workflow Sequence — High-End Editorial Styles
-   Clean off-white canvas, crisp charcoal typography,
-   hairline borders (#E5E2D9), signal amber (#D67A20) active accents.
+   Alert Workflow Sequence — Editorial Magazine UI/UX Styles
+   Editorial Palette: #F8FBFC, #FFFFFF, #DCEEF2, #C8E3EA, #1F3440, #60717B, #4C8DA2
    ============================================================ */
 
 .workflowSection {
   background: #FFFFFF;
-  border-top: 1px solid #E5E2D9;
-  border-bottom: 1px solid #E5E2D9;
-  padding: 80px 24px;
-  color: #161816;
+  border-top: 1px solid #DCEEF2;
+  border-bottom: 1px solid #DCEEF2;
+  padding: clamp(3.5rem, 6vw, 5.5rem) 24px;
+  color: #1F3440;
   position: relative;
   overflow: hidden;
 }
 
 .sectionContainer {
-  max-width: 1240px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -32,15 +31,15 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #D67A20;
+  color: #4C8DA2;
   margin-bottom: 10px;
 }
 
 .title {
-  font-family: var(--font-family-sans);
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
   font-size: clamp(2rem, 3.5vw, 2.75rem);
   font-weight: 800;
-  color: #161816;
+  color: #1F3440;
   letter-spacing: -0.03em;
   line-height: 1.15;
   margin-bottom: 14px;
@@ -49,7 +48,7 @@
 .subtitle {
   font-size: 1.05rem;
   line-height: 1.6;
-  color: #737571;
+  color: #60717B;
 }
 
 /* Step Tabs */
@@ -73,26 +72,27 @@
 }
 
 .stepTab {
-  background: #F7F5F0;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
   padding: 16px 18px;
   text-align: left;
   cursor: pointer;
   position: relative;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
 .stepTab:hover {
-  background: #EFECE6;
-  border-color: #DDD8CD;
+  background: #DCEEF2;
+  border-color: #C8E3EA;
+  transform: translateY(-1px);
 }
 
 .stepTabActive {
   background: #FFFFFF;
-  border-color: #D67A20;
-  box-shadow: 0 4px 16px rgba(22, 24, 22, 0.06);
+  border-color: #4C8DA2;
+  box-shadow: 0 4px 20px rgba(31, 52, 64, 0.08);
 }
 
 .stepTabActive::before {
@@ -102,7 +102,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: #D67A20;
+  background: #4C8DA2;
 }
 
 .tabNumberRow {
@@ -116,11 +116,11 @@
   font-family: var(--font-family-mono, monospace);
   font-size: 11px;
   font-weight: 700;
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .stepTabActive .tabNumber {
-  color: #D67A20;
+  color: #4C8DA2;
 }
 
 .tabIcon {
@@ -132,7 +132,7 @@
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: #161816;
+  color: #1F3440;
 }
 
 .tabProgressBar {
@@ -141,19 +141,20 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #D67A20;
+  background: #4C8DA2;
 }
 
 /* Editorial Stage Layout */
 .editorialStage {
-  background: #F7F5F0;
-  border: 1px solid #E5E2D9;
-  border-radius: 8px;
-  padding: 40px;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 24px;
+  padding: clamp(24px, 4vw, 44px);
   display: grid;
   grid-template-columns: 1.15fr 1fr;
   gap: 40px;
   align-items: center;
+  box-shadow: 0 4px 24px rgba(31, 52, 64, 0.03);
 }
 
 @media (max-width: 900px) {
@@ -178,20 +179,21 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #737571;
+  color: #60717B;
 }
 
 .phaseDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #D67A20;
+  background: #4C8DA2;
 }
 
 .stepHeadline {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
   font-size: clamp(1.4rem, 2.2vw, 1.85rem);
   font-weight: 800;
-  color: #161816;
+  color: #1F3440;
   line-height: 1.25;
   letter-spacing: -0.02em;
 }
@@ -199,13 +201,13 @@
 .stepDescription {
   font-size: 0.95rem;
   line-height: 1.65;
-  color: #737571;
+  color: #60717B;
 }
 
 .actorNoteBox {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  border: 1px solid #DCEEF2;
+  border-radius: 14px;
   padding: 14px 18px;
   display: flex;
   flex-direction: column;
@@ -217,13 +219,13 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: #2E5A44;
+  color: #4C8B71;
   text-transform: uppercase;
 }
 
 .actorNoteText {
   font-size: 13px;
-  color: #161816;
+  color: #1F3440;
   line-height: 1.5;
   margin: 0;
 }
@@ -237,28 +239,30 @@
 
 .stepNavBtn {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
-  padding: 8px 16px;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 8px 18px;
   font-size: 12.5px;
   font-weight: 600;
-  color: #161816;
+  color: #1F3440;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .stepNavBtn:hover {
-  background: #EFECE6;
+  background: #DCEEF2;
+  border-color: #4C8DA2;
 }
 
 .stepNavBtnPrimary {
-  background: #161816;
+  background: #1F3440;
   color: #FFFFFF;
-  border-color: #161816;
+  border-color: #1F3440;
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.12);
 }
 
 .stepNavBtnPrimary:hover {
-  background: #333835;
+  background: #334652;
 }
 
 /* Right HUD Card */
@@ -268,17 +272,17 @@
 
 .hudCard {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 8px;
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 4px 16px rgba(22, 24, 22, 0.04);
+  box-shadow: 0 4px 20px rgba(31, 52, 64, 0.05);
 }
 
 .hudHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #E5E2D9;
+  border-bottom: 1px solid #DCEEF2;
   padding-bottom: 12px;
   margin-bottom: 16px;
 }
@@ -294,32 +298,32 @@
   font-size: 10px;
   font-weight: 700;
   padding: 3px 8px;
-  border-radius: 4px;
-  background: rgba(46, 90, 68, 0.08);
-  color: #2E5A44;
-  border: 1px solid rgba(46, 90, 68, 0.22);
+  border-radius: 6px;
+  background: rgba(76, 139, 113, 0.1);
+  color: #4C8B71;
+  border: 1px solid rgba(76, 139, 113, 0.25);
 }
 
 .hudStationText {
   font-family: var(--font-family-mono, monospace);
   font-size: 10px;
   font-weight: 600;
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .hudStatusDot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #2E5A44;
+  background: #4C8B71;
 }
 
 .h3HexViewport {
   width: 100%;
   height: 140px;
-  background: #FAF8F5;
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -332,19 +336,19 @@
 }
 
 .h3Polygon {
-  stroke: #DDD8CD;
+  stroke: #C8E3EA;
   stroke-width: 1.5;
-  fill: rgba(239, 236, 230, 0.5);
+  fill: rgba(220, 238, 242, 0.35);
 }
 
 .h3PolygonVerified {
-  stroke: #2E5A44;
-  fill: rgba(46, 90, 68, 0.08);
+  stroke: #4C8B71;
+  fill: rgba(76, 139, 113, 0.1);
 }
 
 .h3PolygonCritical {
-  stroke: #D67A20;
-  fill: rgba(214, 122, 32, 0.1);
+  stroke: #4C8DA2;
+  fill: rgba(76, 141, 162, 0.15);
 }
 
 .radarRingPulse {
@@ -373,9 +377,9 @@
 }
 
 .hudMetricItem {
-  background: #FAF8F5;
-  border: 1px solid #E5E2D9;
-  border-radius: 4px;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 10px;
   padding: 8px 10px;
 }
 
@@ -384,7 +388,7 @@
   font-family: var(--font-family-mono, monospace);
   font-size: 8.5px;
   font-weight: 700;
-  color: #9B9D98;
+  color: #8FA2AD;
   letter-spacing: 0.06em;
   margin-bottom: 2px;
 }
@@ -393,14 +397,14 @@
   display: block;
   font-size: 11.5px;
   font-weight: 700;
-  color: #161816;
+  color: #1F3440;
 }
 
 .hudFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid #E5E2D9;
+  border-top: 1px solid #DCEEF2;
   padding-top: 12px;
   font-size: 11px;
 }
@@ -409,16 +413,17 @@
   display: flex;
   flex-direction: column;
   font-size: 10px;
-  color: #737571;
+  color: #60717B;
 }
 
 .hudInspectBtn {
   font-size: 11.5px;
-  font-weight: 600;
-  color: #D67A20;
+  font-weight: 700;
+  color: #4C8DA2;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .hudInspectBtn:hover {
-  color: #B35E10;
+  color: #387A92;
 }

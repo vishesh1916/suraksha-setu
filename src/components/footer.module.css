@@ -128,7 +128,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #161816;
+  color: #1F3440;
   margin-bottom: 0.25rem;
 }
 
@@ -142,24 +142,24 @@
 }
 
 .linkList a {
-  color: #737571;
+  color: #60717B;
   font-size: 0.85rem;
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
 .linkList a:hover {
-  color: #161816;
+  color: #4C8DA2;
 }
 
 .linkList span {
-  color: #9B9D98;
+  color: #8FA2AD;
   font-size: 0.82rem;
 }
 
 .bottomBar {
   margin-top: 3.5rem;
-  border-top: 1px solid #E5E2D9;
+  border-top: 1px solid #DCEEF2;
   padding: 1.5rem 0;
   background: #FFFFFF;
 }
@@ -173,7 +173,7 @@
   justify-content: space-between;
   gap: 1rem;
   font-size: 0.8rem;
-  color: #737571;
+  color: #60717B;
   flex-wrap: wrap;
 }
 
@@ -182,5 +182,5 @@
   align-items: center;
   gap: 8px;
   font-size: 0.75rem;
-  color: #9B9D98;
+  color: #8FA2AD;
 }

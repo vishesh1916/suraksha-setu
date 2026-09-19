@@ -175,14 +175,14 @@ a:hover {
 }
 
 .btn-accent {
-  background: var(--color-safety-amber);
+  background: var(--color-accent);
   color: #FFFFFF;
-  border-color: var(--color-safety-amber);
+  border-color: var(--color-accent);
 }
 
 .btn-accent:hover:not(:disabled) {
-  background: var(--color-safety-amber-dark);
-  border-color: var(--color-safety-amber-dark);
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .btn-danger {
@@ -252,8 +252,8 @@ a:hover {
 }
 
 .input:focus {
-  border-color: var(--color-charcoal-primary);
-  box-shadow: 0 0 0 2px rgba(22, 24, 22, 0.08);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
   outline: none;
 }
 

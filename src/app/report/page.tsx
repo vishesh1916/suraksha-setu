@@ -390,7 +390,7 @@ export default function ReportPage() {
               <div className={styles.receiptRow}>
                 <span>Report ID</span>
                 <span className={styles.receiptValue} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <code style={{ fontSize: '0.88rem', background: '#FAF7F2', color: 'var(--color-accent, #D67A20)', padding: '3px 8px', borderRadius: 4, fontFamily: 'monospace', fontWeight: 700, border: '1px solid var(--color-accent, #D67A20)' }}>
+                  <code style={{ fontSize: '0.88rem', background: '#DCEEF2', color: '#4C8DA2', padding: '4px 10px', borderRadius: 9999, fontFamily: 'var(--font-family-mono, monospace)', fontWeight: 700, border: '1px solid #C8E3EA' }}>
                     {reportId}
                   </code>
                   <button
@@ -517,14 +517,14 @@ export default function ReportPage() {
               <span style={{ fontSize: '1.6rem' }}>🛡️</span>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <strong style={{ color: 'var(--color-charcoal, #161816)', fontSize: '0.95rem' }}>
+                  <strong style={{ color: '#1F3440', fontSize: '0.95rem', fontFamily: "var(--font-family-heading, 'Manrope', sans-serif)" }}>
                     Active Hazard Reported by You
                   </strong>
                   <span className={styles.activeReportBadge}>
                     ID: {recentReports[0].id}
                   </span>
                 </div>
-                <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: 'var(--color-text-secondary, #474946)' }}>
+                <p style={{ margin: '3px 0 0', fontSize: '0.82rem', color: '#60717B' }}>
                   {recentReports[0].landmark} · {HAZARD_CATEGORIES[recentReports[0].category as HazardCategory]?.icon || '⚠️'} {recentReports[0].category} · Severity {recentReports[0].severity}/5
                 </p>
               </div>

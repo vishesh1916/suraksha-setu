@@ -236,8 +236,8 @@ function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void)
             'WARNING',
             '#C4511A',
             'WATCH',
-            '#D67A20',
-            '#2E5A44',
+            '#4C8DA2',
+            '#4C8B71',
           ],
           'fill-opacity': 0.18,
         },
@@ -254,12 +254,12 @@ function setupPolygonLayers(map: any, onPolygonClick: (eventId: string) => void)
             'match',
             ['get', 'severity'],
             'SEVERE',
-            '#A82824',
+            '#D76D63',
             'WARNING',
-            '#C4511A',
+            '#D7AA63',
             'WATCH',
-            '#D67A20',
-            '#2E5A44',
+            '#4C8DA2',
+            '#4C8B71',
           ],
           'line-width': 1.8,
           'line-dasharray': [3, 2],
@@ -838,9 +838,9 @@ function MapContent() {
           el.title = `${ev.title} · M${mag.toFixed(1)} (${ev.source})`;
         } else if (ev.is_community_report) {
           // Neutral dashed community style
-          el.style.background = '#F3F1EB';
-          el.style.color = '#161816';
-          el.style.border = '1.5px dashed #737571';
+          el.style.background = '#F8FBFC';
+          el.style.color = '#1F3440';
+          el.style.border = '1.5px dashed #4C8DA2';
           el.innerText = ev.acronym;
           el.title = `Unverified Community Report: ${ev.title}`;
         } else {
@@ -850,7 +850,7 @@ function MapContent() {
 
         // Active selected outline
         if (selectedEvent?.id === ev.id) {
-          el.style.outline = '3px solid #161816';
+          el.style.outline = '3px solid #1F3440';
           el.style.outlineOffset = '2px';
           el.style.transform = 'scale(1.18)';
           el.style.zIndex = '100';
@@ -883,9 +883,9 @@ function MapContent() {
         VERIFIED_SHELTERS.forEach((sh) => {
           const el = document.createElement('div');
           el.className = styles.acronymBadge;
-          el.style.background = '#161816';
+          el.style.background = '#1F3440';
           el.style.color = '#FFFFFF';
-          el.style.border = '1.5px solid #E5E2D9';
+          el.style.border = '1.5px solid #DCEEF2';
           el.style.width = '24px';
           el.style.height = '24px';
           el.style.borderRadius = '4px';
@@ -1591,7 +1591,7 @@ function MapContent() {
                         <span className={`${styles.acronymBadge} ${styles.sevWatch}`} style={{ width: '22px', height: '22px', fontSize: '10px' }}>
                           {acr}
                         </span>
-                        <span style={{ color: '#161816', fontWeight: 600 }}>{HAZARD_ACRONYM_META[acr].name}</span>
+                        <span style={{ color: '#1F3440', fontWeight: 600 }}>{HAZARD_ACRONYM_META[acr].name}</span>
                       </div>
                     ))}
                   </div>
@@ -1637,24 +1637,24 @@ function MapContent() {
                     {sourcesHealth.map((sh) => (
                       <div key={sh.id} style={{ padding: '8px 10px', background: '#FAF9F6', borderRadius: '4px', border: '1px solid #EFECE6' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '3px' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#161816' }}>{sh.name}</span>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: '#1F3440' }}>{sh.name}</span>
                           <span style={{
                             fontSize: '9.5px',
                             padding: '1px 5px',
                             borderRadius: '3px',
                             fontWeight: 700,
                             letterSpacing: '0.02em',
-                            background: sh.status === 'HEALTHY' ? '#EBF5EE' : sh.status === 'DEGRADED' ? '#FEF3E8' : '#F4F3EF',
-                            color: sh.status === 'HEALTHY' ? '#2E5A44' : sh.status === 'DEGRADED' ? '#D67A20' : '#8A8C86',
+                            background: sh.status === 'HEALTHY' ? 'rgba(76, 139, 113, 0.1)' : sh.status === 'DEGRADED' ? 'rgba(215, 170, 99, 0.15)' : '#F8FBFC',
+                            color: sh.status === 'HEALTHY' ? '#4C8B71' : sh.status === 'DEGRADED' ? '#D7AA63' : '#8FA2AD',
                           }}>
                             {sh.status === 'HEALTHY' ? '● LIVE / SYNC' : sh.status === 'DEGRADED' ? 'RETRYING' : 'PENDING BRIDGE'}
                           </span>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#383A36', marginBottom: '4px', lineHeight: 1.35 }}>{sh.statusMessage}</div>
-                        <div style={{ fontSize: '10px', color: '#737571', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '11px', color: '#60717B', marginBottom: '4px', lineHeight: 1.35 }}>{sh.statusMessage}</div>
+                        <div style={{ fontSize: '10px', color: '#8FA2AD', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span>Coverage: {sh.coverage}</span>
                           {sh.officialFeedUrl && (
-                            <a href={sh.officialFeedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#D67A20', textDecoration: 'underline', fontWeight: 600 }}>
+                            <a href={sh.officialFeedUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#4C8DA2', textDecoration: 'underline', fontWeight: 600 }}>
                               Official Portal ↗
                             </a>
                           )}
@@ -1815,7 +1815,7 @@ function MapContent() {
                     <span className={`${styles.severityPill} ${styles.sevWarning}`}>
                       {selectedEvent.severity}
                     </span>
-                    <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '2px 0 0', color: '#161816' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '2px 0 0', color: '#1F3440', fontFamily: "var(--font-family-heading, 'Manrope', sans-serif)" }}>
                       {selectedEvent.title}
                     </h3>
                   </div>
@@ -1933,13 +1933,13 @@ function MapContent() {
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#737571' }}>{t.map.telemetryFreshness}:</span>
-                    <span style={{ fontWeight: 600, color: '#161816' }}>{selectedEvent.freshness}</span>
+                    <span style={{ color: '#60717B' }}>{t.map.telemetryFreshness}:</span>
+                    <span style={{ fontWeight: 600, color: '#1F3440' }}>{selectedEvent.freshness}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px solid #EFECE6' }}>
-                    <span style={{ color: '#737571' }}>{t.map.dailySyncStatus}:</span>
-                    <span style={{ color: '#D67A20', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span className={styles.pulseDotLive} style={{ width: '5px', height: '5px', background: '#D67A20' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px', borderTop: '1px solid #DCEEF2' }}>
+                    <span style={{ color: '#60717B' }}>{t.map.dailySyncStatus}:</span>
+                    <span style={{ color: '#4C8DA2', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span className={styles.pulseDotLive} style={{ width: '5px', height: '5px', background: '#4C8DA2' }} />
                       Continuous Real-Time Sync
                     </span>
                   </div>
@@ -2007,12 +2007,12 @@ function MapContent() {
           <div
             style={{
               background: '#FFFFFF',
-              border: '1px solid #E5E2D9',
-              borderRadius: '8px',
-              maxWidth: '460px',
+              border: '1px solid #DCEEF2',
+              borderRadius: '20px',
+              maxWidth: '480px',
               width: '100%',
               padding: '24px',
-              boxShadow: '0 12px 32px rgba(22, 24, 22, 0.2)',
+              boxShadow: '0 12px 32px rgba(31, 52, 64, 0.15)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -2069,12 +2069,12 @@ function MapContent() {
                     placeholder="e.g. Near Gomti River Barrage, Lucknow"
                     value={sosLandmark}
                     onChange={(e) => setSosLandmark(e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E2D9', borderRadius: '4px', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #DCEEF2', borderRadius: '10px', fontSize: '13px' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#555753', marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#60717B', marginBottom: '4px' }}>
                     Contact Phone Number (Optional)
                   </label>
                   <input
@@ -2082,12 +2082,12 @@ function MapContent() {
                     placeholder="e.g. 9876543210"
                     value={sosPhone}
                     onChange={(e) => setSosPhone(e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E2D9', borderRadius: '4px', fontSize: '13px' }}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #DCEEF2', borderRadius: '10px', fontSize: '13px' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#555753', marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#60717B', marginBottom: '4px' }}>
                     Distress Situation Details
                   </label>
                   <textarea
@@ -2095,7 +2095,7 @@ function MapContent() {
                     placeholder="Describe water depth, trapped individuals, medical requirements..."
                     value={sosNotes}
                     onChange={(e) => setSosNotes(e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #E5E2D9', borderRadius: '4px', fontSize: '13px', resize: 'vertical' }}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #DCEEF2', borderRadius: '10px', fontSize: '13px', resize: 'vertical' }}
                   />
                 </div>
 

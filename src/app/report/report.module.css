@@ -4,8 +4,8 @@
 
 .page {
   min-height: 100dvh;
-  background-color: var(--color-bg-primary, #F7F5F0);
-  color: var(--color-charcoal, #161816);
+  background-color: var(--color-bg-primary, #F8FBFC);
+  color: var(--color-charcoal, #1F3440);
   display: flex;
   flex-direction: column;
 }
@@ -13,7 +13,7 @@
 /* Workflow Subheader */
 .workflowHeader {
   background: #FFFFFF;
-  border-bottom: 1px solid var(--color-border, #E5E2D9);
+  border-bottom: 1px solid var(--color-border, #DCEEF2);
   padding: 0.875rem 2rem;
   display: flex;
   align-items: center;
@@ -27,25 +27,25 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.82rem;
-  color: var(--color-text-muted, #737571);
+  color: var(--color-text-muted, #60717B);
 }
 
 .breadcrumb a {
-  color: var(--color-text-secondary, #474946);
+  color: var(--color-text-secondary, #60717B);
   text-decoration: none;
   font-weight: 500;
 }
 
 .breadcrumb a:hover {
-  color: var(--color-accent, #D67A20);
+  color: var(--color-accent, #4C8DA2);
 }
 
 .breadcrumbSep {
-  color: var(--color-border, #E5E2D9);
+  color: var(--color-border, #DCEEF2);
 }
 
 .breadcrumbCurrent {
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
   font-weight: 600;
 }
 
@@ -65,35 +65,35 @@
   font-weight: 500;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  border: 1px solid var(--color-border, #E5E2D9);
-  color: var(--color-text-muted, #737571);
+  border: 1px solid var(--color-border, #DCEEF2);
+  color: var(--color-text-muted, #60717B);
   background: #FFFFFF;
   transition: all 0.15s ease;
 }
 
 .stepPillActive {
-  background: #FAF7F2;
-  border-color: var(--color-accent, #D67A20);
-  color: var(--color-accent, #D67A20);
+  background: #DCEEF2;
+  border-color: var(--color-accent, #4C8DA2);
+  color: var(--color-accent, #4C8DA2);
   font-weight: 700;
 }
 
 .stepPillDone {
   background: #F0FDF4;
   border-color: #86EFAC;
-  color: var(--color-eucalyptus, #2E5A44);
+  color: var(--color-eucalyptus, #4C8B71);
 }
 
 .progressBar {
   height: 3px;
-  background: var(--color-border, #E5E2D9);
+  background: var(--color-border, #DCEEF2);
   position: relative;
   width: 100%;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--color-accent, #D67A20);
+  background: var(--color-accent, #4C8DA2);
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -109,7 +109,7 @@
 .emergencyDisclaimer {
   background: #FFF7ED;
   border: 1px solid #FDBA74;
-  border-left: 4px solid var(--color-accent, #D67A20);
+  border-left: 4px solid var(--color-accent, #4C8DA2);
   border-radius: var(--radius-sm, 3px);
   padding: 0.85rem 1.15rem;
   font-size: 0.82rem;
@@ -128,7 +128,7 @@
 /* Active Reported Hazard Banner */
 .activeReportBanner {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
   border-radius: var(--radius-md, 6px);
   padding: 1.25rem 1.5rem;
   margin-bottom: 2rem;
@@ -144,9 +144,9 @@
   font-family: var(--font-family-mono, monospace);
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--color-accent, #D67A20);
-  background: #FAF7F2;
-  border: 1px solid var(--color-accent, #D67A20);
+  color: var(--color-accent, #4C8DA2);
+  background: #DCEEF2;
+  border: 1px solid var(--color-accent, #4C8DA2);
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
 }
@@ -160,14 +160,14 @@
   font-family: var(--font-family-sans);
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
   letter-spacing: -0.02em;
   margin-bottom: 0.35rem;
 }
 
 .stepSubtitle {
   font-size: 0.92rem;
-  color: var(--color-text-secondary, #474946);
+  color: var(--color-text-secondary, #60717B);
   margin-bottom: 1.75rem;
   line-height: 1.5;
 }
@@ -179,7 +179,7 @@
   margin-top: 2rem;
   gap: 1rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--color-border, #E5E2D9);
+  border-top: 1px solid var(--color-border, #DCEEF2);
 }
 
 /* —— Category Grid —— */
@@ -196,7 +196,7 @@
   text-align: left;
   padding: 1.25rem;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
   border-radius: var(--radius-md, 6px);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -206,15 +206,15 @@
 }
 
 .categoryTile:hover {
-  border-color: var(--color-charcoal, #161816);
+  border-color: var(--color-charcoal, #1F3440);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .categorySelected {
-  border-color: var(--color-accent, #D67A20);
-  background: #FAF7F2;
-  outline: 2px solid var(--color-accent, #D67A20);
+  border-color: var(--color-accent, #4C8DA2);
+  background: #DCEEF2;
+  outline: 2px solid var(--color-accent, #4C8DA2);
 }
 
 .categoryIcon {
@@ -225,12 +225,12 @@
 .categoryLabel {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
 }
 
 .categoryLabelHi {
   font-size: 0.78rem;
-  color: var(--color-text-muted, #737571);
+  color: var(--color-text-muted, #60717B);
   margin-top: 0.15rem;
 }
 
@@ -247,7 +247,7 @@
   gap: 1rem;
   padding: 1rem 1.25rem;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
   border-radius: var(--radius-md, 6px);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -257,14 +257,14 @@
 }
 
 .severityCard:hover {
-  border-color: var(--color-charcoal, #161816);
+  border-color: var(--color-charcoal, #1F3440);
   transform: translateX(3px);
 }
 
 .severitySelected {
-  border-color: var(--color-accent, #D67A20);
-  background: #FAF7F2;
-  outline: 2px solid var(--color-accent, #D67A20);
+  border-color: var(--color-accent, #4C8DA2);
+  background: #DCEEF2;
+  outline: 2px solid var(--color-accent, #4C8DA2);
 }
 
 .severityIndicator {
@@ -289,12 +289,12 @@
 .severityLabel {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
 }
 
 .severityDesc {
   font-size: 0.82rem;
-  color: var(--color-text-secondary, #474946);
+  color: var(--color-text-secondary, #60717B);
 }
 
 /* —— Location —— */
@@ -331,14 +331,14 @@
 
 .locationName {
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
   font-size: 0.95rem;
   margin: 0;
 }
 
 .locationAccuracy {
   font-size: 0.78rem;
-  color: var(--color-eucalyptus, #2E5A44);
+  color: var(--color-eucalyptus, #4C8B71);
   font-family: var(--font-family-mono, monospace);
   margin: 0.25rem 0 0 0;
 }
@@ -347,7 +347,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: var(--color-text-muted, #737571);
+  color: var(--color-text-muted, #60717B);
   font-size: 0.76rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -360,7 +360,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--color-border, #E5E2D9);
+  background: var(--color-border, #DCEEF2);
 }
 
 .hubList {
@@ -374,22 +374,22 @@
   font-size: 0.76rem;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
   background: #FFFFFF;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
   cursor: pointer;
   transition: all 0.15s ease;
   font-weight: 500;
 }
 
 .hubBtn:hover {
-  border-color: var(--color-charcoal, #161816);
+  border-color: var(--color-charcoal, #1F3440);
 }
 
 .hubBtnActive {
-  background: var(--color-charcoal, #161816);
+  background: var(--color-charcoal, #1F3440);
   color: #FFFFFF;
-  border-color: var(--color-charcoal, #161816);
+  border-color: var(--color-charcoal, #1F3440);
   font-weight: 600;
 }
 
@@ -402,7 +402,7 @@
 
 .charCount {
   font-size: 0.75rem;
-  color: var(--color-text-muted, #737571);
+  color: var(--color-text-muted, #60717B);
   font-family: var(--font-family-mono, monospace);
   text-align: right;
   margin-top: 0.25rem;
@@ -411,7 +411,7 @@
 .photoUpload {
   width: 100%;
   min-height: 140px;
-  border: 1.5px dashed var(--color-border, #E5E2D9);
+  border: 1.5px dashed var(--color-border, #DCEEF2);
   border-radius: var(--radius-md, 6px);
   cursor: pointer;
   overflow: hidden;
@@ -423,8 +423,8 @@
 }
 
 .photoUpload:hover {
-  border-color: var(--color-accent, #D67A20);
-  background: #FAF7F2;
+  border-color: var(--color-accent, #4C8DA2);
+  background: #DCEEF2;
 }
 
 .photoPlaceholder {
@@ -432,7 +432,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  color: var(--color-text-muted, #737571);
+  color: var(--color-text-muted, #60717B);
   font-size: 0.85rem;
 }
 
@@ -449,7 +449,7 @@
 /* —— Review —— */
 .reviewCard {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
   border-radius: var(--radius-md, 6px);
   padding: 1.5rem;
   display: flex;
@@ -464,7 +464,7 @@
   align-items: flex-start;
   gap: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border, #E5E2D9);
+  border-bottom: 1px solid var(--color-border, #DCEEF2);
   font-size: 0.88rem;
 }
 
@@ -474,7 +474,7 @@
 }
 
 .reviewLabel {
-  color: var(--color-text-muted, #737571);
+  color: var(--color-text-muted, #60717B);
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.72rem;
@@ -488,7 +488,7 @@
   height: 80px;
   object-fit: cover;
   border-radius: var(--radius-sm, 3px);
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
 }
 
 /* —— Consent —— */
@@ -496,7 +496,7 @@
   margin-top: 1.5rem;
   padding: 1rem 1.25rem;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
   border-radius: var(--radius-md, 6px);
 }
 
@@ -504,7 +504,7 @@
   display: flex;
   gap: 0.75rem;
   font-size: 0.82rem;
-  color: var(--color-text-secondary, #474946);
+  color: var(--color-text-secondary, #60717B);
   cursor: pointer;
   line-height: 1.5;
   align-items: flex-start;
@@ -515,7 +515,7 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  accent-color: var(--color-accent, #D67A20);
+  accent-color: var(--color-accent, #4C8DA2);
 }
 
 /* —— Error —— */
@@ -535,7 +535,7 @@
   margin: 2rem auto;
   text-align: center;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
+  border: 1px solid var(--color-border, #DCEEF2);
   border-radius: var(--radius-md, 6px);
   padding: 2.5rem 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -549,19 +549,19 @@
 .receiptTitle {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: var(--color-charcoal, #1F3440);
   margin-bottom: 0.5rem;
 }
 
 .receiptSubtitle {
-  color: var(--color-text-secondary, #474946);
+  color: var(--color-text-secondary, #60717B);
   font-size: 0.92rem;
   margin-bottom: 1.75rem;
 }
 
 .receiptDetails {
-  background: var(--color-bg-primary, #F7F5F0);
-  border: 1px solid var(--color-border, #E5E2D9);
+  background: var(--color-bg-primary, #F8FBFC);
+  border: 1px solid var(--color-border, #DCEEF2);
   border-radius: var(--radius-sm, 3px);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
@@ -579,7 +579,7 @@
 }
 
 .receiptRow span:first-child {
-  color: var(--color-text-muted, #737571);
+  color: var(--color-text-muted, #60717B);
 }
 
 .receiptValue {

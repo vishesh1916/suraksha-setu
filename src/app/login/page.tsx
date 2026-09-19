@@ -143,12 +143,12 @@ function LoginForm() {
               setPassword('Suraksha@Setu2026!');
             }}
             style={{
-              background: '#FAF7F2',
-              border: '1px dashed var(--color-border, #E5E2D9)',
-              color: 'var(--color-charcoal, #161816)',
+              background: '#DCEEF2',
+              border: '1px dashed #C8E3EA',
+              color: '#1F3440',
               fontSize: '12px',
-              padding: '8px 12px',
-              borderRadius: '4px',
+              padding: '10px 14px',
+              borderRadius: '12px',
               cursor: 'pointer',
               width: '100%',
               display: 'flex',

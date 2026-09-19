@@ -1,11 +1,13 @@
 /* ============================================================
-   Suraksha Setu — Editorial All-India Weather Intelligence Styles
+   SURAKSHA SETU — Editorial Weather Intelligence Styles
+   Editorial Palette: #F8FBFC, #FFFFFF, #DCEEF2, #C8E3EA, #1F3440, #60717B, #4C8DA2
    ============================================================ */
 
 .page {
   min-height: 100vh;
-  background-color: var(--color-bg-primary, #F7F5F0);
-  color: var(--color-charcoal, #161816);
+  background-color: #F8FBFC;
+  color: #1F3440;
+  font-family: var(--font-family-body, 'Inter', sans-serif);
   display: flex;
   flex-direction: column;
 }
@@ -13,7 +15,7 @@
 .container {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 5rem;
+  padding: 3rem 1.5rem 5rem;
   width: 100%;
   flex: 1;
 }
@@ -21,11 +23,11 @@
 /* Header & Search Banner */
 .searchBanner {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-md, 6px);
-  padding: 2.5rem 2rem;
+  border: 1px solid #DCEEF2;
+  border-radius: 24px;
+  padding: 2.75rem 2.5rem;
   margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 24px rgba(31, 52, 64, 0.04);
   position: relative;
 }
 
@@ -33,77 +35,80 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: #FAF7F2;
-  border: 1px solid var(--color-accent, #D67A20);
-  color: var(--color-accent, #D67A20);
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: #DCEEF2;
+  border: 1px solid #C8E3EA;
+  color: #4C8DA2;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .title {
-  font-family: var(--font-family-sans);
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
-  letter-spacing: -0.02em;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.2;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  color: #1F3440;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.6rem 0;
+  line-height: 1.15;
 }
 
 .subtitle {
-  font-size: 1rem;
-  color: var(--color-text-secondary, #474946);
+  font-size: 1.05rem;
+  color: #60717B;
   max-width: 680px;
-  line-height: 1.5;
-  margin: 0 0 1.75rem 0;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
 }
 
 /* Search Form */
 .searchForm {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   max-width: 640px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .searchInput {
   flex: 1;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
-  padding: 0.85rem 1.25rem;
-  color: var(--color-charcoal, #161816);
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 0.85rem 1.5rem;
+  color: #1F3440;
   font-size: 0.95rem;
+  font-family: inherit;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .searchInput:focus {
-  border-color: var(--color-accent, #D67A20);
-  box-shadow: 0 0 0 3px rgba(214, 122, 32, 0.12);
+  border-color: #4C8DA2;
+  box-shadow: 0 0 0 3px rgba(76, 141, 162, 0.15);
 }
 
 .searchBtn {
-  background: var(--color-charcoal, #161816);
+  background: #1F3440;
   color: #FFFFFF;
   border: none;
-  border-radius: var(--radius-sm, 3px);
-  padding: 0 1.5rem;
+  border-radius: 9999px;
+  padding: 0 1.75rem;
   font-size: 0.925rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: background 0.15s ease;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.12);
 }
 
 .searchBtn:hover {
-  background: #000000;
+  background: #334652;
+  transform: translateY(-1px);
 }
 
 /* Quick Hub Chips */
@@ -111,73 +116,75 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .quickHubsLabel {
-  font-size: 12px;
-  color: var(--color-text-muted, #737571);
-  font-weight: 500;
+  font-size: 12.5px;
+  color: #60717B;
+  font-weight: 600;
 }
 
 .hubChip {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 12px;
-  color: var(--color-text-secondary, #474946);
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 5px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #60717B;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hubChip:hover {
-  border-color: var(--color-charcoal, #161816);
-  color: var(--color-charcoal, #161816);
-  background: #FAF7F2;
+  border-color: #4C8DA2;
+  color: #1F3440;
+  background: #DCEEF2;
+  transform: translateY(-1px);
 }
 
 /* Active Location Hero Telemetry Card */
 .activeHeroCard {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-md, 6px);
-  padding: 2rem;
+  border: 1px solid #DCEEF2;
+  border-radius: 24px;
+  padding: 2.25rem;
   margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 24px rgba(31, 52, 64, 0.04);
 }
 
 .heroHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 1px solid var(--color-border, #E5E2D9);
-  padding-bottom: 1.25rem;
-  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #DCEEF2;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
 }
 
 .locationTitle {
-  font-family: var(--font-family-sans);
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
-  margin: 0 0 4px 0;
-  letter-spacing: -0.01em;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #1F3440;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
 }
 
 .locationMeta {
   font-size: 13px;
-  color: var(--color-text-muted, #737571);
+  color: #60717B;
 }
 
 .threatBadge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  border-radius: var(--radius-sm, 3px);
+  padding: 6px 16px;
+  border-radius: 9999px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -186,205 +193,229 @@
 }
 
 .threatCRITICAL {
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
-  color: #DC2626;
+  background: rgba(215, 109, 99, 0.1);
+  border: 1px solid rgba(215, 109, 99, 0.3);
+  color: #D76D63;
 }
 
 .threatWARNING {
-  background: #FFF7ED;
-  border: 1px solid #FDBA74;
-  color: var(--color-accent, #D67A20);
+  background: rgba(215, 170, 99, 0.12);
+  border: 1px solid rgba(215, 170, 99, 0.3);
+  color: #D7AA63;
 }
 
 .threatWATCH {
-  background: #FEFCE8;
-  border: 1px solid #FEF08A;
-  color: #CA8A04;
+  background: rgba(76, 141, 162, 0.12);
+  border: 1px solid rgba(76, 141, 162, 0.3);
+  color: #4C8DA2;
 }
 
 .threatNORMAL {
-  background: #F0FDF4;
-  border: 1px solid #86EFAC;
-  color: var(--color-eucalyptus, #2E5A44);
+  background: rgba(76, 139, 113, 0.1);
+  border: 1px solid rgba(76, 139, 113, 0.3);
+  color: #4C8B71;
 }
 
 /* Primary Telemetry Grid */
 .telemetryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
   margin-bottom: 2rem;
 }
 
 .metricTile {
-  background: #FAF7F2;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
-  padding: 1.25rem 1rem;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
+  padding: 1.35rem 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metricTile:hover {
+  background: #FFFFFF;
+  border-color: #C8E3EA;
+  box-shadow: 0 4px 14px rgba(31, 52, 64, 0.05);
 }
 
 .metricTileLabel {
   font-size: 11px;
-  color: var(--color-text-muted, #737571);
+  color: #60717B;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   font-family: var(--font-family-mono, monospace);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .metricTileValue {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
-  font-family: var(--font-family-sans);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #1F3440;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  letter-spacing: -0.02em;
 }
 
 .metricTileSub {
-  font-size: 11.5px;
-  color: var(--color-text-muted, #737571);
+  font-size: 12px;
+  color: #8FA2AD;
 }
 
 /* Hourly Trend Strip */
 .sectionTitle {
-  font-family: var(--font-family-sans);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
-  margin: 2rem 0 1rem 0;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1F3440;
+  margin: 2.25rem 0 1.25rem 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  letter-spacing: -0.01em;
 }
 
 .hourlyStrip {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   overflow-x: auto;
   padding-bottom: 12px;
   scrollbar-width: thin;
 }
 
 .hourCard {
-  flex: 0 0 110px;
+  flex: 0 0 115px;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
-  padding: 12px 8px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
+  padding: 14px 10px;
   text-align: center;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hourCard:hover {
+  border-color: #4C8DA2;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(31, 52, 64, 0.06);
 }
 
 .hourTime {
   font-size: 12px;
-  color: var(--color-text-muted, #737571);
+  color: #60717B;
   font-weight: 600;
   font-family: var(--font-family-mono, monospace);
 }
 
 .hourTemp {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  font-size: 17px;
+  font-weight: 800;
+  color: #1F3440;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
 }
 
 .hourPrecip {
-  font-size: 11px;
-  color: var(--color-accent, #D67A20);
-  font-weight: 600;
+  font-size: 11.5px;
+  color: #4C8DA2;
+  font-weight: 700;
 }
 
 /* 7-Day Outlook */
 .dailyGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 2.5rem;
 }
 
 .dayCard {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
-  padding: 14px 10px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
+  padding: 16px 12px;
   text-align: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dayCard:hover {
+  border-color: #4C8DA2;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(31, 52, 64, 0.06);
 }
 
 .dayName {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
-  margin-bottom: 4px;
+  color: #1F3440;
+  margin-bottom: 6px;
 }
 
 .dayTempHigh {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  font-size: 16px;
+  font-weight: 800;
+  color: #1F3440;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
 }
 
 .dayTempLow {
   font-size: 12px;
-  color: var(--color-text-muted, #737571);
+  color: #8FA2AD;
   margin-left: 4px;
 }
 
 .dayPrecip {
-  font-size: 11px;
-  color: var(--color-accent, #D67A20);
+  font-size: 11.5px;
+  color: #4C8DA2;
   margin-top: 6px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* All 28 States & UTs Grid */
 .statesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
 .stateCard {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
-  padding: 14px 16px;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
+  padding: 16px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.03);
 }
 
 .stateCard:hover {
-  border-color: var(--color-charcoal, #161816);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: #4C8DA2;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(31, 52, 64, 0.07);
 }
 
 .stateName {
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: #1F3440;
 }
 
 .stateRegion {
-  font-size: 11.5px;
-  color: var(--color-text-muted, #737571);
+  font-size: 12px;
+  color: #60717B;
 }
 
 .stateThreat {
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
   font-family: var(--font-family-mono, monospace);
 }
-

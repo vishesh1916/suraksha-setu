@@ -1,15 +1,14 @@
 /* ============================================================
    SURAKSHA SETU — Technical Weather Radar Visual Styles
-   Editorial technical aesthetic: white canvas, crisp hairline borders,
-   charcoal typography, signal amber accents.
+   Editorial Palette: #F8FBFC, #FFFFFF, #DCEEF2, #C8E3EA, #1F3440, #60717B, #4C8DA2
    ============================================================ */
 
 .container {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
-  border-radius: 8px;
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(22, 24, 22, 0.05);
+  box-shadow: 0 4px 24px rgba(31, 52, 64, 0.05);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -20,9 +19,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 18px;
-  border-bottom: 1px solid #E5E2D9;
-  background: #FAF8F5;
+  padding: 14px 20px;
+  border-bottom: 1px solid #DCEEF2;
+  background: #F8FBFC;
   flex-wrap: wrap;
   gap: 10px;
 }
@@ -37,8 +36,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #D67A20;
-  box-shadow: 0 0 0 3px rgba(214, 122, 32, 0.2);
+  background: #4C8DA2;
+  box-shadow: 0 0 0 3px rgba(76, 141, 162, 0.2);
   animation: pulse 2s infinite ease-in-out;
 }
 
@@ -52,16 +51,16 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #161816;
+  color: #1F3440;
 }
 
 .channelTabs {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: #EFECE6;
+  background: #DCEEF2;
   padding: 3px;
-  border-radius: 6px;
+  border-radius: 9999px;
 }
 
 .channelBtn {
@@ -69,18 +68,18 @@
   border: none;
   font-size: 11px;
   font-weight: 600;
-  color: #737571;
-  padding: 4px 10px;
-  border-radius: 4px;
+  color: #60717B;
+  padding: 5px 12px;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: var(--font-family-sans);
 }
 
 .channelBtnActive {
   background: #FFFFFF;
-  color: #161816;
-  box-shadow: 0 1px 3px rgba(22, 24, 22, 0.08);
+  color: #1F3440;
+  box-shadow: 0 1px 4px rgba(31, 52, 64, 0.1);
 }
 
 .canvasWrapper {
@@ -105,45 +104,48 @@
   position: absolute;
   top: 16px;
   left: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
-  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid #DCEEF2;
+  border-radius: 12px;
+  padding: 8px 14px;
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.04);
 }
 
 .telemetryOverlayTopRight {
   position: absolute;
   top: 16px;
   right: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  border: 1px solid #E5E2D9;
-  border-radius: 6px;
-  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid #DCEEF2;
+  border-radius: 12px;
+  padding: 8px 14px;
   text-align: right;
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.04);
 }
 
 .telemetryTag {
   font-family: var(--font-family-mono, monospace);
   font-size: 9px;
   font-weight: 700;
-  color: #9B9D98;
+  color: #8FA2AD;
   letter-spacing: 0.06em;
   margin-bottom: 2px;
 }
 
 .telemetryVal {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #161816;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1F3440;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
 }
 
 .telemetrySub {
-  font-size: 10px;
-  color: #737571;
+  font-size: 10.5px;
+  color: #60717B;
   margin-top: 2px;
 }
 
@@ -155,7 +157,7 @@
   font-family: var(--font-family-mono, monospace);
   font-size: 10px;
   font-weight: 600;
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .compassNorth {
@@ -166,7 +168,7 @@
   font-family: var(--font-family-mono, monospace);
   font-size: 10px;
   font-weight: 600;
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .compassEast {
@@ -176,16 +178,16 @@
   font-family: var(--font-family-mono, monospace);
   font-size: 10px;
   font-weight: 600;
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .visualFooter {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 18px;
-  border-top: 1px solid #E5E2D9;
-  background: #FAF8F5;
+  padding: 12px 20px;
+  border-top: 1px solid #DCEEF2;
+  background: #F8FBFC;
   font-size: 11px;
   flex-wrap: wrap;
   gap: 8px;
@@ -193,7 +195,7 @@
 
 .readoutLeft {
   font-family: var(--font-family-mono, monospace);
-  color: #737571;
+  color: #60717B;
   font-weight: 600;
 }
 
@@ -207,7 +209,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #737571;
+  color: #60717B;
   font-size: 11px;
 }
 

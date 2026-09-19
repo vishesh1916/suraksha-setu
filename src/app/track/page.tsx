@@ -254,21 +254,21 @@ function TrackContent() {
     if (cat === 'Evacuation Ordered') {
       return (
         <div style={{
-          background: 'rgba(239, 68, 68, 0.15)',
-          border: '1px solid #EF4444',
-          borderRadius: '10px',
-          padding: '14px 18px',
-          marginBottom: '20px',
+          background: 'rgba(215, 109, 99, 0.1)',
+          border: '1px solid rgba(215, 109, 99, 0.35)',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
-          gap: '14px'
+          gap: '16px'
         }}>
           <span style={{ fontSize: '2rem' }}>🚨</span>
           <div>
-            <strong style={{ color: '#EF4444', fontSize: '1rem', display: 'block' }}>
+            <strong style={{ color: '#D76D63', fontSize: '1.05rem', display: 'block', fontWeight: 800 }}>
               MANDATORY EVACUATION ORDERED BY CIVIL AUTHORITIES
             </strong>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#FEE2E2' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: '#7F2D25' }}>
               Emergency responders have issued an immediate high-ground evacuation directive for this sector. Follow civil defense instructions and avoid all low-lying transit routes.
             </p>
           </div>
@@ -279,21 +279,21 @@ function TrackContent() {
     if (cat === 'Dewatering & Municipal Crew Dispatched') {
       return (
         <div style={{
-          background: 'rgba(56, 189, 248, 0.15)',
-          border: '1px solid #38BDF8',
-          borderRadius: '10px',
-          padding: '14px 18px',
-          marginBottom: '20px',
+          background: 'rgba(76, 141, 162, 0.1)',
+          border: '1px solid rgba(76, 141, 162, 0.35)',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
-          gap: '14px'
+          gap: '16px'
         }}>
           <span style={{ fontSize: '2rem' }}>🚒</span>
           <div>
-            <strong style={{ color: '#38BDF8', fontSize: '1rem', display: 'block' }}>
+            <strong style={{ color: '#4C8DA2', fontSize: '1.05rem', display: 'block', fontWeight: 800 }}>
               MUNICIPAL DEWATERING CREW & PUMPS MOBILIZED
             </strong>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#E0F2FE' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: '#244955' }}>
               High-volume dewatering pumps and municipal engineering units are on-site actively clearing waterlogged roads and establishing traffic barricades.
             </p>
           </div>
@@ -304,21 +304,21 @@ function TrackContent() {
     if (cat === 'Public Warning Issued (CAP 1.2)') {
       return (
         <div style={{
-          background: 'rgba(245, 158, 11, 0.15)',
-          border: '1px solid #F59E0B',
-          borderRadius: '10px',
-          padding: '14px 18px',
-          marginBottom: '20px',
+          background: 'rgba(215, 170, 99, 0.12)',
+          border: '1px solid rgba(215, 170, 99, 0.35)',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
-          gap: '14px'
+          gap: '16px'
         }}>
           <span style={{ fontSize: '2rem' }}>📢</span>
           <div>
-            <strong style={{ color: '#F59E0B', fontSize: '1rem', display: 'block' }}>
+            <strong style={{ color: '#D7AA63', fontSize: '1.05rem', display: 'block', fontWeight: 800 }}>
               PUBLIC CAP 1.2 EMERGENCY BROADCAST ACTIVE
             </strong>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#FEF3C7' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: '#6E491A' }}>
               Duty meteorologists have broadcasted an official public weather hazard advisory across cellular emergency streams for this geographic zone.
             </p>
           </div>
@@ -329,21 +329,21 @@ function TrackContent() {
     if (cat === 'Hazard Resolved' || tracking.status === 'RESOLVED') {
       return (
         <div style={{
-          background: 'rgba(52, 211, 153, 0.15)',
-          border: '1px solid #34D399',
-          borderRadius: '10px',
-          padding: '14px 18px',
-          marginBottom: '20px',
+          background: 'rgba(76, 139, 113, 0.1)',
+          border: '1px solid rgba(76, 139, 113, 0.35)',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
-          gap: '14px'
+          gap: '16px'
         }}>
           <span style={{ fontSize: '2rem' }}>✅</span>
           <div>
-            <strong style={{ color: '#34D399', fontSize: '1rem', display: 'block' }}>
+            <strong style={{ color: '#4C8B71', fontSize: '1.05rem', display: 'block', fontWeight: 800 }}>
               HAZARD MITIGATED & CORRIDOR FULLY RESTORED
             </strong>
-            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#D1FAE5' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: '#234737' }}>
               Municipal engineers and meteorologists confirm floodwaters have receded. Road dewatering is complete, electrical safety clearance issued, and normal transit restored.
             </p>
           </div>
@@ -354,21 +354,21 @@ function TrackContent() {
     if (tracking.verificationStatus === 'FLAGGED_FALSE_REPORT' || tracking.status === 'DISMISSED') {
       return (
         <div style={{
-          background: 'rgba(148, 163, 184, 0.12)',
-          border: '1px solid rgba(148, 163, 184, 0.3)',
-          borderRadius: '10px',
-          padding: '14px 18px',
-          marginBottom: '20px',
+          background: 'rgba(96, 113, 123, 0.1)',
+          border: '1px solid rgba(96, 113, 123, 0.25)',
+          borderRadius: '16px',
+          padding: '16px 20px',
+          marginBottom: '24px',
           display: 'flex',
           alignItems: 'center',
-          gap: '14px'
+          gap: '16px'
         }}>
           <span style={{ fontSize: '1.8rem' }}>ℹ️</span>
           <div>
-            <strong style={{ color: '#CBD5E1', fontSize: '0.95rem', display: 'block' }}>
+            <strong style={{ color: '#1F3440', fontSize: '1rem', display: 'block', fontWeight: 800 }}>
               REPORT REVIEWED: FLAGGED AS INACCURATE / RECEDED
             </strong>
-            <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: '#94A3B8' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#60717B' }}>
               {tracking.verificationRationale || 'Cross-checked against nearest Doppler weather radar and automatic rain gauge network. No actionable life threat detected at coordinates.'}
             </p>
           </div>
@@ -413,7 +413,7 @@ function TrackContent() {
           justifyContent: 'center',
           marginBottom: '12px'
         }}>
-          <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>Your Device Reports:</span>
+          <span style={{ fontSize: '0.82rem', color: '#60717B', fontWeight: 600 }}>Your Device Reports:</span>
           {myReports.map((r) => (
             <button
               key={r.id}
@@ -424,17 +424,18 @@ function TrackContent() {
                 performTracking(r.id);
               }}
               style={{
-                background: activeTrackId === r.id ? 'rgba(56, 189, 248, 0.25)' : 'rgba(11, 31, 51, 0.7)',
-                border: activeTrackId === r.id ? '1px solid #38BDF8' : '1px solid rgba(138, 153, 168, 0.3)',
-                color: activeTrackId === r.id ? '#38BDF8' : '#CBD5E1',
-                padding: '4px 10px',
+                background: activeTrackId === r.id ? '#DCEEF2' : '#FFFFFF',
+                border: activeTrackId === r.id ? '1.5px solid #4C8DA2' : '1px solid #C8E3EA',
+                color: activeTrackId === r.id ? '#1F3440' : '#60717B',
+                padding: '5px 14px',
                 borderRadius: '999px',
                 fontSize: '0.78rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontWeight: activeTrackId === r.id ? 700 : 500
+                fontWeight: activeTrackId === r.id ? 700 : 500,
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
               <span>{activeTrackId === r.id ? '📍' : '📄'}</span>
@@ -454,7 +455,7 @@ function TrackContent() {
           justifyContent: 'center',
           marginBottom: '24px'
         }}>
-          <span style={{ fontSize: '0.8rem', color: '#8A99A8' }}>Recent Community Hazards:</span>
+          <span style={{ fontSize: '0.82rem', color: '#60717B', fontWeight: 600 }}>Recent Community Hazards:</span>
           {publicRecentReports.map((r) => (
             <button
               key={r.id}
@@ -465,17 +466,18 @@ function TrackContent() {
                 performTracking(r.id);
               }}
               style={{
-                background: activeTrackId === r.id ? 'rgba(56, 189, 248, 0.25)' : 'rgba(11, 31, 51, 0.5)',
-                border: activeTrackId === r.id ? '1px solid #38BDF8' : '1px solid rgba(138, 153, 168, 0.25)',
-                color: activeTrackId === r.id ? '#38BDF8' : '#94A3B8',
-                padding: '4px 10px',
+                background: activeTrackId === r.id ? '#DCEEF2' : '#FFFFFF',
+                border: activeTrackId === r.id ? '1.5px solid #4C8DA2' : '1px solid #C8E3EA',
+                color: activeTrackId === r.id ? '#1F3440' : '#60717B',
+                padding: '5px 14px',
                 borderRadius: '999px',
                 fontSize: '0.76rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontWeight: activeTrackId === r.id ? 700 : 400
+                fontWeight: activeTrackId === r.id ? 700 : 500,
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
               <span>{activeTrackId === r.id ? '🛡️' : '⚠️'}</span>
@@ -489,7 +491,7 @@ function TrackContent() {
       {loading && (
         <div style={{ textAlign: 'center', padding: '3rem 0' }}>
           <div className="spinner spinner-lg" />
-          <p style={{ marginTop: 16, color: '#8A99A8' }}>
+          <p style={{ marginTop: 16, color: '#60717B' }}>
             Connecting to official disaster review registry…
           </p>
         </div>
@@ -509,15 +511,15 @@ function TrackContent() {
           <div className={styles.cardHeader}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <span style={{ fontSize: 13, color: '#8A99A8' }}>Report Tracking Record</span>
+                <span style={{ fontSize: 13, color: '#60717B', fontWeight: 600 }}>Report Tracking Record</span>
                 {tracking.verificationStatus === 'VERIFIED_GENUINE' && (
                   <span style={{
-                    background: 'rgba(52, 211, 153, 0.15)',
-                    border: '1px solid #34D399',
-                    color: '#34D399',
+                    background: 'rgba(76, 139, 113, 0.1)',
+                    border: '1px solid rgba(76, 139, 113, 0.3)',
+                    color: '#4C8B71',
                     fontSize: '11px',
                     fontWeight: 700,
-                    padding: '2px 8px',
+                    padding: '3px 10px',
                     borderRadius: '999px'
                   }}>
                     ✓ Verified Genuine Hazard
@@ -525,19 +527,19 @@ function TrackContent() {
                 )}
                 {tracking.verificationStatus === 'FLAGGED_FALSE_REPORT' && (
                   <span style={{
-                    background: 'rgba(239, 68, 68, 0.15)',
-                    border: '1px solid #EF4444',
-                    color: '#EF4444',
+                    background: 'rgba(215, 109, 99, 0.1)',
+                    border: '1px solid rgba(215, 109, 99, 0.3)',
+                    color: '#D76D63',
                     fontSize: '11px',
                     fontWeight: 700,
-                    padding: '2px 8px',
+                    padding: '3px 10px',
                     borderRadius: '999px'
                   }}>
                     ✕ Flagged Inaccurate / False Alarm
                   </span>
                 )}
               </div>
-              <strong style={{ fontSize: 18, color: '#F7F6F2' }}>
+              <strong style={{ fontSize: 18, color: '#1F3440', fontFamily: "var(--font-family-heading, 'Manrope', sans-serif)" }}>
                 {tracking.landmark || `${tracking.category} Incident`} · Severity {tracking.severity}/5
               </strong>
             </div>
@@ -606,30 +608,30 @@ function TrackContent() {
           {/* Detailed Agency Action History / Audit Trail */}
           {tracking.actionHistory && tracking.actionHistory.length > 0 && (
             <div style={{
-              marginTop: '20px',
-              paddingTop: '16px',
-              borderTop: '1px solid var(--color-border, #E5E2D9)'
+              marginTop: '24px',
+              paddingTop: '20px',
+              borderTop: '1px solid #DCEEF2'
             }}>
               <h4 style={{
-                margin: '0 0 12px',
+                margin: '0 0 14px',
                 fontSize: '0.82rem',
-                color: 'var(--color-charcoal, #161816)',
+                color: '#1F3440',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.06em',
                 fontFamily: 'var(--font-family-mono, monospace)',
                 fontWeight: 700
               }}>
                 Action History & Agency Deployment Log ({tracking.actionHistory.length})
               </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {tracking.actionHistory.map((item) => (
                   <div
                     key={item.id}
                     style={{
-                      background: '#FAF7F2',
-                      border: '1px solid var(--color-border, #E5E2D9)',
-                      borderRadius: '4px',
-                      padding: '10px 14px',
+                      background: '#F8FBFC',
+                      border: '1px solid #DCEEF2',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'flex-start',
@@ -637,15 +639,15 @@ function TrackContent() {
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-charcoal, #161816)' }}>
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1F3440' }}>
                         {item.action}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary, #474946)', marginTop: '2px' }}>
-                        By: <strong style={{ color: 'var(--color-charcoal, #161816)' }}>{item.actorName}</strong>
-                        {item.notes && <span style={{ marginLeft: 6, color: 'var(--color-text-muted, #737571)' }}>— {item.notes}</span>}
+                      <div style={{ fontSize: '0.8rem', color: '#60717B', marginTop: '3px' }}>
+                        By: <strong style={{ color: '#1F3440' }}>{item.actorName}</strong>
+                        {item.notes && <span style={{ marginLeft: 6, color: '#8FA2AD' }}>— {item.notes}</span>}
                       </div>
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted, #737571)', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '0.74rem', color: '#8FA2AD', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
                       {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>

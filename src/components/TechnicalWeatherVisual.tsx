@@ -121,15 +121,15 @@ export function TechnicalWeatherVisual({
       ctx.beginPath();
       ctx.arc(cx, cy, maxRadius, Math.PI, 2 * Math.PI, false);
       ctx.closePath();
-      ctx.fillStyle = mode === 'velocity' ? '#FCFBFA' : '#FFFFFF';
+      ctx.fillStyle = mode === 'velocity' ? '#F8FBFC' : '#FFFFFF';
       ctx.fill();
-      ctx.strokeStyle = '#E5E2D9';
+      ctx.strokeStyle = '#DCEEF2';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.clip();
 
       // 2. Subtle coordinate grid lines
-      ctx.strokeStyle = '#F3EFE8';
+      ctx.strokeStyle = 'rgba(76, 141, 162, 0.08)';
       ctx.lineWidth = 1;
       for (let x = 0; x <= width; x += 40) {
         ctx.beginPath();
@@ -212,7 +212,7 @@ export function TechnicalWeatherVisual({
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.lineTo(cx + maxRadius * Math.cos(sweepAngle), cy + maxRadius * Math.sin(sweepAngle));
-      ctx.strokeStyle = mode === 'velocity' ? '#2E5A44' : '#D67A20';
+      ctx.strokeStyle = mode === 'velocity' ? '#4C8B71' : '#4C8DA2';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.restore();
@@ -232,13 +232,13 @@ export function TechnicalWeatherVisual({
 
           if (pt.intensity > 0.72) {
             // Severe cloudburst / thunderstorm core (>50 dBZ)
-            ctx.fillStyle = illuminated ? '#D67A20' : 'rgba(214, 122, 32, 0.75)';
+            ctx.fillStyle = illuminated ? '#4C8DA2' : 'rgba(76, 141, 162, 0.75)';
           } else if (pt.intensity > 0.4) {
             // Moderate precipitation echo (35-50 dBZ)
-            ctx.fillStyle = illuminated ? '#2E5A44' : 'rgba(46, 90, 68, 0.65)';
+            ctx.fillStyle = illuminated ? '#4C8B71' : 'rgba(76, 139, 113, 0.65)';
           } else {
             // Light rain (<35 dBZ)
-            ctx.fillStyle = illuminated ? '#737571' : 'rgba(115, 117, 113, 0.45)';
+            ctx.fillStyle = illuminated ? '#60717B' : 'rgba(96, 113, 123, 0.45)';
           }
           ctx.fill();
 
@@ -246,7 +246,7 @@ export function TechnicalWeatherVisual({
           if (pt.intensity > 0.78) {
             ctx.beginPath();
             ctx.arc(ex, ey, pt.size * 2.2, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(214, 122, 32, 0.25)';
+            ctx.strokeStyle = 'rgba(76, 141, 162, 0.25)';
             ctx.lineWidth = 1;
             ctx.stroke();
           }
@@ -254,7 +254,7 @@ export function TechnicalWeatherVisual({
 
         // Subtle faint background hexes to show grid coverage
         hexes.slice(0, 3).forEach((h) => {
-          drawHex(cx + h.x, cy + h.y, h.size, 'rgba(221, 216, 205, 0.6)', 'rgba(239, 236, 230, 0.15)');
+          drawHex(cx + h.x, cy + h.y, h.size, 'rgba(200, 227, 234, 0.6)', 'rgba(220, 238, 242, 0.2)');
         });
 
       } else if (mode === 'velocity') {
@@ -270,24 +270,24 @@ export function TechnicalWeatherVisual({
           cx + maxRadius * Math.cos(zeroIsodopAngle),
           cy + maxRadius * Math.sin(zeroIsodopAngle)
         );
-        ctx.strokeStyle = '#737571';
+        ctx.strokeStyle = '#8FA2AD';
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.setLineDash([]);
 
         // Label Zero Isodop
         ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
-        ctx.fillStyle = '#737571';
+        ctx.fillStyle = '#60717B';
         ctx.fillText('ZERO-ISODOP (0 m/s)', cx - 15, cy - maxRadius * 0.75);
         ctx.restore();
 
         // Inflow sector label (-V_r towards radar)
         ctx.font = 'bold 9px "JetBrains Mono", monospace';
-        ctx.fillStyle = '#2E5A44';
+        ctx.fillStyle = '#4C8B71';
         ctx.fillText('INFLOW (-V_r)', cx - 110, cy - 40);
 
         // Outflow sector label (+V_r away from radar)
-        ctx.fillStyle = '#D67A20';
+        ctx.fillStyle = '#4C8DA2';
         ctx.fillText('OUTFLOW (+V_r)', cx + 45, cy - 40);
 
         // Draw velocity vectors with radial flow animation
@@ -301,7 +301,7 @@ export function TechnicalWeatherVisual({
           const tipX = vx + dir * v.length * Math.cos(v.theta);
           const tipY = vy + dir * v.length * Math.sin(v.theta);
 
-          const col = v.isInflow ? '#2E5A44' : '#D67A20';
+          const col = v.isInflow ? '#4C8B71' : '#4C8DA2';
 
           ctx.beginPath();
           ctx.moveTo(vx, vy);
@@ -325,7 +325,7 @@ export function TechnicalWeatherVisual({
           const ey = cy + pt.r * Math.sin(pt.theta);
           ctx.beginPath();
           ctx.arc(ex, ey, 2, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(180, 175, 165, 0.4)';
+          ctx.fillStyle = 'rgba(143, 162, 173, 0.4)';
           ctx.fill();
         });
 
@@ -333,15 +333,15 @@ export function TechnicalWeatherVisual({
         hexes.forEach((hex) => {
           const hx = cx + hex.x;
           const hy = cy + hex.y;
-          let stroke = '#2E5A44';
-          let fill = 'rgba(46, 90, 68, 0.12)';
+          let stroke = '#4C8B71';
+          let fill = 'rgba(76, 139, 113, 0.12)';
 
           if (hex.risk === 'alert') {
-            stroke = '#D67A20';
-            fill = 'rgba(214, 122, 32, 0.22)';
+            stroke = '#D76D63';
+            fill = 'rgba(215, 109, 99, 0.2)';
           } else if (hex.risk === 'warning') {
-            stroke = '#E88A2F';
-            fill = 'rgba(232, 138, 47, 0.16)';
+            stroke = '#D7AA63';
+            fill = 'rgba(215, 170, 99, 0.2)';
           }
 
           drawHex(hx, hy, hex.size, stroke, fill, hex.label, hex.tag);
@@ -351,11 +351,11 @@ export function TechnicalWeatherVisual({
       // 9. Radar Center Pivot Station
       ctx.beginPath();
       ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#161816';
+      ctx.fillStyle = '#1F3440';
       ctx.fill();
       ctx.beginPath();
       ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-      ctx.strokeStyle = mode === 'velocity' ? '#2E5A44' : '#D67A20';
+      ctx.strokeStyle = mode === 'velocity' ? '#4C8B71' : '#4C8DA2';
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
@@ -482,15 +482,15 @@ export function TechnicalWeatherVisual({
           {activeTab === 'reflectivity' && (
             <>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#D67A20' }} />
+                <span className={styles.legendDot} style={{ background: '#4C8DA2' }} />
                 <span>Severe (&gt;50 dBZ)</span>
               </div>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#2E5A44' }} />
+                <span className={styles.legendDot} style={{ background: '#4C8B71' }} />
                 <span>Moderate (35–50 dBZ)</span>
               </div>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#737571' }} />
+                <span className={styles.legendDot} style={{ background: '#8FA2AD' }} />
                 <span>Light (&lt;35 dBZ)</span>
               </div>
             </>
@@ -499,15 +499,15 @@ export function TechnicalWeatherVisual({
           {activeTab === 'velocity' && (
             <>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#2E5A44' }} />
+                <span className={styles.legendDot} style={{ background: '#4C8B71' }} />
                 <span>Inflow (-V_r Inbound)</span>
               </div>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#D67A20' }} />
+                <span className={styles.legendDot} style={{ background: '#4C8DA2' }} />
                 <span>Outflow (+V_r Outbound)</span>
               </div>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#737571' }} />
+                <span className={styles.legendDot} style={{ background: '#8FA2AD' }} />
                 <span>Zero-Isodop (0 m/s)</span>
               </div>
             </>
@@ -516,15 +516,15 @@ export function TechnicalWeatherVisual({
           {activeTab === 'hexRisk' && (
             <>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#D67A20' }} />
+                <span className={styles.legendDot} style={{ background: '#D76D63' }} />
                 <span>Critical Flooded Hex</span>
               </div>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#E88A2F' }} />
+                <span className={styles.legendDot} style={{ background: '#D7AA63' }} />
                 <span>Waterlogging Warning</span>
               </div>
               <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: '#2E5A44' }} />
+                <span className={styles.legendDot} style={{ background: '#4C8B71' }} />
                 <span>Nominal Baseline</span>
               </div>
             </>

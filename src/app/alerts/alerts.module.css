@@ -1,11 +1,13 @@
 /* ============================================================
    Suraksha Setu — Editorial Public Official Alerts Directory
+   Editorial Palette: #F8FBFC, #FFFFFF, #DCEEF2, #C8E3EA, #1F3440, #60717B, #4C8DA2
    ============================================================ */
 
 .page {
   min-height: 100vh;
-  background-color: var(--color-bg-primary, #F7F5F0);
-  color: var(--color-charcoal, #161816);
+  background-color: #F8FBFC;
+  color: #1F3440;
+  font-family: var(--font-family-body, 'Inter', sans-serif);
   display: flex;
   flex-direction: column;
 }
@@ -13,43 +15,43 @@
 .container {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
+  padding: 3.5rem 1.5rem 5rem;
   width: 100%;
   flex: 1;
 }
 
 .headerSection {
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
-  color: #DC2626;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  background: #FEEFEF;
+  border: 1px solid #FCD4D4;
+  color: #D76D63;
   font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 1rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
 }
 
 .title {
-  font-family: var(--font-family-sans);
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
-  letter-spacing: -0.02em;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 2.35rem;
+  font-weight: 800;
+  color: #1F3440;
+  letter-spacing: -0.025em;
   margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
   font-size: 1rem;
-  color: var(--color-text-secondary, #474946);
+  color: #60717B;
   max-width: 680px;
-  line-height: 1.5;
+  line-height: 1.6;
   margin: 0;
 }
 
@@ -59,13 +61,13 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 14px;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-md, 6px);
-  padding: 12px 16px;
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
+  padding: 12px 18px;
   margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(31, 52, 64, 0.04);
 }
 
 .filterPills {
@@ -76,31 +78,32 @@
 
 .pillBtn {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: 999px;
-  padding: 6px 14px;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 7px 16px;
   font-size: 12.5px;
-  font-weight: 500;
-  color: var(--color-text-secondary, #474946);
+  font-weight: 600;
+  color: #60717B;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pillBtn:hover {
-  border-color: var(--color-charcoal, #161816);
-  color: var(--color-charcoal, #161816);
+  border-color: #4C8DA2;
+  color: #1F3440;
+  transform: translateY(-1px);
 }
 
 .pillActive {
-  background: var(--color-charcoal, #161816);
-  border-color: var(--color-charcoal, #161816);
+  background: #1F3440;
+  border-color: #1F3440;
   color: #FFFFFF;
   font-weight: 600;
 }
 
 .feedStatus {
   font-size: 12px;
-  color: var(--color-text-muted, #737571);
+  color: #8FA2AD;
   font-family: var(--font-family-mono, monospace);
   display: flex;
   align-items: center;
@@ -111,31 +114,32 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #10B981;
+  background: #4C8B71;
   display: inline-block;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 6px rgba(76, 139, 113, 0.5);
 }
 
 /* Empty State */
 .emptyState {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-md, 6px);
-  padding: 3.5rem 2rem;
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
+  padding: 4rem 2rem;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(31, 52, 64, 0.04);
 }
 
 .emptyTitle {
-  color: var(--color-charcoal, #161816);
-  font-size: 1.15rem;
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  color: #1F3440;
+  font-size: 1.2rem;
   font-weight: 700;
   margin: 12px 0 6px;
 }
 
 .emptyDesc {
-  color: var(--color-text-secondary, #474946);
-  font-size: 0.9rem;
+  color: #60717B;
+  font-size: 0.92rem;
   max-width: 460px;
   margin: 0 auto;
 }
@@ -149,26 +153,27 @@
 
 .alertCard {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-md, 6px);
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
   padding: 1.75rem 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(31, 52, 64, 0.04);
   position: relative;
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .alertCard:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-  border-color: #D1CEC5;
+  box-shadow: 0 8px 28px rgba(31, 52, 64, 0.08);
+  border-color: #C8E3EA;
+  transform: translateY(-1px);
 }
 
 .alertCardCritical {
-  border-left: 5px solid #DC2626;
+  border-left: 5px solid #D76D63;
 }
 
 .alertCardHigh {
-  border-left: 5px solid var(--color-accent, #D67A20);
+  border-left: 5px solid #D7AA63;
 }
 
 .cardTop {
@@ -180,9 +185,10 @@
 }
 
 .headline {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--color-charcoal, #161816);
+  color: #1F3440;
   margin: 0 0 6px 0;
   letter-spacing: -0.01em;
 }
@@ -192,7 +198,7 @@
   align-items: center;
   gap: 12px;
   font-size: 12.5px;
-  color: var(--color-text-muted, #737571);
+  color: #8FA2AD;
   flex-wrap: wrap;
 }
 
@@ -207,33 +213,33 @@
 .mapCellBadge {
   font-family: var(--font-family-mono, monospace);
   font-size: 11px;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm, 3px);
-  background: var(--color-bg-primary, #F7F5F0);
-  border: 1px solid var(--color-border, #E5E2D9);
-  color: var(--color-text-secondary, #474946);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: #DCEEF2;
+  border: 1px solid #C8E3EA;
+  color: #1F3440;
   font-weight: 600;
 }
 
 .guidanceBox {
-  background: #FAF7F2;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
-  padding: 1rem 1.25rem;
+  background: #F0F8FA;
+  border: 1px solid #DCEEF2;
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
   margin: 1.25rem 0;
   font-size: 13.5px;
-  color: var(--color-charcoal, #161816);
-  line-height: 1.55;
+  color: #1F3440;
+  line-height: 1.6;
 }
 
 .guidanceTitle {
-  color: var(--color-accent, #D67A20);
+  color: #4C8DA2;
   display: block;
   font-weight: 700;
   margin-bottom: 4px;
-  font-size: 12.5px;
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .cardFooter {
@@ -243,7 +249,7 @@
   flex-wrap: wrap;
   gap: 12px;
   padding-top: 1rem;
-  border-top: 1px solid var(--color-border, #E5E2D9);
+  border-top: 1px solid #EDF5F8;
 }
 
 .capBtnGroup {
@@ -253,41 +259,43 @@
 
 .capBtn {
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
-  padding: 6px 12px;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 9999px;
+  padding: 7px 14px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-charcoal, #161816);
+  color: #1F3440;
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   transition: all 0.15s ease;
 }
 
 .capBtn:hover {
-  background: #FAF7F2;
-  border-color: var(--color-charcoal, #161816);
+  background: #F8FBFC;
+  border-color: #4C8DA2;
 }
 
 .inspectBtn {
-  background: var(--color-charcoal, #161816);
+  background: #1F3440;
   color: #FFFFFF;
   border: none;
-  border-radius: var(--radius-sm, 3px);
-  padding: 7px 16px;
+  border-radius: 9999px;
+  padding: 8px 18px;
   font-size: 12.5px;
   font-weight: 600;
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: background 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.10);
 }
 
 .inspectBtn:hover {
-  background: #000000;
+  background: #334652;
+  transform: translateY(-1px);
 }
 
 @media (max-width: 640px) {
@@ -307,4 +315,3 @@
     align-items: flex-start;
   }
 }
-

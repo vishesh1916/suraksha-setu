@@ -1,0 +1,153 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 20px 48px -12px rgba(31, 52, 64, 0.16), 0 2px 8px -2px rgba(31, 52, 64, 0.05);
+  border: 1px solid rgba(76, 141, 162, 0.18);
+  background: #3A474D;
+}
+
+.bgSvg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Center Concentric SOS Waves */
+.sosBeaconAnchor {
+  position: absolute;
+  top: 60%;
+  left: 28%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.sosCenterBtn {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #E53E3E 0%, #C53030 100%);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(197, 48, 48, 0.55), 0 0 0 4px rgba(255, 255, 255, 0.35);
+  z-index: 3;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sosCenterBtn:hover {
+  transform: scale(1.06);
+}
+
+.sosText {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+/* Concentric Ripple Waves (8-10s loop) */
+.rippleWave1,
+.rippleWave2,
+.rippleWave3,
+.rippleWave4 {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  animation: sosWaveExpand 8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.rippleWave1 {
+  animation-delay: 0s;
+}
+
+.rippleWave2 {
+  animation-delay: 2s;
+}
+
+.rippleWave3 {
+  animation-delay: 4s;
+}
+
+.rippleWave4 {
+  animation-delay: 6s;
+}
+
+@keyframes sosWaveExpand {
+  0% {
+    width: 68px;
+    height: 68px;
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    width: 68px;
+    height: 68px;
+    opacity: 0;
+    transform: scale(4.2);
+  }
+}
+
+/* Floating Status Tag */
+.dispatchStatusCard {
+  position: absolute;
+  top: 60%;
+  left: 48%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  padding: 10px 18px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(76, 139, 113, 0.25);
+  z-index: 4;
+}
+
+.checkIconWrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: #4C8B71;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.dispatchTextWrap {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.dispatchTitle {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  color: #1F3440;
+}
+
+.dispatchSub {
+  font-size: 10.5px;
+  color: #60717B;
+  font-weight: 500;
+}

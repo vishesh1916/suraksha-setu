@@ -1,0 +1,157 @@
+.cardContainer {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 20px 48px -12px rgba(11, 26, 36, 0.22), 0 2px 8px -2px rgba(11, 26, 36, 0.08);
+  border: 1px solid rgba(76, 141, 162, 0.22);
+  background: #0B1A24;
+}
+
+.mapSvg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Floating Alert Pin */
+.alertPinWrapper {
+  position: absolute;
+  top: 36%;
+  left: 64%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.pinDotPulse {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(229, 62, 62, 0.4);
+  animation: radarPinPulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes radarPinPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+
+.pinCard {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 14px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(229, 62, 62, 0.2);
+}
+
+.pinDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #E53E3E;
+  flex-shrink: 0;
+}
+
+.pinContent {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.pinTitle {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1F3440;
+}
+
+.pinSub {
+  font-size: 9.5px;
+  color: #60717B;
+  font-weight: 500;
+}
+
+/* Floating Map Controls */
+.mapControls {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 3;
+}
+
+.controlBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(200, 227, 234, 0.8);
+  color: #1F3440;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.controlBtn:hover {
+  background: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.zoomGroup {
+  display: flex;
+  flex-direction: column;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(200, 227, 234, 0.8);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.zoomBtn {
+  width: 36px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #1F3440;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.zoomBtn:hover {
+  background: #F0F6F8;
+}
+
+.zoomDivider {
+  height: 1px;
+  background: rgba(200, 227, 234, 0.7);
+  width: 100%;
+}

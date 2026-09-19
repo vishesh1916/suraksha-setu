@@ -1,7 +1,7 @@
 /* ============================================================
    SURAKSHA SETU — Multi-Hazard Operational Map Styles
-   Editorial design system: off-white canvas (#F7F5F0), charcoal (#161816),
-   warm gray (#737571), eucalyptus green (#2E5A44), signal amber / burnt orange (#D67A20)
+   Editorial design system: off-white canvas (#F8FBFC), charcoal (#1F3440),
+   warm gray (#60717B), eucalyptus green (#4C8B71), signal amber / burnt orange (#4C8DA2)
    ============================================================ */
 
 .mapPage {
@@ -9,8 +9,8 @@
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  background: #F7F5F0;
-  color: #161816;
+  background: #F8FBFC;
+  color: #1F3440;
   font-family: var(--font-family-sans, system-ui, -apple-system, sans-serif);
   overflow: hidden;
   position: relative;
@@ -35,7 +35,7 @@
   min-width: 380px;
   max-width: 480px;
   background: #FFFFFF;
-  border-right: 1px solid #E5E2D9;
+  border-right: 1px solid #DCEEF2;
   display: flex;
   flex-direction: column;
   z-index: 25;
@@ -60,7 +60,7 @@
   width: 36px;
   height: 38px;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-left: none;
   border-radius: 0 6px 6px 0;
   display: flex;
@@ -70,19 +70,19 @@
   z-index: 30;
   box-shadow: 3px 2px 8px rgba(22, 24, 22, 0.06);
   font-size: 13px;
-  color: #161816;
+  color: #1F3440;
   pointer-events: auto;
   transition: background 0.15s ease;
 }
 
 .railToggleBtn:hover {
-  background: #FAF8F5;
+  background: #DCEEF2;
 }
 
 .railHeader {
   padding: 16px 20px 14px;
-  border-bottom: 1px solid #E5E2D9;
-  background: #FAF8F5;
+  border-bottom: 1px solid #DCEEF2;
+  background: #F8FBFC;
 }
 
 .railHeaderTop {
@@ -102,23 +102,23 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2E5A44;
-  box-shadow: 0 0 0 0 rgba(46, 90, 68, 0.5);
+  background: #4C8B71;
+  box-shadow: 0 0 0 0 rgba(76, 139, 113, 0.5);
   animation: livePulse 2s infinite;
 }
 
 @keyframes livePulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(46, 90, 68, 0.7);
+    box-shadow: 0 0 0 0 rgba(76, 139, 113, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(46, 90, 68, 0);
+    box-shadow: 0 0 0 6px rgba(76, 139, 113, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(46, 90, 68, 0);
+    box-shadow: 0 0 0 0 rgba(76, 139, 113, 0);
   }
 }
 
@@ -126,7 +126,7 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: #161816;
+  color: #1F3440;
   margin: 0;
 }
 
@@ -137,7 +137,7 @@
   color: #555753;
   padding: 2px 8px;
   border-radius: 4px;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
 }
 
 .railMetaSub {
@@ -145,7 +145,7 @@
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #737571;
+  color: #60717B;
 }
 
 .refreshTriggerBtn {
@@ -165,7 +165,7 @@
 
 .refreshTriggerBtn:hover {
   background: #E5E1D7;
-  color: #161816;
+  color: #1F3440;
   border-color: #C5C1B5;
 }
 
@@ -198,7 +198,7 @@
 .tabNav {
   display: flex;
   overflow-x: auto;
-  border-bottom: 1px solid #E5E2D9;
+  border-bottom: 1px solid #DCEEF2;
   background: #FFFFFF;
   scrollbar-width: none;
 }
@@ -211,7 +211,7 @@
   padding: 10px 14px;
   font-size: 12px;
   font-weight: 600;
-  color: #737571;
+  color: #60717B;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -224,35 +224,35 @@
 }
 
 .tabBtn:hover {
-  color: #161816;
-  background: #FAF8F5;
+  color: #1F3440;
+  background: #DCEEF2;
 }
 
 .tabBtnActive {
-  color: #161816;
-  border-bottom-color: #D67A20;
+  color: #1F3440;
+  border-bottom-color: #4C8DA2;
   font-weight: 700;
 }
 
 .tabCountBadge {
   font-size: 10px;
   font-weight: 700;
-  background: #EFECE6;
+  background: #DCEEF2;
   padding: 1px 5px;
   border-radius: 10px;
-  color: #555753;
+  color: #1F3440;
 }
 
 .tabBtnActive .tabCountBadge {
-  background: #161816;
+  background: #1F3440;
   color: #FFFFFF;
 }
 
 /* Filter Controls Bar */
 .filterBar {
   padding: 10px 16px;
-  background: #FAF8F5;
-  border-bottom: 1px solid #E5E2D9;
+  background: #F8FBFC;
+  border-bottom: 1px solid #DCEEF2;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -268,9 +268,9 @@
 .filterSelect {
   font-size: 11.5px;
   font-weight: 600;
-  color: #161816;
+  color: #1F3440;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 4px;
   padding: 5px 8px;
   outline: none;
@@ -292,14 +292,14 @@
   border: none;
   padding: 3px 7px;
   border-radius: 3px;
-  color: #737571;
+  color: #60717B;
   cursor: pointer;
   transition: all 0.12s ease;
 }
 
 .filterTimeBtnActive {
   background: #FFFFFF;
-  color: #161816;
+  color: #1F3440;
   font-weight: 700;
   box-shadow: 0 1px 2px rgba(22, 24, 22, 0.08);
 }
@@ -322,17 +322,17 @@
   font-family: var(--font-family-mono, monospace);
   padding: 2px 7px;
   border-radius: 3px;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   background: #FFFFFF;
-  color: #737571;
+  color: #60717B;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.12s ease;
 }
 
 .acronymPillActive {
-  background: #161816;
-  border-color: #161816;
+  background: #1F3440;
+  border-color: #1F3440;
   color: #FFFFFF;
 }
 
@@ -353,7 +353,7 @@
   margin-top: 8px;
   margin-bottom: 4px;
   padding-bottom: 4px;
-  border-bottom: 1px solid #E5E2D9;
+  border-bottom: 1px solid #DCEEF2;
 }
 
 .feedSectionTitle {
@@ -361,13 +361,13 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #737571;
+  color: #60717B;
 }
 
 /* Standard Official Hazard Card */
 .hazardCard {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 6px;
   padding: 12px;
   cursor: pointer;
@@ -385,9 +385,9 @@
 }
 
 .hazardCardSelected {
-  border-color: #D67A20 !important;
+  border-color: #4C8DA2 !important;
   background: #FDFBF8;
-  box-shadow: 0 0 0 1px #D67A20;
+  box-shadow: 0 0 0 1px #4C8DA2;
 }
 
 .cardTopRow {
@@ -406,14 +406,14 @@
 .cardTitle {
   font-size: 13px;
   font-weight: 700;
-  color: #161816;
+  color: #1F3440;
   line-height: 1.35;
   margin: 0;
 }
 
 .cardLocation {
   font-size: 11.5px;
-  color: #737571;
+  color: #60717B;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -426,7 +426,7 @@
   font-size: 11px;
   color: #555753;
   padding-top: 4px;
-  border-top: 1px dashed #E5E2D9;
+  border-top: 1px dashed #DCEEF2;
   flex-wrap: wrap;
 }
 
@@ -438,7 +438,7 @@
 
 .cardTelemetryVal {
   font-weight: 700;
-  color: #161816;
+  color: #1F3440;
   font-family: var(--font-family-mono, monospace);
 }
 
@@ -447,11 +447,11 @@
   align-items: center;
   justify-content: space-between;
   font-size: 10.5px;
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .cardSourceLink {
-  color: #737571;
+  color: #60717B;
   text-decoration: none;
   font-weight: 600;
   display: flex;
@@ -460,7 +460,7 @@
 }
 
 .cardSourceLink:hover {
-  color: #D67A20;
+  color: #4C8DA2;
 }
 
 /* Distinct Neutral Community Hazard Card */
@@ -479,7 +479,7 @@
 
 .communityCard:hover {
   background: #F3F1EB;
-  border-color: #9B9D98;
+  border-color: #8FA2AD;
 }
 
 .communityBadgeRow {
@@ -493,7 +493,7 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #737571;
+  color: #60717B;
   background: #EFECE6;
   padding: 2px 6px;
   border-radius: 3px;
@@ -510,9 +510,9 @@
 
 .modReceived { background: #EFECE6; color: #555753; }
 .modUnderReview { background: #FEF3E2; color: #B35C00; }
-.modVerified { background: #EAF3EC; color: #2E5A44; }
+.modVerified { background: #EAF3EC; color: #4C8B71; }
 .modDismissed { background: #FBEBEA; color: #A82824; }
-.modResolved { background: #EFECE6; color: #737571; text-decoration: line-through; }
+.modResolved { background: #EFECE6; color: #60717B; text-decoration: line-through; }
 
 /* Acronym Badges */
 .acronymBadge {
@@ -577,12 +577,12 @@
 
 /* Severity Colors: Editorial standard */
 .sevAdvisory {
-  background: #2E5A44;
+  background: #4C8B71;
   color: #FFFFFF;
 }
 
 .sevWatch {
-  background: #D67A20;
+  background: #4C8DA2;
   color: #FFFFFF;
 }
 
@@ -597,7 +597,7 @@
 }
 
 .sevInactive {
-  background: #737571;
+  background: #60717B;
   color: #FFFFFF;
 }
 
@@ -612,7 +612,7 @@
   height: 100%;
   position: relative;
   overflow: hidden;
-  background: #F7F5F0;
+  background: #F8FBFC;
 }
 
 .mapCanvas {
@@ -660,7 +660,7 @@
   display: flex;
   align-items: center;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 6px;
   padding: 8px 12px;
   box-shadow: 0 2px 8px rgba(22, 24, 22, 0.08);
@@ -669,7 +669,7 @@
 
 .searchIcon {
   font-size: 13px;
-  color: #737571;
+  color: #60717B;
 }
 
 .searchInput {
@@ -677,20 +677,20 @@
   border: none;
   outline: none;
   font-size: 12.5px;
-  color: #161816;
+  color: #1F3440;
   background: transparent;
   font-family: inherit;
 }
 
 .searchInput::placeholder {
-  color: #9B9D98;
+  color: #8FA2AD;
 }
 
 .searchClearBtn {
   background: none;
   border: none;
   font-size: 12px;
-  color: #9B9D98;
+  color: #8FA2AD;
   cursor: pointer;
 }
 
@@ -700,7 +700,7 @@
   left: 0;
   right: 0;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 6px;
   box-shadow: 0 6px 16px rgba(22, 24, 22, 0.1);
   max-height: 320px;
@@ -712,16 +712,16 @@
   padding: 8px 12px;
   font-size: 10px;
   font-weight: 800;
-  color: #9B9D98;
+  color: #8FA2AD;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  background: #FAF8F5;
-  border-bottom: 1px solid #E5E2D9;
+  background: #F8FBFC;
+  border-bottom: 1px solid #DCEEF2;
 }
 
 .autocompleteItem {
   padding: 10px 12px;
-  border-bottom: 1px solid #F3F1EB;
+  border-bottom: 1px solid #DCEEF2;
   cursor: pointer;
   display: flex;
   align-items: flex-start;
@@ -731,18 +731,18 @@
 }
 
 .autocompleteItem:hover {
-  background: #FAF8F5;
+  background: #DCEEF2;
 }
 
 .autoItemName {
   font-size: 12.5px;
   font-weight: 700;
-  color: #161816;
+  color: #1F3440;
 }
 
 .autoItemCat {
   font-size: 11px;
-  color: #737571;
+  color: #60717B;
   margin-top: 1px;
 }
 
@@ -757,12 +757,12 @@
 
 .autoBadgeMetro {
   background: #EFECE6;
-  color: #161816;
+  color: #1F3440;
 }
 
 .autoBadgeDisaster {
   background: #FDF0E6;
-  color: #D67A20;
+  color: #4C8DA2;
 }
 
 /* Top-Right Floating Controls */
@@ -778,12 +778,12 @@
 
 .mapControlBtn {
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 6px;
   padding: 7px 11px;
   font-size: 11.5px;
   font-weight: 600;
-  color: #161816;
+  color: #1F3440;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -793,13 +793,13 @@
 }
 
 .mapControlBtn:hover {
-  background: #FAF8F5;
-  border-color: #C0BCB1;
+  background: #DCEEF2;
+  border-color: #4C8DA2;
 }
 
 .mapControlBtnActive {
-  background: #161816;
-  border-color: #161816;
+  background: #1F3440;
+  border-color: #1F3440;
   color: #FFFFFF;
 }
 
@@ -809,7 +809,7 @@
   top: 48px;
   right: 0;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 6px;
   box-shadow: 0 6px 18px rgba(22, 24, 22, 0.12);
   width: 260px;
@@ -825,8 +825,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #737571;
-  border-bottom: 1px solid #E5E2D9;
+  color: #60717B;
+  border-bottom: 1px solid #DCEEF2;
   padding-bottom: 6px;
   margin: 0;
 }
@@ -836,14 +836,14 @@
   align-items: center;
   justify-content: space-between;
   font-size: 12px;
-  color: #161816;
+  color: #1F3440;
   cursor: pointer;
   padding: 4px 0;
 }
 
 .layerCheckboxLabel input {
   cursor: pointer;
-  accent-color: #D67A20;
+  accent-color: #4C8DA2;
 }
 
 /* Bottom Bar / Status */
@@ -863,7 +863,7 @@
   pointer-events: auto;
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(4px);
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 10.5px;
@@ -878,7 +878,7 @@
 .bottomTimeSlider {
   pointer-events: auto;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 6px;
   padding: 4px 8px;
   display: flex;
@@ -899,7 +899,7 @@
   max-height: calc(100vh - 88px);
   overflow-y: auto;
   background: #FFFFFF;
-  border: 1px solid #E5E2D9;
+  border: 1px solid #DCEEF2;
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(22, 24, 22, 0.14);
   z-index: 35;
@@ -921,8 +921,8 @@
 
 .panelHeader {
   padding: 16px;
-  background: #FAF8F5;
-  border-bottom: 1px solid #E5E2D9;
+  background: #F8FBFC;
+  border-bottom: 1px solid #DCEEF2;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -933,15 +933,15 @@
   background: none;
   border: none;
   font-size: 16px;
-  color: #737571;
+  color: #60717B;
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
 }
 
 .panelCloseBtn:hover {
-  background: #EFECE6;
-  color: #161816;
+  background: #DCEEF2;
+  color: #1F3440;
 }
 
 .panelContent {
@@ -956,17 +956,17 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #737571;
+  color: #60717B;
   margin-bottom: 6px;
 }
 
 .guidanceBox {
-  background: #FDFBF8;
-  border-left: 3px solid #D67A20;
+  background: #F8FBFC;
+  border-left: 3px solid #4C8DA2;
   padding: 10px 12px;
   font-size: 12.5px;
   line-height: 1.5;
-  color: #161816;
+  color: #1F3440;
   border-radius: 0 4px 4px 0;
 }
 
@@ -977,8 +977,8 @@
 }
 
 .telemetryCard {
-  background: #FAF8F5;
-  border: 1px solid #E5E2D9;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
   border-radius: 4px;
   padding: 8px 10px;
 }
@@ -986,7 +986,7 @@
 .telemetryCardLabel {
   font-size: 10px;
   font-weight: 700;
-  color: #737571;
+  color: #60717B;
   text-transform: uppercase;
 }
 
@@ -994,7 +994,7 @@
   font-size: 14px;
   font-weight: 800;
   font-family: var(--font-family-mono, monospace);
-  color: #161816;
+  color: #1F3440;
   margin-top: 2px;
 }
 
@@ -1003,12 +1003,12 @@
   align-items: center;
   gap: 8px;
   padding-top: 10px;
-  border-top: 1px solid #E5E2D9;
+  border-top: 1px solid #DCEEF2;
 }
 
 .panelPrimaryBtn {
   flex: 1;
-  background: #D67A20;
+  background: #4C8DA2;
   color: #FFFFFF;
   border: none;
   border-radius: 4px;
@@ -1027,8 +1027,8 @@
 
 .panelSecondaryBtn {
   background: #FFFFFF;
-  color: #161816;
-  border: 1px solid #E5E2D9;
+  color: #1F3440;
+  border: 1px solid #DCEEF2;
   border-radius: 4px;
   padding: 8px 12px;
   font-size: 12px;
@@ -1039,7 +1039,8 @@
 }
 
 .panelSecondaryBtn:hover {
-  background: #FAF8F5;
+  background: #DCEEF2;
+  border-color: #4C8DA2;
 }
 
 /* ============================================================
@@ -1082,7 +1083,7 @@
 
 .mapArea :global(.map-cluster-badge) {
   border-radius: 16px;
-  background: #161816;
+  background: #1F3440;
   color: #FFFFFF;
   font-family: var(--font-family-mono, monospace);
   font-size: 11px;
@@ -1111,7 +1112,7 @@
     min-width: 100%;
     height: 52vh;
     border-right: none;
-    border-top: 1px solid #E5E2D9;
+    border-top: 1px solid #DCEEF2;
     border-radius: 12px 12px 0 0;
     box-shadow: 0 -4px 16px rgba(22, 24, 22, 0.08);
     transform: translateY(0);
@@ -1128,7 +1129,7 @@
     width: 54px;
     height: 24px;
     border-radius: 6px 6px 0 0;
-    border-left: 1px solid #E5E2D9;
+    border-left: 1px solid #DCEEF2;
     border-bottom: none;
   }
 

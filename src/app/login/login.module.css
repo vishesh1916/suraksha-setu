@@ -1,13 +1,15 @@
 /* ============================================================
    Suraksha Setu — Editorial Authentication Portal Styles
+   Editorial Palette: #F8FBFC, #FFFFFF, #DCEEF2, #C8E3EA, #1F3440, #60717B, #4C8DA2
    ============================================================ */
 
 .page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-primary, #F7F5F0);
-  color: var(--color-charcoal, #161816);
+  background-color: #F8FBFC;
+  color: #1F3440;
+  font-family: var(--font-family-body, 'Inter', sans-serif);
   position: relative;
 }
 
@@ -20,8 +22,8 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(76, 141, 162, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 141, 162, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black 30%, transparent 90%);
 }
@@ -32,7 +34,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2.5rem;
-  border-bottom: 1px solid var(--color-border, #E5E2D9);
+  border-bottom: 1px solid #DCEEF2;
   background: #FFFFFF;
   position: relative;
   z-index: 10;
@@ -48,11 +50,11 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-family-sans);
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
   font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--color-charcoal, #161816);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #1F3440;
   text-decoration: none;
 }
 
@@ -62,14 +64,14 @@
 
 .subBrand {
   font-size: 0.78rem;
-  color: var(--color-text-muted, #737571);
-  border-left: 1px solid var(--color-border, #E5E2D9);
+  color: #8FA2AD;
+  border-left: 1px solid #DCEEF2;
   padding-left: 1rem;
   letter-spacing: 0.02em;
 }
 
 .navAction {
-  color: var(--color-text-secondary, #474946);
+  color: #60717B;
   font-size: 0.85rem;
   text-decoration: none;
   display: flex;
@@ -80,7 +82,7 @@
 }
 
 .navAction:hover {
-  color: var(--color-charcoal, #161816);
+  color: #1F3440;
 }
 
 /* Center Form Container */
@@ -98,10 +100,10 @@
   width: 100%;
   max-width: 440px;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-md, 6px);
+  border: 1px solid #DCEEF2;
+  border-radius: 24px;
   padding: 2.75rem 2.25rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 12px 36px rgba(31, 52, 64, 0.06);
 }
 
 .cardBadge {
@@ -112,28 +114,28 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-accent, #D67A20);
-  background: #FAF7F2;
-  border: 1px solid var(--color-accent, #D67A20);
-  padding: 0.25rem 0.65rem;
+  color: #4C8DA2;
+  background: #DCEEF2;
+  border: 1px solid #C8E3EA;
+  padding: 0.3rem 0.75rem;
   border-radius: 9999px;
   margin-bottom: 1.25rem;
   font-family: var(--font-family-mono, monospace);
 }
 
 .title {
-  font-family: var(--font-family-sans);
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
   font-size: 1.625rem;
-  font-weight: 700;
-  color: var(--color-charcoal, #161816);
-  letter-spacing: -0.01em;
+  font-weight: 800;
+  color: #1F3440;
+  letter-spacing: -0.02em;
   margin: 0 0 0.5rem 0;
   line-height: 1.2;
 }
 
 .subtitle {
   font-size: 0.875rem;
-  color: var(--color-text-secondary, #474946);
+  color: #60717B;
   line-height: 1.5;
   margin: 0 0 2rem 0;
 }
@@ -143,11 +145,11 @@
   display: flex;
   align-items: flex-start;
   gap: 0.65rem;
-  background: #FEF2F2;
-  border: 1px solid #FECACA;
-  border-radius: var(--radius-sm, 3px);
+  background: #FEEFEF;
+  border: 1px solid #FCD4D4;
+  border-radius: 12px;
   padding: 0.85rem 1rem;
-  color: #DC2626;
+  color: #D76D63;
   font-size: 0.85rem;
   margin-bottom: 1.5rem;
   line-height: 1.4;
@@ -169,7 +171,7 @@
   font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: var(--color-charcoal, #161816);
+  color: #1F3440;
   text-transform: uppercase;
   font-family: var(--font-family-mono, monospace);
 }
@@ -183,23 +185,23 @@
 .input {
   width: 100%;
   background: #FFFFFF;
-  border: 1px solid var(--color-border, #E5E2D9);
-  border-radius: var(--radius-sm, 3px);
+  border: 1.5px solid #C8E3EA;
+  border-radius: 12px;
   padding: 0.8rem 1rem;
-  color: var(--color-charcoal, #161816);
+  color: #1F3440;
   font-size: 0.95rem;
   font-family: inherit;
-  transition: border-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
 }
 
 .input:focus {
-  border-color: var(--color-accent, #D67A20);
-  box-shadow: 0 0 0 3px rgba(214, 122, 32, 0.12);
+  border-color: #4C8DA2;
+  box-shadow: 0 0 0 3px rgba(76, 141, 162, 0.16);
 }
 
 .input::placeholder {
-  color: var(--color-text-muted, #737571);
+  color: #8FA2AD;
 }
 
 .toggleBtn {
@@ -207,7 +209,7 @@
   right: 0.85rem;
   background: transparent;
   border: none;
-  color: var(--color-text-muted, #737571);
+  color: #8FA2AD;
   cursor: pointer;
   padding: 0.25rem;
   display: flex;
@@ -217,17 +219,17 @@
 }
 
 .toggleBtn:hover {
-  color: var(--color-charcoal, #161816);
+  color: #1F3440;
 }
 
 .submitBtn {
   margin-top: 0.5rem;
   width: 100%;
-  background: var(--color-charcoal, #161816);
+  background: #1F3440;
   color: #FFFFFF;
   border: none;
-  border-radius: var(--radius-sm, 3px);
-  padding: 0.9rem 1.25rem;
+  border-radius: 9999px;
+  padding: 0.95rem 1.25rem;
   font-size: 0.925rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -236,11 +238,13 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: background 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.12);
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: #000000;
+  background: #334652;
+  transform: translateY(-1px);
 }
 
 .submitBtn:disabled {
@@ -251,25 +255,24 @@
 .cardFooter {
   margin-top: 1.75rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--color-border, #E5E2D9);
+  border-top: 1px solid #DCEEF2;
   font-size: 0.775rem;
-  color: var(--color-text-muted, #737571);
+  color: #8FA2AD;
   text-align: center;
   line-height: 1.4;
 }
 
 .footer {
   padding: 1.25rem 2.5rem;
-  border-top: 1px solid var(--color-border, #E5E2D9);
+  border-top: 1px solid #DCEEF2;
   background: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 0.775rem;
-  color: var(--color-text-muted, #737571);
+  color: #8FA2AD;
   position: relative;
   z-index: 10;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
-

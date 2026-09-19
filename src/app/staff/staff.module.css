@@ -88,11 +88,12 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: #DCEEF2;
+  border: 1px solid #C8E3EA;
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
-  color: #34d399;
+  color: #4C8B71;
+  font-weight: 600;
 }
 
 .logoutButton {
@@ -103,9 +104,9 @@
   border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #D76D63;
+  background: rgba(215, 109, 99, 0.08);
+  border: 1px solid rgba(215, 109, 99, 0.2);
   cursor: pointer;
   width: 100%;
   transition: all var(--transition-fast);
@@ -113,8 +114,8 @@
 }
 
 .logoutButton:hover {
-  background: rgba(239, 68, 68, 0.18);
-  color: #fca5a5;
+  background: rgba(215, 109, 99, 0.16);
+  color: #B54F45;
 }
 
 /* —— Main —— */
@@ -587,59 +588,61 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
-  background: #081624;
-  border-bottom: 1px solid rgba(138, 153, 168, 0.2);
+  padding: 14px 24px;
+  background: #F8FBFC;
+  border-bottom: 1px solid #DCEEF2;
   overflow-x: auto;
 }
 
 .adminTabBtn {
-  background: transparent;
-  border: 1px solid transparent;
-  color: #8A99A8;
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  color: #60717B;
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 8px 18px;
+  border-radius: 9999px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
 
 .adminTabBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #F7F6F2;
+  border-color: #4C8DA2;
+  color: #1F3440;
+  background: #DCEEF2;
+  transform: translateY(-1px);
 }
 
 .adminTabBtnActive {
-  background: #19314C !important;
-  color: #38BDF8 !important;
-  border-color: rgba(56, 189, 248, 0.4) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  background: #1F3440 !important;
+  color: #FFFFFF !important;
+  border-color: #1F3440 !important;
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.12);
 }
 
 .tabBadge {
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #EF4444;
+  background: rgba(215, 109, 99, 0.15);
+  border: 1px solid rgba(215, 109, 99, 0.3);
+  color: #D76D63;
   font-size: 11px;
   font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 999px;
+  padding: 2px 7px;
+  border-radius: 9999px;
 }
 
 /* Escalation Desk Cards */
 .escalationCard {
-  background: rgba(14, 38, 61, 0.7);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  border-radius: 12px;
-  padding: 20px;
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
+  padding: 22px;
   margin-bottom: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  border-left: 4px solid #EF4444;
+  box-shadow: 0 4px 16px rgba(31, 52, 64, 0.04);
+  border-left: 4px solid #D76D63;
 }
 
 .escalationHeader {
@@ -656,7 +659,7 @@
   flex-wrap: wrap;
   margin-top: 16px;
   padding-top: 14px;
-  border-top: 1px solid rgba(138, 153, 168, 0.15);
+  border-top: 1px solid #DCEEF2;
 }
 
 /* Citizen Reports Stream Table */
@@ -664,25 +667,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: rgba(11, 31, 51, 0.6);
-  border: 1px solid rgba(138, 153, 168, 0.18);
-  border-radius: 8px;
+  padding: 14px 18px;
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-radius: 14px;
   margin-bottom: 8px;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.02);
 }
 
 .citizenReportRow:hover {
-  background: rgba(18, 45, 71, 0.8);
-  border-color: rgba(56, 189, 248, 0.3);
+  background: #F8FBFC;
+  border-color: #4C8DA2;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(31, 52, 64, 0.05);
 }
 
 .reportThumb {
   width: 54px;
   height: 54px;
-  border-radius: 6px;
+  border-radius: 8px;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid #DCEEF2;
   cursor: pointer;
 }
 
@@ -696,10 +702,11 @@
 }
 
 .predictionHeaderBox {
-  background: linear-gradient(135deg, rgba(8, 22, 36, 0.95), rgba(14, 38, 61, 0.95));
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  border-radius: 12px;
-  padding: 20px 24px;
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-radius: 20px;
+  padding: 22px 26px;
+  box-shadow: 0 4px 20px rgba(31, 52, 64, 0.04);
 }
 
 .trajectoryGrid {
@@ -709,10 +716,10 @@
 }
 
 .trajectoryCard {
-  background: rgba(11, 31, 51, 0.8);
-  border: 1px solid rgba(138, 153, 168, 0.25);
-  border-radius: 10px;
-  padding: 14px;
+  background: #F8FBFC;
+  border: 1px solid #DCEEF2;
+  border-radius: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -725,10 +732,11 @@
 }
 
 .solutionCard {
-  background: rgba(11, 31, 51, 0.85);
-  border: 1px solid rgba(138, 153, 168, 0.25);
-  border-radius: 10px;
-  padding: 16px;
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(31, 52, 64, 0.03);
 }
 
 

@@ -1,7 +1,7 @@
 /* ============================================================
    SURAKSHA SETU — Design System Tokens
-   High-end editorial aesthetic: soft off-white canvas, crisp charcoal
-   typography, warm gray, muted eucalyptus, signal amber/burnt orange.
+   Editorial Magazine Theme: Calm off-white canvas, deep slate/charcoal
+   typography, steel cyan/teal accent, muted sky borders, and editorial badges.
    ============================================================ */
 
 :root {
@@ -12,108 +12,110 @@
   --color-editorial-secondary-accent: #C8E3EA;
   --color-editorial-text-primary: #1F3440;
   --color-editorial-text-secondary: #60717B;
+  --color-editorial-text-muted: #8FA2AD;
   --color-editorial-accent: #4C8DA2;
+  --color-editorial-accent-hover: #387A92;
   --color-editorial-success: #4C8B71;
   --color-editorial-warning: #D7AA63;
   --color-editorial-danger: #D76D63;
 
   --font-family-heading: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-family-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'Space Grotesk', 'SFMono-Regular', Menlo, monospace;
 
-  --radius-editorial: 28px;
+  --radius-editorial: 24px;
   --radius-pill: 9999px;
-  --shadow-editorial-card: 0 12px 32px -8px rgba(31, 52, 64, 0.05), 0 2px 6px -1px rgba(31, 52, 64, 0.02);
-  --shadow-editorial-hover: 0 20px 40px -12px rgba(31, 52, 64, 0.09), 0 4px 10px -2px rgba(31, 52, 64, 0.03);
-  --border-editorial: 1px solid rgba(76, 141, 162, 0.14);
-  --border-editorial-subtle: 1px solid rgba(200, 227, 234, 0.6);
+  --shadow-editorial-card: 0 12px 32px -8px rgba(31, 52, 64, 0.06), 0 2px 6px -1px rgba(31, 52, 64, 0.02);
+  --shadow-editorial-hover: 0 20px 40px -12px rgba(31, 52, 64, 0.10), 0 4px 10px -2px rgba(31, 52, 64, 0.04);
+  --border-editorial: 1px solid rgba(76, 141, 162, 0.16);
+  --border-editorial-subtle: 1px solid #DCEEF2;
 
-  /* —— Legacy / Core Fallbacks —— */
+  /* —— Legacy / Core Fallbacks (Harmonized with Editorial Palette) —— */
   --color-canvas-base: #F8FBFC;
   --color-canvas-card: #FFFFFF;
   --color-canvas-subtle: #DCEEF2;
   --color-canvas-muted: #C8E3EA;
   
+  --color-charcoal: #1F3440;
   --color-charcoal-primary: #1F3440;
   --color-charcoal-secondary: #334652;
   --color-warm-gray: #60717B;
   --color-warm-gray-light: #8FA2AD;
   
   --color-border-hairline: rgba(76, 141, 162, 0.14);
-  --color-border-subtle: #C8E3EA;
+  --color-border-subtle: #DCEEF2;
   --color-border-strong: #4C8DA2;
 
-  /* Muted Eucalyptus Green — Verified / Normal / Trust */
-  --color-eucalyptus: #2E5A44;
-  --color-eucalyptus-dark: #1E3D2E;
-  --color-eucalyptus-light: #3D755A;
-  --color-eucalyptus-bg: rgba(46, 90, 68, 0.08);
-  --color-eucalyptus-border: rgba(46, 90, 68, 0.22);
+  /* Muted Sage / Eucalyptus Green — Verified / Trust */
+  --color-eucalyptus: #4C8B71;
+  --color-eucalyptus-dark: #2E5A44;
+  --color-eucalyptus-light: #6BA88F;
+  --color-eucalyptus-bg: rgba(76, 139, 113, 0.10);
+  --color-eucalyptus-border: rgba(76, 139, 113, 0.25);
 
-  /* Signal Amber / Burnt Orange — Strictly for Weather Warnings & Active States */
-  --color-safety-amber: #D67A20;
-  --color-safety-amber-light: #E88A2F;
-  --color-safety-amber-dark: #B35E10;
-  --color-safety-amber-bg: rgba(214, 122, 32, 0.08);
-  --color-safety-amber-border: rgba(214, 122, 32, 0.28);
+  /* Amber & Coral Warning States */
+  --color-safety-amber: #D7AA63;
+  --color-safety-amber-light: #E5BE7E;
+  --color-safety-amber-dark: #B58843;
+  --color-safety-amber-bg: rgba(215, 170, 99, 0.12);
+  --color-safety-amber-border: rgba(215, 170, 99, 0.30);
 
-  /* —— Platform Core Tokens —— */
-  --color-bg-primary: #F7F5F0;
+  /* —— Platform Core Tokens (Synchronized with Home Page) —— */
+  --color-bg-primary: #F8FBFC;
   --color-bg-secondary: #FFFFFF;
   --color-bg-card: #FFFFFF;
-  --color-bg-elevated: #EFECE6;
-  --color-bg-glass: rgba(247, 245, 240, 0.92);
-  --color-bg-overlay: rgba(22, 24, 22, 0.45);
+  --color-bg-elevated: #DCEEF2;
+  --color-bg-glass: rgba(248, 251, 252, 0.94);
+  --color-bg-overlay: rgba(31, 52, 64, 0.45);
 
-  --color-surface-hover: rgba(22, 24, 22, 0.04);
-  --color-surface-active: rgba(22, 24, 22, 0.08);
+  --color-surface-hover: rgba(31, 52, 64, 0.04);
+  --color-surface-active: rgba(31, 52, 64, 0.08);
 
-  --color-text-primary: #161816;
-  --color-text-secondary: #737571;
-  --color-text-muted: #9B9D98;
-  --color-text-inverse: #F7F5F0;
+  --color-text-primary: #1F3440;
+  --color-text-secondary: #60717B;
+  --color-text-muted: #8FA2AD;
+  --color-text-inverse: #FFFFFF;
 
-  /* Accent — Burnt Orange for Active Weather / Warning States */
-  --color-accent: #D67A20;
-  --color-accent-hover: #B35E10;
-  --color-accent-subtle: rgba(214, 122, 32, 0.08);
-  --color-accent-glow: rgba(214, 122, 32, 0.2);
+  /* Accent — Editorial Steel Cyan / Teal */
+  --color-accent: #4C8DA2;
+  --color-accent-hover: #387A92;
+  --color-accent-subtle: #DCEEF2;
+  --color-accent-glow: rgba(76, 141, 162, 0.20);
 
   /* Severity — Alert Colors */
-  --color-severity-critical: #C53030;
-  --color-severity-critical-bg: rgba(197, 48, 48, 0.08);
-  --color-severity-high: #D67A20;
-  --color-severity-high-bg: rgba(214, 122, 32, 0.08);
-  --color-severity-moderate: #D9822B;
-  --color-severity-moderate-bg: rgba(217, 130, 43, 0.08);
-  --color-severity-low: #3E6B5C;
-  --color-severity-low-bg: rgba(62, 107, 92, 0.08);
-  --color-severity-info: #5A626A;
-  --color-severity-info-bg: rgba(90, 98, 106, 0.08);
+  --color-severity-critical: #D76D63;
+  --color-severity-critical-bg: rgba(215, 109, 99, 0.10);
+  --color-severity-high: #D7AA63;
+  --color-severity-high-bg: rgba(215, 170, 99, 0.10);
+  --color-severity-moderate: #4C8DA2;
+  --color-severity-moderate-bg: rgba(76, 141, 162, 0.10);
+  --color-severity-low: #4C8B71;
+  --color-severity-low-bg: rgba(76, 139, 113, 0.10);
+  --color-severity-info: #60717B;
+  --color-severity-info-bg: rgba(96, 113, 123, 0.10);
 
   /* Status Colors */
-  --color-success: #2E5A44;
-  --color-success-bg: rgba(46, 90, 68, 0.08);
-  --color-warning: #D67A20;
-  --color-warning-bg: rgba(214, 122, 32, 0.08);
-  --color-error: #C53030;
-  --color-error-bg: rgba(197, 48, 48, 0.08);
-  --color-info: #2E5A44;
-  --color-info-bg: rgba(46, 90, 68, 0.08);
+  --color-success: #4C8B71;
+  --color-success-bg: rgba(76, 139, 113, 0.10);
+  --color-warning: #D7AA63;
+  --color-warning-bg: rgba(215, 170, 99, 0.10);
+  --color-error: #D76D63;
+  --color-error-bg: rgba(215, 109, 99, 0.10);
+  --color-info: #4C8DA2;
+  --color-info-bg: rgba(76, 141, 162, 0.10);
 
   /* Confidence Score */
-  --color-confidence-high: #2E5A44;
-  --color-confidence-medium: #D67A20;
-  --color-confidence-low: #C53030;
+  --color-confidence-high: #4C8B71;
+  --color-confidence-medium: #D7AA63;
+  --color-confidence-low: #D76D63;
 
   /* Borders */
-  --color-border: #E5E2D9;
-  --color-border-hover: #DDD8CD;
-  --color-border-focus: #161816;
+  --color-border: #DCEEF2;
+  --color-border-hover: #C8E3EA;
+  --color-border-focus: #4C8DA2;
 
-  /* —— Typography —— */
-  --font-family-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-family-mono: 'Space Grotesk', 'JetBrains Mono', monospace;
-
+  /* —— Typography Sizes —— */
   --font-size-xs: 0.75rem;     /* 12px */
   --font-size-sm: 0.8125rem;   /* 13px */
   --font-size-base: 0.875rem;  /* 14px */
@@ -155,20 +157,20 @@
   --space-24: 6rem;     /* 96px */
 
   /* —— Border Radius —— */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
   /* —— Shadows —— */
-  --shadow-sm: 0 1px 2px rgba(22, 24, 22, 0.05);
-  --shadow-md: 0 4px 12px rgba(22, 24, 22, 0.06), 0 1px 3px rgba(22, 24, 22, 0.04);
-  --shadow-lg: 0 10px 24px rgba(22, 24, 22, 0.08), 0 2px 6px rgba(22, 24, 22, 0.04);
-  --shadow-xl: 0 20px 32px rgba(22, 24, 22, 0.1), 0 4px 12px rgba(22, 24, 22, 0.05);
+  --shadow-sm: 0 1px 3px rgba(31, 52, 64, 0.04);
+  --shadow-md: 0 4px 14px rgba(31, 52, 64, 0.06), 0 1px 3px rgba(31, 52, 64, 0.03);
+  --shadow-lg: 0 12px 28px rgba(31, 52, 64, 0.08), 0 2px 6px rgba(31, 52, 64, 0.03);
+  --shadow-xl: 0 20px 40px rgba(31, 52, 64, 0.10), 0 4px 12px rgba(31, 52, 64, 0.04);
   --shadow-glow-accent: 0 0 16px var(--color-accent-glow);
-  --shadow-glow-danger: 0 0 16px rgba(197, 48, 48, 0.2);
+  --shadow-glow-danger: 0 0 16px rgba(215, 109, 99, 0.2);
 
   /* —— Transitions —— */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -187,18 +189,18 @@
 
   /* —— Layout —— */
   --sidebar-width: 260px;
-  --header-height: 64px;
+  --header-height: 68px;
   --bottom-nav-height: 72px;
-  --max-content-width: 1200px;
+  --max-content-width: 1400px;
   --map-control-gap: 12px;
 }
 
 /* High Contrast Mode */
 @media (prefers-contrast: high) {
   :root {
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #c4cfdf;
-    --color-border: rgba(148, 163, 192, 0.4);
-    --color-accent: #80a0ff;
+    --color-text-primary: #1F3440;
+    --color-text-secondary: #334652;
+    --color-border: rgba(76, 141, 162, 0.5);
+    --color-accent: #387A92;
   }
 }

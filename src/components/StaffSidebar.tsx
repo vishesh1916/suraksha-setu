@@ -46,7 +46,7 @@ export function StaffSidebar({ activeTab, role = 'Officer' }: { activeTab: strin
 
       <div className={styles.sidebarFooter}>
         <div className={styles.sessionPill}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399' }} />
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4C8B71' }} />
           <span>Clearance: Verified</span>
         </div>
 
