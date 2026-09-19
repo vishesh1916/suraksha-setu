@@ -63,7 +63,11 @@ function convertReportToUnifiedEvent(r: Report): UnifiedHazardEvent {
       moderationStatus: modStatus,
       mediaUrl: r.mediaUrl,
       reportCount: 1,
-      safetyGuidance: 'Citizen-submitted ground observation. Field verification in progress.',
+      safetyGuidance: r.currentActionCategory
+        ? `Tactical Action Taken: ${r.currentActionCategory}. Field verification in progress.`
+        : 'Citizen-submitted ground observation. Field verification in progress.',
+      actionCategory: r.currentActionCategory,
+      tacticalAction: r.currentActionCategory,
     },
   };
 }
@@ -168,7 +172,159 @@ const VERIFIED_SHELTERS: ReliefShelter[] = [
   },
 ];
 
-type RailTab = 'official' | 'earth' | 'weather_flood';
+type RailTab = 'official' | 'earth' | 'weather_flood' | 'community';
+
+// HTML escape helper for secure native popup rendering
+function escapeHtml(str: string | undefined | null): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function createHazardPopupHtml(ev: UnifiedHazardEvent): string {
+  let badgeBg = '#16A34A';
+  if (ev.acronym === 'EQ') badgeBg = '#EA580C';
+  else if (ev.acronym === 'FL') badgeBg = ev.severity === 'ADVISORY' ? '#16A34A' : '#DC2626';
+  else if (ev.acronym === 'FR') badgeBg = '#B91C1C';
+  else if (ev.acronym === 'ST') badgeBg = '#0284C7';
+  else if (ev.acronym === 'CW') badgeBg = '#1E293B';
+  else if (ev.acronym === 'LS') badgeBg = '#7C3AED';
+  else if (ev.acronym === 'HW') badgeBg = '#D97706';
+  else if (ev.acronym === 'RF') badgeBg = '#2563EB';
+
+  if (ev.is_community_report) {
+    badgeBg = '#D97706';
+  }
+
+  let sevBg = '#F0FDF4';
+  let sevColor = '#16A34A';
+  if (ev.severity === 'SEVERE') {
+    sevBg = '#7F1D1D';
+    sevColor = '#FFFFFF';
+  } else if (ev.severity === 'WARNING') {
+    sevBg = '#FEF2F2';
+    sevColor = '#DC2626';
+  } else if (ev.severity === 'WATCH') {
+    sevBg = '#FFF7ED';
+    sevColor = '#EA580C';
+  }
+
+  const title = escapeHtml(ev.title);
+  const location = escapeHtml(`${ev.district ? ev.district + ', ' : ''}${ev.state ? ev.state + ', ' : ''}${ev.country}`);
+  const guidance = escapeHtml(ev.details?.safetyGuidance || 'Official multi-hazard advisory. Follow district administrative directives.');
+  const sourceName = escapeHtml(ev.is_community_report ? 'Citizen Report' : ev.source);
+  const sourceUrl = ev.source_url || '#';
+
+  // Metrics HTML
+  let metricsHtml = '';
+  if (ev.details?.magnitude !== undefined) {
+    metricsHtml += `
+      <div class="popup-metric-row">
+        <span class="popup-metric-key">Magnitude &amp; Depth:</span>
+        <span class="popup-metric-val">M ${ev.details.magnitude.toFixed(1)} · ${ev.details.depthKm || 10} km</span>
+      </div>`;
+  }
+  if (ev.details?.waterDepthFeet !== undefined) {
+    metricsHtml += `
+      <div class="popup-metric-row">
+        <span class="popup-metric-key">Inundation Depth:</span>
+        <span class="popup-metric-val">${ev.details.waterDepthFeet} ft (${Math.round(ev.details.waterDepthFeet * 30.48)} cm)</span>
+      </div>`;
+  }
+  if (ev.details?.rainfallRateMmH !== undefined) {
+    metricsHtml += `
+      <div class="popup-metric-row">
+        <span class="popup-metric-key">Rainfall Rate:</span>
+        <span class="popup-metric-val">${ev.details.rainfallRateMmH} mm/h</span>
+      </div>`;
+  }
+  if (ev.details?.moderationStatus) {
+    const isVer = ev.confidence === 'VERIFIED';
+    metricsHtml += `
+      <div class="popup-metric-row">
+        <span class="popup-metric-key">Verification Status:</span>
+        <span class="popup-metric-val" style="color:${isVer ? '#2E7D32' : '#D97706'};">● ${escapeHtml(ev.details.moderationStatus)}</span>
+      </div>`;
+  }
+  if (ev.details?.actionCategory || ev.details?.tacticalAction) {
+    metricsHtml += `
+      <div class="popup-metric-row">
+        <span class="popup-metric-key">Tactical Response:</span>
+        <span class="popup-metric-val" style="color:#0284C7;">${escapeHtml(ev.details.actionCategory || ev.details.tacticalAction)}</span>
+      </div>`;
+  }
+  if (!metricsHtml) {
+    metricsHtml = `
+      <div class="popup-metric-row">
+        <span class="popup-metric-key">Network Status:</span>
+        <span class="popup-metric-val">Active Real-Time Telemetry</span>
+      </div>`;
+  }
+
+  const isExternal = sourceUrl.startsWith('http');
+  const targetAttr = isExternal ? 'target="_blank" rel="noopener noreferrer"' : '';
+
+  return `
+    <div class="suraksha-popup-inner">
+      <div class="popup-top-row">
+        <div class="popup-badge" style="background:${badgeBg};">${ev.is_community_report ? 'CR' : ev.acronym}</div>
+        <div class="popup-badge-label" style="background:${sevBg};color:${sevColor};">${ev.severity}</div>
+        <span class="popup-source-tag">${sourceName}</span>
+      </div>
+      <h3 class="popup-title">${title}</h3>
+      <div class="popup-loc">📍 ${location}</div>
+      <div class="popup-metric-box">
+        ${metricsHtml}
+      </div>
+      <p class="popup-guidance">${guidance}</p>
+      <div class="popup-actions">
+        <a href="${sourceUrl}" ${targetAttr} class="popup-btn-primary">
+          ${ev.is_community_report ? 'Track Report ↗' : 'Official Feed ↗'}
+        </a>
+        <a href="/report" class="popup-btn-secondary">
+          Ground Update
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+function createShelterPopupHtml(sh: ReliefShelter): string {
+  const percent = Math.min(100, Math.round((sh.occupancy / sh.capacity) * 100));
+  return `
+    <div class="suraksha-popup-inner">
+      <div class="popup-top-row">
+        <div class="popup-badge" style="background:#1F3440;color:#FFFFFF;">SH</div>
+        <div class="popup-badge-label" style="background:#E8F5EE;color:#2E7D32;">ACTIVE SHELTER CAMP</div>
+        <span class="popup-source-tag">RELIEF POST</span>
+      </div>
+      <h3 class="popup-title">${escapeHtml(sh.name)}</h3>
+      <div class="popup-loc">📍 ${escapeHtml(sh.region)}</div>
+      <div class="popup-metric-box">
+        <div class="popup-metric-row">
+          <span class="popup-metric-key">Capacity &amp; Occupancy:</span>
+          <span class="popup-metric-val">${sh.occupancy} / ${sh.capacity} (${percent}%)</span>
+        </div>
+        <div class="popup-occupancy-bar">
+          <div class="popup-occupancy-fill" style="width: ${percent}%;"></div>
+        </div>
+        <div class="popup-provisions"><strong>Provisions:</strong> ${escapeHtml(sh.provisions)}</div>
+      </div>
+      <div class="popup-actions">
+        <a href="tel:${escapeHtml(sh.contact)}" class="popup-btn-primary" style="background:#1F3440;">
+          📞 Call Desk (${escapeHtml(sh.contact)})
+        </a>
+        <a href="/report" class="popup-btn-secondary">
+          Update Info
+        </a>
+      </div>
+    </div>
+  `;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function resolveMapLibre(mod: any): any {
@@ -313,6 +469,8 @@ function MapContent() {
   const mapRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const markersRef = useRef<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersMapRef = useRef<Map<string, any>>(new Map());
   const [mapReady, setMapReady] = useState(false);
 
   // Core Hazard Data State
@@ -335,11 +493,17 @@ function MapContent() {
   const [isRailOpen, setIsRailOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<RailTab>('official');
 
+  // All Calamities Directory Modal State
+  const [isAllCalamitiesModalOpen, setIsAllCalamitiesModalOpen] = useState(false);
+  const [calamitiesSearch, setCalamitiesSearch] = useState('');
+  const [calamitiesCategory, setCalamitiesCategory] = useState<'ALL' | 'EQ' | 'FL' | 'RF' | 'ST' | 'FR' | 'CR' | 'SH'>('ALL');
+  const [calamitiesSeverity, setCalamitiesSeverity] = useState<string>('ALL');
+
   // Filters
   const [selectedCountry, setSelectedCountry] = useState<string>('ALL');
   const [selectedAcronym, setSelectedAcronym] = useState<string>('ALL');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('ALL');
-  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
 
   // Layer Visibility
   const [layerPolygons, setLayerPolygons] = useState(true);
@@ -440,7 +604,7 @@ function MapContent() {
 
   useEffect(() => {
     fetchHazardData();
-    const interval = setInterval(fetchHazardData, 10000);
+    const interval = setInterval(fetchHazardData, 5000);
     return () => clearInterval(interval);
   }, [fetchHazardData]);
 
@@ -508,42 +672,123 @@ function MapContent() {
     });
   }, []);
 
-  // Filtered Events
-  const filteredEvents = useMemo(() => {
+  // 1. All events rendered on the GIS map canvas (driven by layers and global filters)
+  const mapEvents = useMemo(() => {
     return events.filter((ev) => {
-      // 1. Tab filter
-      if (activeTab === 'official' && !ev.is_official) return false;
-      if (activeTab === 'earth') {
-        if (!['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym)) return false;
-      }
-      if (activeTab === 'weather_flood') {
-        if (!['FL', 'RF', 'CW', 'ST', 'CV', 'TC', 'HW'].includes(ev.acronym)) return false;
-      }
-
-      // 2. Acronym filter
-      if (selectedAcronym !== 'ALL' && ev.acronym !== selectedAcronym) return false;
-
-      // 3. Country / Region filter
-      if (selectedCountry !== 'ALL' && ev.country !== selectedCountry) return false;
-
-      // 4. Severity filter
-      if (selectedSeverity !== 'ALL' && ev.severity !== selectedSeverity) return false;
-
-      // 5. Layer toggles
+      // Layer toggles
       if (ev.acronym === 'EQ' && !layerEarthquakes) return false;
       if (['FL', 'RF', 'ST', 'CW', 'TC'].includes(ev.acronym) && !layerWeatherFlood) return false;
       if (['FR', 'HW'].includes(ev.acronym) && !layerFires) return false;
       if (ev.is_community_report && !layerCommunity) return false;
 
+      // Acronym filter
+      if (selectedAcronym !== 'ALL' && ev.acronym !== selectedAcronym) return false;
+
+      // Country / Region filter
+      if (selectedCountry !== 'ALL' && ev.country !== selectedCountry) return false;
+
+      // Severity filter
+      if (selectedSeverity !== 'ALL' && ev.severity !== selectedSeverity) return false;
+
       return true;
     });
-  }, [events, activeTab, selectedAcronym, selectedCountry, selectedSeverity, layerEarthquakes, layerWeatherFlood, layerFires, layerCommunity]);
+  }, [events, selectedAcronym, selectedCountry, selectedSeverity, layerEarthquakes, layerWeatherFlood, layerFires, layerCommunity]);
 
-  // KPI Dynamic Counts
+  // 2. Events displayed in the Left Intelligence Sidebar Rail (filtered by tab)
+  const sidebarEvents = useMemo(() => {
+    return mapEvents.filter((ev) => {
+      if (activeTab === 'official') return ev.is_official;
+      if (activeTab === 'earth') return ['EQ', 'LS', 'TS', 'AV'].includes(ev.acronym);
+      if (activeTab === 'weather_flood') return ['FL', 'RF', 'CW', 'ST', 'CV', 'TC', 'HW'].includes(ev.acronym);
+      if (activeTab === 'community') return ev.is_community_report;
+      return true;
+    });
+  }, [mapEvents, activeTab]);
+
+  // KPI & Tab Dynamic Counts
   const officialAlertsCount = useMemo(() => events.filter((e) => e.is_official).length || 35, [events]);
   const earthEventsCount = useMemo(() => events.filter((e) => ['EQ', 'LS', 'TS', 'AV'].includes(e.acronym)).length || 12, [events]);
   const weatherEventsCount = useMemo(() => events.filter((e) => ['FL', 'RF', 'CW', 'ST', 'CV', 'TC', 'HW'].includes(e.acronym)).length || 15, [events]);
+  const communityReportsCount = useMemo(() => events.filter((e) => e.is_community_report).length, [events]);
   const liveFeedsCount = useMemo(() => (sourcesHealth.length > 0 ? sourcesHealth.length : 8), [sourcesHealth]);
+
+  // Comprehensive Directory List (Used in All Calamities Modal)
+  const allCalamitiesList = useMemo(() => {
+    const list: Array<{
+      id: string;
+      acronym: string;
+      title: string;
+      severity: string;
+      district?: string;
+      country: string;
+      source: string;
+      detailsText?: string;
+      coords?: [number, number];
+      is_community_report?: boolean;
+    }> = [];
+
+    events.forEach((ev) => {
+      const coords = getEventCenter(ev);
+      let details = ev.details?.safetyGuidance?.slice(0, 85);
+      if (ev.details?.magnitude !== undefined) {
+        details = `Magnitude: M ${ev.details.magnitude.toFixed(1)} · Depth: ${ev.details.depthKm || 10} km`;
+      } else if (ev.details?.waterDepthFeet !== undefined) {
+        details = `Inundation: ${ev.details.waterDepthFeet} ft · Verified field triage`;
+      } else if (ev.details?.rainfallRateMmH !== undefined) {
+        details = `Rainfall Rate: ${ev.details.rainfallRateMmH} mm/h · Radar Cell`;
+      }
+
+      list.push({
+        id: ev.id,
+        acronym: ev.acronym,
+        title: ev.title,
+        severity: ev.severity,
+        district: ev.district,
+        country: ev.country,
+        source: ev.is_community_report ? 'Citizen Ground Report' : ev.source,
+        detailsText: details,
+        coords: coords || undefined,
+        is_community_report: ev.is_community_report,
+      });
+    });
+
+    VERIFIED_SHELTERS.forEach((sh) => {
+      list.push({
+        id: sh.id,
+        acronym: 'SH',
+        title: sh.name,
+        severity: 'ADVISORY',
+        district: sh.region,
+        country: 'India',
+        source: 'Relief Logistics Command',
+        detailsText: `Capacity: ${sh.capacity} persons · Occupancy: ${sh.occupancy} · Desk: ${sh.contact}`,
+        coords: [sh.lng, sh.lat],
+        is_community_report: false,
+      });
+    });
+
+    return list;
+  }, [events]);
+
+  const filteredCalamitiesList = useMemo(() => {
+    return allCalamitiesList.filter((item) => {
+      if (calamitiesCategory !== 'ALL') {
+        if (calamitiesCategory === 'CR' && !item.is_community_report) return false;
+        if (calamitiesCategory !== 'CR' && item.acronym !== calamitiesCategory) return false;
+      }
+      if (calamitiesSeverity !== 'ALL' && item.severity !== calamitiesSeverity) return false;
+      if (calamitiesSearch.trim()) {
+        const q = calamitiesSearch.toLowerCase().trim();
+        const match =
+          item.title.toLowerCase().includes(q) ||
+          (item.district && item.district.toLowerCase().includes(q)) ||
+          item.source.toLowerCase().includes(q) ||
+          item.acronym.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [allCalamitiesList, calamitiesCategory, calamitiesSeverity, calamitiesSearch]);
 
   // Auto-focus if ?highlight or ?lat/?lng passed
   useEffect(() => {
@@ -655,17 +900,27 @@ function MapContent() {
         try { m.remove(); } catch {}
       });
       markersRef.current = [];
+      markersMapRef.current.clear();
 
-      // 1. Render Point Hazards
-      filteredEvents.forEach((ev) => {
+      // 1. Render Point Hazards & Citizen Ground Reports
+      mapEvents.forEach((ev) => {
         const coords = getEventCenter(ev);
         if (!coords) return;
 
         const el = document.createElement('div');
-        el.className = 'map-acronym-marker';
 
-        // Badge color and shape
-        if (ev.acronym === 'EQ') {
+        // Distinct styling for Community Reports vs Official Hazards
+        if (ev.is_community_report) {
+          el.className = 'map-acronym-marker map-citizen-marker';
+          el.style.width = '30px';
+          el.style.height = '30px';
+          el.style.borderRadius = '8px';
+          el.style.background = '#D97706';
+          el.style.border = '2px solid #FFFFFF';
+          el.innerText = 'CR';
+          el.title = `Citizen Ground Report: ${ev.title}`;
+        } else if (ev.acronym === 'EQ') {
+          el.className = 'map-acronym-marker';
           const mag = ev.details?.magnitude ?? 4.2;
           const size = mag >= 5.5 ? 36 : mag >= 4.5 ? 30 : 26;
           el.style.width = `${size}px`;
@@ -674,41 +929,52 @@ function MapContent() {
           el.style.background = '#EA580C';
           el.style.border = '2px solid #FFFFFF';
           el.innerText = 'EQ';
+          el.title = `USGS Earthquake: ${ev.title}`;
         } else if (ev.acronym === 'FL') {
+          el.className = 'map-acronym-marker';
           el.style.width = '28px';
           el.style.height = '28px';
           el.style.borderRadius = '6px';
           el.style.background = ev.severity === 'ADVISORY' ? '#16A34A' : '#DC2626';
           el.style.border = '2px solid #FFFFFF';
           el.innerText = 'FL';
+          el.title = `Flood Hazard: ${ev.title}`;
         } else if (ev.acronym === 'FR') {
+          el.className = 'map-acronym-marker';
           el.style.width = '28px';
           el.style.height = '28px';
           el.style.borderRadius = '6px';
           el.style.background = '#B91C1C';
           el.style.border = '2px solid #FFFFFF';
           el.innerText = 'FR';
+          el.title = `NASA Hotspot: ${ev.title}`;
         } else if (ev.acronym === 'ST') {
+          el.className = 'map-acronym-marker';
           el.style.width = '28px';
           el.style.height = '28px';
           el.style.borderRadius = '6px';
           el.style.background = '#0284C7';
           el.style.border = '2px solid #FFFFFF';
           el.innerText = 'ST';
+          el.title = `Severe Squall / Storm: ${ev.title}`;
         } else if (ev.acronym === 'CW') {
+          el.className = 'map-acronym-marker';
           el.style.width = '28px';
           el.style.height = '28px';
           el.style.borderRadius = '6px';
           el.style.background = '#1E293B';
           el.style.border = '2px solid #FFFFFF';
           el.innerText = 'CW';
+          el.title = `Cyclone Warning: ${ev.title}`;
         } else {
+          el.className = 'map-acronym-marker';
           el.style.width = '28px';
           el.style.height = '28px';
           el.style.borderRadius = '6px';
           el.style.background = ev.severity === 'SEVERE' ? '#7F1D1D' : ev.severity === 'WARNING' ? '#EA580C' : '#16A34A';
           el.style.border = '2px solid #FFFFFF';
           el.innerText = ev.acronym;
+          el.title = `${ev.acronym} Hazard: ${ev.title}`;
         }
 
         if (selectedEvent?.id === ev.id) {
@@ -718,17 +984,29 @@ function MapContent() {
           el.style.zIndex = '100';
         }
 
+        // Attach Rich Interactive Native Popup to Pin
+        const popup = new maplibregl.Popup({
+          offset: [0, -14],
+          closeButton: true,
+          closeOnClick: false,
+          maxWidth: '320px',
+          className: 'suraksha-popup',
+        }).setHTML(createHazardPopupHtml(ev));
+
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           setSelectedEvent(ev);
-          flyToCoords(coords[0], coords[1], 9);
+          flyToCoords(coords[0], coords[1], 10);
         });
 
         try {
           const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
             .setLngLat([coords[0], coords[1]])
+            .setPopup(popup)
             .addTo(mapRef.current);
+
           markersRef.current.push(marker);
+          markersMapRef.current.set(ev.id, marker);
         } catch {}
       });
 
@@ -743,7 +1021,15 @@ function MapContent() {
           el.style.background = '#1F3440';
           el.style.border = '2px solid #FFFFFF';
           el.innerText = 'SH';
-          el.title = `Relief Shelter: ${sh.name}`;
+          el.title = `Relief Shelter Camp: ${sh.name}`;
+
+          const popup = new maplibregl.Popup({
+            offset: [0, -14],
+            closeButton: true,
+            closeOnClick: false,
+            maxWidth: '320px',
+            className: 'suraksha-popup',
+          }).setHTML(createShelterPopupHtml(sh));
 
           el.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -752,7 +1038,7 @@ function MapContent() {
               source: 'Relief Logistics Command',
               source_url: '#',
               hazard_type: 'RELIEF_SHELTER',
-              acronym: 'FL',
+              acronym: 'SH' as any,
               title: sh.name,
               severity: 'ADVISORY',
               status: 'ACTIVE',
@@ -767,17 +1053,24 @@ function MapContent() {
               is_community_report: false,
               details: {
                 nearestLocality: sh.region,
-                safetyGuidance: `Transit shelter camp open. Capacity: ${sh.capacity} persons (Occupancy: ${sh.occupancy}). Provisions: ${sh.provisions}`,
+                safetyGuidance: `Transit shelter camp open. Capacity: ${sh.capacity} persons (Occupancy: ${sh.occupancy}). Provisions: ${sh.provisions}. Emergency Desk: ${sh.contact}`,
+                contact: sh.contact,
               },
             });
             flyToCoords(sh.lng, sh.lat, 11);
+            if (!popup.isOpen()) {
+              popup.addTo(mapRef.current);
+            }
           });
 
           try {
             const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
               .setLngLat([sh.lng, sh.lat])
+              .setPopup(popup)
               .addTo(mapRef.current);
+
             markersRef.current.push(marker);
+            markersMapRef.current.set(sh.id, marker);
           } catch {}
         });
       }
@@ -788,7 +1081,7 @@ function MapContent() {
     return () => {
       isMounted = false;
     };
-  }, [filteredEvents, selectedEvent, layerShelters, mapReady, flyToCoords]);
+  }, [mapEvents, selectedEvent, layerShelters, mapReady, flyToCoords]);
 
   // Reset Center
   const handleResetView = () => {
@@ -913,8 +1206,8 @@ function MapContent() {
                 </div>
               </Link>
 
-              {/* Three Tabs: Official Alerts | Earth Events | Weather */}
-              <div className={styles.threeTabsRow} role="tablist">
+              {/* Four Tabs: Official Alerts | Earth Events | Weather & Flood | Ground Reports */}
+              <div className={styles.fourTabsRow} role="tablist">
                 <button
                   type="button"
                   role="tab"
@@ -951,8 +1244,21 @@ function MapContent() {
                     setSelectedAcronym('ALL');
                   }}
                 >
-                  <span>Weather</span>
+                  <span>Weather &amp; Flood</span>
                   <span className={styles.tabBadgeNumber}>{weatherEventsCount}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'community'}
+                  className={`${styles.tabPillBtn} ${activeTab === 'community' ? styles.tabPillBtnActive : ''}`}
+                  onClick={() => {
+                    setActiveTab('community');
+                    setSelectedAcronym('ALL');
+                  }}
+                >
+                  <span>Ground Reports</span>
+                  <span className={styles.tabBadgeNumber}>{communityReportsCount}</span>
                 </button>
               </div>
 
@@ -1014,20 +1320,25 @@ function MapContent() {
                 </div>
               </div>
 
-              {/* Latest Official Alerts Header */}
+              {/* Latest Alerts List Header */}
               <div className={styles.alertsListHeader}>
                 <div className={styles.alertsHeaderTitleWrap}>
-                  <span className={styles.alertsHeaderTitle}>Latest Official Alerts</span>
-                  <span className={styles.alertsCountBadge}>{filteredEvents.length}</span>
+                  <span className={styles.alertsHeaderTitle}>
+                    {activeTab === 'community'
+                      ? 'Ground Citizen Reports'
+                      : activeTab === 'earth'
+                      ? 'Earth & Seismic Events'
+                      : activeTab === 'weather_flood'
+                      ? 'Weather & Flood Alerts'
+                      : 'Latest Official Alerts'}
+                  </span>
+                  <span className={styles.alertsCountBadge}>{sidebarEvents.length}</span>
                 </div>
                 <button
                   type="button"
                   className={styles.viewAllLink}
-                  onClick={() => {
-                    setSelectedAcronym('ALL');
-                    setSelectedSeverity('ALL');
-                    setSelectedCountry('ALL');
-                  }}
+                  onClick={() => setIsAllCalamitiesModalOpen(true)}
+                  title="Open National Calamities & Disasters Directory"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
                   View All →
@@ -1036,12 +1347,14 @@ function MapContent() {
 
               {/* Scrollable Alerts List */}
               <div className={styles.alertsScrollList}>
-                {filteredEvents.length === 0 ? (
+                {sidebarEvents.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#60717B', fontSize: '13px' }}>
-                    No alerts found for this filter criteria.
+                    {activeTab === 'community'
+                      ? 'No active citizen ground reports for this region.'
+                      : 'No alerts found for this filter criteria.'}
                   </div>
                 ) : (
-                  filteredEvents.map((ev) => {
+                  sidebarEvents.map((ev) => {
                     const isSelected = selectedEvent?.id === ev.id;
 
                     let badgeClass = styles.badgeEq;
@@ -1066,11 +1379,21 @@ function MapContent() {
                         onClick={() => {
                           setSelectedEvent(ev);
                           const center = getEventCenter(ev);
-                          if (center) flyToCoords(center[0], center[1], 9);
+                          if (center) {
+                            flyToCoords(center[0], center[1], 10);
+                            const targetMarker = markersMapRef.current.get(ev.id);
+                            if (targetMarker) {
+                              const p = targetMarker.getPopup();
+                              if (p && !p.isOpen()) targetMarker.togglePopup();
+                            }
+                          }
                         }}
                       >
-                        <div className={`${styles.cardAcronymSquare} ${badgeClass}`}>
-                          {ev.acronym}
+                        <div
+                          className={`${styles.cardAcronymSquare} ${badgeClass}`}
+                          style={ev.is_community_report ? { background: '#D97706' } : undefined}
+                        >
+                          {ev.is_community_report ? 'CR' : ev.acronym}
                         </div>
 
                         <div className={styles.cardDetailsCol}>
@@ -1091,29 +1414,34 @@ function MapContent() {
                               <span>Magnitude: M {ev.details.magnitude.toFixed(1)} · Depth: {ev.details.depthKm || 10} km</span>
                             )}
                             {ev.details?.waterDepthFeet !== undefined && (
-                              <span>Water Inundation: {ev.details.waterDepthFeet} ft · Lowland Sector</span>
+                              <span>Water Inundation: {ev.details.waterDepthFeet} ft · Observed depth</span>
                             )}
                             {ev.details?.rainfallRateMmH !== undefined && (
                               <span>Rain Rate: {ev.details.rainfallRateMmH} mm/h · Monsoon Surge</span>
                             )}
+                            {ev.details?.moderationStatus && (
+                              <span style={{ color: ev.confidence === 'VERIFIED' ? '#16A34A' : '#D97706', fontWeight: 700 }}>
+                                ● Status: {ev.details.moderationStatus}
+                              </span>
+                            )}
                             {ev.details?.riverBasin && (
                               <span>Basin: {ev.details.riverBasin}</span>
                             )}
-                            {ev.details?.magnitude === undefined && !ev.details?.waterDepthFeet && !ev.details?.rainfallRateMmH && !ev.details?.riverBasin && (
+                            {ev.details?.magnitude === undefined && !ev.details?.waterDepthFeet && !ev.details?.rainfallRateMmH && !ev.details?.riverBasin && !ev.details?.moderationStatus && (
                               <span>{ev.details?.safetyGuidance?.slice(0, 65) || 'Telemetry recorded by official monitoring network.'}</span>
                             )}
                           </div>
 
                           <div className={styles.cardFooterVerified}>
-                            <span>{ev.freshness || `${ev.source} Verified`}</span>
+                            <span>{ev.freshness || (ev.is_community_report ? 'Citizen Ground Submission' : `${ev.source} Verified`)}</span>
                             <a
                               href={ev.source_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              target={ev.source_url.startsWith('http') ? '_blank' : undefined}
+                              rel={ev.source_url.startsWith('http') ? 'noopener noreferrer' : undefined}
                               className={styles.verifiedSourceLink}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              {ev.source} ↗
+                              {ev.is_community_report ? 'Track Ground Report' : ev.source} ↗
                             </a>
                           </div>
                         </div>
@@ -1258,6 +1586,14 @@ function MapContent() {
                         type="checkbox"
                         checked={layerShelters}
                         onChange={(e) => setLayerShelters(e.target.checked)}
+                      />
+                    </label>
+                    <label className={styles.layerCheckboxLabel}>
+                      <span>Citizen Reports (Public CR)</span>
+                      <input
+                        type="checkbox"
+                        checked={layerCommunity}
+                        onChange={(e) => setLayerCommunity(e.target.checked)}
                       />
                     </label>
                   </div>
@@ -1541,8 +1877,21 @@ function MapContent() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800, background: '#EBF4F7', color: '#4C8DA2', padding: '2px 8px', borderRadius: '4px' }}>
-                    {selectedEvent.acronym} &bull; {selectedEvent.severity}
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      background: selectedEvent.acronym === 'SH' ? '#E8F5EE' : selectedEvent.is_community_report ? '#FEF3C7' : '#EBF4F7',
+                      color: selectedEvent.acronym === 'SH' ? '#2E7D32' : selectedEvent.is_community_report ? '#D97706' : '#4C8DA2',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {selectedEvent.acronym === 'SH'
+                      ? 'SH • ACTIVE RELIEF CAMP'
+                      : selectedEvent.is_community_report
+                      ? 'CR • CITIZEN GROUND REPORT'
+                      : `${selectedEvent.acronym} • ${selectedEvent.severity}`}
                   </span>
                   <button
                     type="button"
@@ -1562,24 +1911,43 @@ function MapContent() {
                   {selectedEvent.details?.safetyGuidance || 'No additional safety notes provided.'}
                 </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <a
-                    href={selectedEvent.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      flex: 1,
-                      background: '#1F3440',
-                      color: '#FFFFFF',
-                      padding: '7px 12px',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      textAlign: 'center',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {selectedEvent.source} ↗
-                  </a>
+                  {selectedEvent.acronym === 'SH' ? (
+                    <a
+                      href={`tel:${selectedEvent.details?.contact || '112'}`}
+                      style={{
+                        flex: 1,
+                        background: '#1F3440',
+                        color: '#FFFFFF',
+                        padding: '7px 12px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      📞 Call Desk ({selectedEvent.details?.contact || '112'})
+                    </a>
+                  ) : (
+                    <a
+                      href={selectedEvent.source_url}
+                      target={selectedEvent.source_url.startsWith('http') ? '_blank' : undefined}
+                      rel={selectedEvent.source_url.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      style={{
+                        flex: 1,
+                        background: '#1F3440',
+                        color: '#FFFFFF',
+                        padding: '7px 12px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {selectedEvent.is_community_report ? 'Track Ground Report ↗' : `${selectedEvent.source} ↗`}
+                    </a>
+                  )}
                   <Link
                     href="/report"
                     style={{
@@ -1701,6 +2069,173 @@ function MapContent() {
             }}
           >
             {toastMessage}
+          </div>
+        )}
+
+        {/* ============================================================
+            4. ALL CALAMITIES & DISASTER INTELLIGENCE DIRECTORY MODAL
+            ============================================================ */}
+        {isAllCalamitiesModalOpen && (
+          <div
+            className={styles.allCalamitiesOverlay}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsAllCalamitiesModalOpen(false);
+            }}
+          >
+            <div
+              className={styles.allCalamitiesCard}
+              role="dialog"
+              aria-modal="true"
+              aria-label="National Calamities and Disasters Directory"
+            >
+              {/* Modal Header */}
+              <div className={styles.modalHeader}>
+                <div className={styles.modalHeaderTop}>
+                  <div className={styles.modalHeaderLeft}>
+                    <span className={styles.modalLivePill}>● Live Telemetry</span>
+                    <h3 className={styles.modalTitle}>National Calamities &amp; Disaster Directory</h3>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.modalCloseBtn}
+                    onClick={() => setIsAllCalamitiesModalOpen(false)}
+                    title="Close Directory"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Real-time Search Input */}
+                <div className={styles.modalSearchRow}>
+                  <span className={styles.modalSearchIcon}>🔍</span>
+                  <input
+                    type="text"
+                    className={styles.modalSearchInput}
+                    placeholder="Search calamities by region, district, agency, or hazard type..."
+                    value={calamitiesSearch}
+                    onChange={(e) => setCalamitiesSearch(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
+                {/* Category Filter Chips */}
+                <div className={styles.modalFiltersRow}>
+                  {[
+                    { id: 'ALL', label: `All Calamities (${allCalamitiesList.length})` },
+                    { id: 'EQ', label: `Earthquakes (${allCalamitiesList.filter((c) => c.acronym === 'EQ').length})` },
+                    { id: 'FL', label: `Floods (${allCalamitiesList.filter((c) => c.acronym === 'FL').length})` },
+                    { id: 'RF', label: `Cloudburst / Rain (${allCalamitiesList.filter((c) => c.acronym === 'RF').length})` },
+                    { id: 'ST', label: `Storms (${allCalamitiesList.filter((c) => c.acronym === 'ST').length})` },
+                    { id: 'FR', label: `Fires (${allCalamitiesList.filter((c) => c.acronym === 'FR').length})` },
+                    { id: 'CR', label: `Citizen Reports (${allCalamitiesList.filter((c) => c.is_community_report).length})` },
+                    { id: 'SH', label: `Relief Shelters (${VERIFIED_SHELTERS.length})` },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={`${styles.modalCatChip} ${calamitiesCategory === cat.id ? styles.modalCatChipActive : ''}`}
+                      onClick={() => setCalamitiesCategory(cat.id as any)}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Scrollable Body */}
+              <div className={styles.modalBody}>
+                {filteredCalamitiesList.length === 0 ? (
+                  <div className={styles.emptyStateBox}>
+                    No calamity or emergency records found matching your search query.
+                  </div>
+                ) : (
+                  <div className={styles.modalCalamityGrid}>
+                    {filteredCalamitiesList.map((item) => {
+                      let badgeBg = '#16A34A';
+                      if (item.acronym === 'EQ') badgeBg = '#EA580C';
+                      else if (item.acronym === 'FL') badgeBg = item.severity === 'ADVISORY' ? '#16A34A' : '#DC2626';
+                      else if (item.acronym === 'FR') badgeBg = '#B91C1C';
+                      else if (item.acronym === 'ST') badgeBg = '#0284C7';
+                      else if (item.acronym === 'SH') badgeBg = '#1F3440';
+                      if (item.is_community_report) badgeBg = '#D97706';
+
+                      return (
+                        <div key={item.id} className={styles.modalItemCard}>
+                          <div className={styles.modalItemTop}>
+                            <div className={styles.modalItemAcronym} style={{ background: badgeBg }}>
+                              {item.is_community_report ? 'CR' : item.acronym}
+                            </div>
+                            <div className={styles.modalItemDetails}>
+                              <div className={styles.modalItemTitleRow}>
+                                <h4 className={styles.modalItemTitle}>{item.title}</h4>
+                                <span
+                                  style={{
+                                    fontSize: '9.5px',
+                                    fontWeight: 800,
+                                    padding: '2px 7px',
+                                    borderRadius: '4px',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.03em',
+                                    background:
+                                      item.severity === 'SEVERE'
+                                        ? '#7F1D1D'
+                                        : item.severity === 'WARNING'
+                                        ? '#FEF2F2'
+                                        : '#F0FDF4',
+                                    color:
+                                      item.severity === 'SEVERE'
+                                        ? '#FFFFFF'
+                                        : item.severity === 'WARNING'
+                                        ? '#DC2626'
+                                        : '#16A34A',
+                                  }}
+                                >
+                                  {item.severity}
+                                </span>
+                              </div>
+                              <div className={styles.modalItemLoc}>
+                                📍 {item.district ? `${item.district}, ` : ''}{item.country}
+                              </div>
+                              {item.detailsText && (
+                                <div className={styles.modalItemMetric}>
+                                  {item.detailsText}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className={styles.modalItemBottom}>
+                            <span className={styles.modalItemSource}>
+                              {item.is_community_report ? 'Citizen Ground Report' : item.source}
+                            </span>
+                            <button
+                              type="button"
+                              className={styles.modalLocateBtn}
+                              onClick={() => {
+                                setIsAllCalamitiesModalOpen(false);
+                                const coords = item.coords;
+                                if (coords) {
+                                  flyToCoords(coords[0], coords[1], 10.5);
+                                  setTimeout(() => {
+                                    const marker = markersMapRef.current.get(item.id);
+                                    if (marker) {
+                                      const p = marker.getPopup();
+                                      if (p && !p.isOpen()) marker.togglePopup();
+                                    }
+                                  }, 500);
+                                }
+                              }}
+                            >
+                              Locate on GIS Map 🎯
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </main>

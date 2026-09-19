@@ -295,27 +295,35 @@
   font-weight: 500;
 }
 
-/* 3 Tabs Row */
-.threeTabsRow {
+/* 4 Tabs 2x2 Grid */
+.fourTabsRow {
   margin: 0 1.25rem 0.75rem;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
+.threeTabsRow {
+  margin: 0 1.25rem 0.75rem;
+  display: flex;
+  gap: 5px;
+}
+
 .tabPillBtn {
-  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
   background: #FFFFFF;
   border: 1.5px solid #C8E3EA;
-  border-radius: 9999px;
+  border-radius: 12px;
   padding: 6px 10px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #60717B;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 5px;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
@@ -332,8 +340,15 @@
 }
 
 .tabBadgeNumber {
-  font-size: 10.5px;
-  opacity: 0.85;
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 5px;
+  border-radius: 9999px;
+}
+
+.tabPillBtnActive .tabBadgeNumber {
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
 }
 
 /* Filter Controls Section */
@@ -1095,7 +1110,7 @@
 }
 
 /* ============================================================
-   4. MapLibre Custom Marker Elements
+   4. MapLibre Custom Marker Elements & Interactive Popups
    ============================================================ */
 .mapCard :global(.map-acronym-marker) {
   cursor: pointer !important;
@@ -1113,6 +1128,548 @@
 .mapCard :global(.map-acronym-marker:hover) {
   transform: scale(1.15) !important;
   z-index: 50 !important;
+}
+
+/* Pulsating Citizen Ground Report Marker */
+.mapCard :global(.map-acronym-marker.map-citizen-marker) {
+  background: #D97706 !important;
+  position: relative;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 4px 12px rgba(217, 119, 6, 0.45) !important;
+}
+
+.mapCard :global(.map-citizen-marker::after) {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  border: 2px solid #D97706;
+  animation: citizenPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes citizenPing {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  75%, 100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* MapLibre Anchor Popup Styles (Native on-pin popup cards) */
+.mapCard :global(.maplibregl-popup) {
+  z-index: 100 !important;
+  max-width: 320px !important;
+}
+
+.mapCard :global(.maplibregl-popup-content) {
+  background: #FFFFFF !important;
+  border: 1.5px solid #C8E3EA !important;
+  border-radius: 18px !important;
+  box-shadow: 0 12px 36px rgba(31, 52, 64, 0.22) !important;
+  padding: 14px 16px !important;
+  font-family: var(--font-family-body, 'Inter', -apple-system, sans-serif) !important;
+  color: #1F3440 !important;
+  line-height: 1.4 !important;
+}
+
+.mapCard :global(.maplibregl-popup-tip) {
+  border-top-color: #FFFFFF !important;
+}
+
+.mapCard :global(.maplibregl-popup-close-button) {
+  font-size: 18px !important;
+  color: #60717B !important;
+  padding: 6px 10px !important;
+  right: 6px !important;
+  top: 6px !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  outline: none !important;
+  transition: color 0.15s ease !important;
+}
+
+.mapCard :global(.maplibregl-popup-close-button:hover) {
+  color: #1F3440 !important;
+}
+
+.mapCard :global(.suraksha-popup-inner) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mapCard :global(.popup-top-row) {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mapCard :global(.popup-badge) {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #FFFFFF;
+  font-family: var(--font-family-mono, monospace);
+  flex-shrink: 0;
+}
+
+.mapCard :global(.popup-badge-label) {
+  font-size: 9.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.mapCard :global(.popup-source-tag) {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: #60717B;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding-right: 18px; /* space for close X */
+}
+
+.mapCard :global(.popup-title) {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1F3440;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.mapCard :global(.popup-loc) {
+  font-size: 11.5px;
+  color: #60717B;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mapCard :global(.popup-metric-box) {
+  background: #F8FBFC;
+  border: 1px solid #EDF5F8;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #1F3440;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mapCard :global(.popup-metric-row) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mapCard :global(.popup-metric-key) {
+  font-weight: 600;
+  color: #60717B;
+}
+
+.mapCard :global(.popup-metric-val) {
+  font-weight: 800;
+  color: #1F3440;
+}
+
+.mapCard :global(.popup-occupancy-bar) {
+  width: 100%;
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin: 3px 0;
+}
+
+.mapCard :global(.popup-occupancy-fill) {
+  height: 100%;
+  background: #4C8DA2;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.mapCard :global(.popup-provisions) {
+  font-size: 10.5px;
+  color: #475569;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.mapCard :global(.popup-guidance) {
+  font-size: 11px;
+  color: #435460;
+  margin: 0;
+  line-height: 1.4;
+  border-left: 2px solid #4C8DA2;
+  padding-left: 8px;
+}
+
+.mapCard :global(.popup-actions) {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mapCard :global(.popup-btn-primary) {
+  flex: 1;
+  background: #1F3440;
+  color: #FFFFFF !important;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.mapCard :global(.popup-btn-primary:hover) {
+  background: #2D4A5B;
+}
+
+.mapCard :global(.popup-btn-secondary) {
+  flex: 1;
+  background: #F8FBFC;
+  border: 1.5px solid #C8E3EA;
+  color: #1F3440 !important;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mapCard :global(.popup-btn-secondary:hover) {
+  background: #EBF4F7;
+  border-color: #4C8DA2;
+}
+
+/* ============================================================
+   All Calamities & Disaster Intelligence Directory Modal
+   ============================================================ */
+.allCalamitiesOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 27, 34, 0.65);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeInModal 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.allCalamitiesCard {
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(15, 27, 34, 0.28);
+  width: 100%;
+  max-width: 960px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpModal {
+  from { transform: translateY(20px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.modalHeader {
+  padding: 1.5rem 1.75rem 1rem;
+  border-bottom: 1px solid #EDF5F8;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modalHeaderTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalTitle {
+  font-family: var(--font-family-heading, 'Manrope', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1F3440;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.modalLivePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #E8F5EE;
+  color: #2E7D32;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid #C7E6D0;
+}
+
+.modalCloseBtn {
+  background: #F8FBFC;
+  border: 1.5px solid #C8E3EA;
+  color: #60717B;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+  background: #1F3440;
+  color: #FFFFFF;
+  border-color: #1F3440;
+}
+
+.modalSearchRow {
+  position: relative;
+  width: 100%;
+}
+
+.modalSearchInput {
+  width: 100%;
+  box-sizing: border-box;
+  background: #F8FBFC;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 12px;
+  padding: 10px 14px 10px 38px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1F3440;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.modalSearchInput:focus {
+  background: #FFFFFF;
+  border-color: #4C8DA2;
+  box-shadow: 0 0 0 3px rgba(76, 141, 162, 0.12);
+}
+
+.modalSearchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #60717B;
+  pointer-events: none;
+}
+
+.modalFiltersRow {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.modalFiltersRow::-webkit-scrollbar {
+  display: none;
+}
+
+.modalCatChip {
+  background: #FFFFFF;
+  border: 1.5px solid #C8E3EA;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #60717B;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.modalCatChip:hover {
+  border-color: #4C8DA2;
+  color: #1F3440;
+}
+
+.modalCatChipActive {
+  background: #1F3440;
+  border-color: #1F3440;
+  color: #FFFFFF !important;
+}
+
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem 1.75rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modalCalamityGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .modalCalamityGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modalItemCard {
+  background: #FFFFFF;
+  border: 1px solid #DCEEF2;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.15s ease;
+}
+
+.modalItemCard:hover {
+  border-color: #4C8DA2;
+  box-shadow: 0 4px 16px rgba(31, 52, 64, 0.06);
+}
+
+.modalItemTop {
+  display: flex;
+  gap: 10px;
+}
+
+.modalItemAcronym {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+  font-family: var(--font-family-mono, monospace);
+  flex-shrink: 0;
+}
+
+.modalItemDetails {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modalItemTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.modalItemTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1F3440;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.modalItemLoc {
+  font-size: 11.5px;
+  color: #60717B;
+}
+
+.modalItemMetric {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1F3440;
+  background: #F8FBFC;
+  border: 1px solid #EDF5F8;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-top: 4px;
+}
+
+.modalItemBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px solid #F1F7F9;
+  font-size: 11px;
+}
+
+.modalItemSource {
+  color: #60717B;
+  font-weight: 600;
+}
+
+.modalLocateBtn {
+  background: #1F3440;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.modalLocateBtn:hover {
+  background: #4C8DA2;
+}
+
+.emptyStateBox {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  color: #60717B;
+  font-size: 13.5px;
 }
 
 /* ============================================================

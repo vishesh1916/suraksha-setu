@@ -17,7 +17,9 @@ export type HazardAcronym =
   | 'DR' // Drought
   | 'TS' // Tsunami
   | 'AV' // Avalanche
-  | 'AQ'; // Air Quality alert
+  | 'AQ' // Air Quality alert
+  | 'SH' // Relief Shelter Camp
+  | 'CR'; // Citizen Ground Report
 
 export type HazardSeverity = 'ADVISORY' | 'WATCH' | 'WARNING' | 'SEVERE';
 
@@ -128,6 +130,20 @@ export const HAZARD_ACRONYM_META: Record<HazardAcronym, HazardAcronymMeta> = {
     primarySource: 'CPCB / SAFAR / OpenAQ',
     description: 'Severe PM2.5 / PM10 particulate exceedances and health advisories',
   },
+  SH: {
+    acronym: 'SH',
+    name: 'Relief Shelter Camp',
+    categoryGroup: 'SPECIAL',
+    primarySource: 'NDRF / District Administration / SDMA',
+    description: 'Evacuation centers, humanitarian transit shelters, and camp logistics',
+  },
+  CR: {
+    acronym: 'CR',
+    name: 'Citizen Ground Report',
+    categoryGroup: 'SPECIAL',
+    primarySource: 'Suraksha Setu Public Citizen Ground Observations',
+    description: 'Crowdsourced citizen field observations and hyper-local flood observations',
+  },
 };
 
 /**
@@ -176,6 +192,8 @@ export interface UnifiedHazardEvent {
     pm25?: number;
     aqi?: number;
     moderationStatus?: 'Received' | 'Under review' | 'Verified' | 'Dismissed' | 'Resolved';
+    actionCategory?: string;
+    tacticalAction?: string;
     mediaUrl?: string;
     reportCount?: number;
     shelterProvisions?: string;
