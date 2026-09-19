@@ -75,9 +75,10 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Error in POST /api/sos:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to broadcast SOS emergency beacon' },
+      { success: false, error: error?.message || 'Failed to broadcast SOS emergency beacon' },
       { status: 500 }
     );
   }

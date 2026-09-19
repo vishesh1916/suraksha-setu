@@ -29,7 +29,7 @@
         },
         {
           "id": "act_del_02",
-          "action": "Verified Genuine \u2014 Pending Tactical Action",
+          "action": "Verified Genuine — Pending Tactical Action",
           "actorName": "Doppler Reviewer Dr. Sharma",
           "notes": "Corroborated with Palam Doppler radar (38 dBZ storm cell) and automatic rain gauge (42mm/h).",
           "timestamp": "2026-09-17T15:48:14.452Z"
@@ -87,7 +87,7 @@
       },
       "h3Index": "882aa494b9e0fffff",
       "landmark": "Outer Ring Road, Bellandur, Bengaluru",
-      "waterDepthFeet": 2.0,
+      "waterDepthFeet": 2,
       "consent": true,
       "status": "REVIEWED",
       "verificationStatus": "VERIFIED_GENUINE",
@@ -139,6 +139,7 @@
       "firstActionTaken": "Pending Verification"
     }
   ],
+  "incidents": [],
   "alerts": [
     {
       "id": "alert_imd_delhi_yamuna_red",
@@ -173,15 +174,15 @@
       "severity": 5,
       "category": "FLOODING",
       "areaName": "NCT Delhi & Yamuna Basin",
-      "headline": "\ud83d\udd34 IMD RED ALERT: Flash Flood & Yamuna Inundation Warning \u2014 NCT Delhi",
+      "headline": "🔴 IMD RED ALERT: Flash Flood & Yamuna Inundation Warning — NCT Delhi",
       "guidance": "National Disaster Management Authority & Delhi Emergency Operations: Extreme monsoon discharge recorded across Yamuna River catchment. Salimgarh bypass, Kashmere Gate Ring Road, and Pragati Maidan underpass corridors severely inundated (>3.8 ft). Citizens strictly advised to avoid low-lying underpasses and arterial riverine transit corridors.",
-      "startsAt": "2026-09-17T15:23:14.452Z",
-      "expiresAt": "2026-09-18T06:23:14.452Z",
+      "startsAt": "2026-09-19T04:00:16.365Z",
+      "expiresAt": "2026-09-19T19:00:16.365Z",
       "publishedBy": "DDMA / IMD National Weather Forecasting Centre",
       "status": "PUBLISHED",
       "source": "India Meteorological Department & Delhi Disaster Management Authority",
       "createdAt": "2026-09-17T15:23:14.452Z",
-      "updatedAt": "2026-09-17T16:23:14.452Z"
+      "updatedAt": "2026-09-19T05:00:16.366Z"
     },
     {
       "id": "alert_incois_mumbai_surge_orange",
@@ -216,15 +217,15 @@
       "severity": 4,
       "category": "FLOODING",
       "areaName": "Mumbai & Konkan Coastline",
-      "headline": "\ud83d\udfe0 INCOIS ORANGE ALERT: Arabian Sea Coastal Inundation & Spring High Tide",
+      "headline": "🟠 INCOIS ORANGE ALERT: Arabian Sea Coastal Inundation & Spring High Tide",
       "guidance": "Indian National Centre for Ocean Information Services (INCOIS): Spring high tide surge reaching 4.87m coinciding with intense squall rains. Sea surge breaching Mahim Causeway and Marine Drive seawalls. Citizens strictly advised to stay away from promenades and low-lying coastal arterial roads.",
-      "startsAt": "2026-09-17T14:23:14.452Z",
-      "expiresAt": "2026-09-18T04:23:14.452Z",
+      "startsAt": "2026-09-19T04:00:16.365Z",
+      "expiresAt": "2026-09-19T19:00:16.365Z",
       "publishedBy": "MCGM Disaster Management Unit",
       "status": "PUBLISHED",
       "source": "Indian National Centre for Ocean Information Services (INCOIS)",
       "createdAt": "2026-09-17T14:23:14.452Z",
-      "updatedAt": "2026-09-17T16:23:14.452Z"
+      "updatedAt": "2026-09-19T05:00:16.366Z"
     },
     {
       "id": "alert_cwc_guwahati_brahmaputra_red",
@@ -259,15 +260,15 @@
       "severity": 5,
       "category": "FLOODING",
       "areaName": "Guwahati & Brahmaputra Catchment",
-      "headline": "\ud83d\udd34 CWC RED ADVISORY: Brahmaputra River Above Extreme Inundation Level",
+      "headline": "🔴 CWC RED ADVISORY: Brahmaputra River Above Extreme Inundation Level",
       "guidance": "Central Water Commission (CWC) Official Hydro-Bulletin: River Brahmaputra at Guwahati Gauge Station is flowing at 50.18m (0.68m above Extreme Danger Level) with rising trend. SDRF and 1st NDRF Battalion deployed with rescue motorboats. Avoid ferry transit.",
-      "startsAt": "2026-09-17T13:23:14.452Z",
-      "expiresAt": "2026-09-18T16:23:14.452Z",
+      "startsAt": "2026-09-19T04:00:16.365Z",
+      "expiresAt": "2026-09-19T19:00:16.365Z",
       "publishedBy": "Central Water Commission & ASDMA",
       "status": "PUBLISHED",
       "source": "Central Water Commission (CWC) Hydrological Sentinel",
       "createdAt": "2026-09-17T13:23:14.452Z",
-      "updatedAt": "2026-09-17T16:23:14.452Z"
+      "updatedAt": "2026-09-19T05:00:16.366Z"
     },
     {
       "id": "alert_imd_hp_cloudburst_orange",
@@ -302,15 +303,15 @@
       "severity": 4,
       "category": "CLOUDBURST",
       "areaName": "Kangra & Western Himalayan Foothills",
-      "headline": "\ud83d\udfe0 IMD ORANGE ALERT: Severe Cloudburst & Slope Debris Flow Watch",
+      "headline": "🟠 IMD ORANGE ALERT: Severe Cloudburst & Slope Debris Flow Watch",
       "guidance": "State Disaster Management Authority Himachal Pradesh: Doppler Radar at Shimla indicates cloudburst rain rates exceeding 80mm/hr over Kangra / Dharamsala slopes. High vulnerability of flash mudslides along NH-154. Travel restricted.",
-      "startsAt": "2026-09-17T15:23:14.452Z",
-      "expiresAt": "2026-09-18T00:23:14.452Z",
+      "startsAt": "2026-09-19T04:00:16.365Z",
+      "expiresAt": "2026-09-19T19:00:16.365Z",
       "publishedBy": "HPSDMA State Emergency Operations Centre",
       "status": "PUBLISHED",
       "source": "India Meteorological Department Shimla Radar & HPSDMA",
       "createdAt": "2026-09-17T15:23:14.452Z",
-      "updatedAt": "2026-09-17T16:23:14.452Z"
+      "updatedAt": "2026-09-19T05:00:16.366Z"
     },
     {
       "id": "alert_imd_bengaluru_yellow",
@@ -345,7 +346,7 @@
       "severity": 3,
       "category": "WATERLOGGING",
       "areaName": "Bengaluru Urban IT Corridor",
-      "headline": "\ud83d\udfe1 IMD YELLOW ADVISORY: Convective Storm Waterlogging & Squall Watch",
+      "headline": "🟡 IMD YELLOW ADVISORY: Convective Storm Waterlogging & Squall Watch",
       "guidance": "IMD Bengaluru Regional Meteorological Centre: Intense localized convective rain bands accompanied by 50 km/h wind squalls across Mahadevapura and Bellandur corridors. BBMP rapid-action dewatering pumps stationed.",
       "startsAt": "2026-09-17T15:38:14.452Z",
       "expiresAt": "2026-09-17T22:23:14.452Z",
@@ -356,8 +357,89 @@
       "updatedAt": "2026-09-17T16:23:14.452Z"
     }
   ],
-  "incidents": [],
-  "sosRequests": [],
-  "auditEvents": [],
-  "savedAt": "2026-09-17T16:23:14.452Z"
+  "sosRequests": [
+    {
+      "reporterName": "Kavita Verma",
+      "phone": "+91 99351 12345",
+      "location": {
+        "latitude": 26.848,
+        "longitude": 80.947
+      },
+      "landmark": "Near Gomti Riverfront Gate 3, Lucknow",
+      "hazardType": "FLOODING",
+      "peopleCount": 5,
+      "hasMedicalEmergency": true,
+      "notes": "Ground floor inundated with 4ft water.",
+      "id": "sos_mu85vrt0_zbxx5",
+      "status": "DISPATCHED",
+      "createdAt": "2026-09-19T09:04:50.052Z",
+      "updatedAt": "2026-09-19T09:05:12.551Z",
+      "dispatchedUnit": "SDRF Water Flotilla Team 4 (ETA: 7m)"
+    },
+    {
+      "id": "sos_req_delhi_01",
+      "reporterName": "Aarav Sharma",
+      "phone": "+91 98110 44821",
+      "location": {
+        "latitude": 28.6328,
+        "longitude": 77.2197
+      },
+      "landmark": "Near Pragati Maidan Tunnel Underpass, Mathura Road Corridor, New Delhi",
+      "hazardType": "FLOODING",
+      "peopleCount": 4,
+      "hasMedicalEmergency": true,
+      "notes": "Car submerged up to bonnet in underpass floodwaters. Elderly diabetic passenger requires urgent insulin & water evacuation.",
+      "status": "DISPATCHED",
+      "dispatchedUnit": "NDRF 8th Battalion Water Rescue Unit (Boat #3)",
+      "createdAt": "2026-09-19T04:40:16.366Z",
+      "updatedAt": "2026-09-19T04:55:16.366Z"
+    },
+    {
+      "id": "sos_req_mumbai_02",
+      "reporterName": "Rohit Kulkarni",
+      "phone": "+91 98201 55902",
+      "location": {
+        "latitude": 19.0178,
+        "longitude": 72.8478
+      },
+      "landmark": "Near Hindmata Cinema Junction, Dadar East, Mumbai",
+      "hazardType": "FLOODING",
+      "peopleCount": 6,
+      "hasMedicalEmergency": false,
+      "notes": "Ground floor shop flooded with 3.5ft water. 6 people stranded on mezzanine slab. Power lines sparking nearby.",
+      "status": "PENDING_RESCUE",
+      "createdAt": "2026-09-19T04:30:16.366Z",
+      "updatedAt": "2026-09-19T04:30:16.366Z"
+    }
+  ],
+  "auditEvents": [
+    {
+      "id": "id_mu85vrt0_7zjddjb",
+      "actorId": "Kavita Verma",
+      "actorRole": "CITIZEN",
+      "entityType": "sos",
+      "entityId": "sos_mu85vrt0_zbxx5",
+      "action": "SOS_DISTRESS_BROADCAST",
+      "metadata": {
+        "landmark": "Near Gomti Riverfront Gate 3, Lucknow",
+        "peopleCount": 5,
+        "hasMedicalEmergency": true
+      },
+      "createdAt": "2026-09-19T09:04:50.052Z"
+    },
+    {
+      "id": "id_mu85w95z_wm0qizb",
+      "actorId": "Rescue Coordinator",
+      "actorRole": "OFFICER",
+      "entityType": "sos",
+      "entityId": "sos_mu85vrt0_zbxx5",
+      "action": "SOS_STATUS_UPDATE",
+      "metadata": {
+        "status": "DISPATCHED",
+        "dispatchedUnit": "SDRF Water Flotilla Team 4 (ETA: 7m)"
+      },
+      "createdAt": "2026-09-19T09:05:12.551Z"
+    }
+  ],
+  "savedAt": "2026-09-19T09:05:12.551Z"
 }

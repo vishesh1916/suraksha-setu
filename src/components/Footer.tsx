@@ -49,6 +49,7 @@ export function Footer() {
           <div className={styles.linkCol}>
             <h4 className={styles.colTitle}>Operations</h4>
             <ul className={styles.linkList}>
+              <li><Link href="/sos" style={{ color: '#D76D63', fontWeight: 600 }}>🚨 Emergency SOS Hub</Link></li>
               <li><Link href="/authorities">For Authorities</Link></li>
               <li><Link href="/staff/admin">Command Triage</Link></li>
               <li><Link href="/safety">Safety Guidelines</Link></li>

@@ -294,6 +294,21 @@ class DataStore {
     const now = Date.now();
     this.sosRequests = [
       {
+        id: 'sos_req_lucknow_ward14',
+        reporterName: 'Resident Welfare Association (RWA) Sector 14',
+        phone: '+91 94150 82914',
+        location: { latitude: 26.8467, longitude: 80.9462 },
+        landmark: 'Ward 14, Gomti Lowlands, Near Bandha Road, Lucknow, Uttar Pradesh',
+        hazardType: 'FLOODING',
+        peopleCount: 12,
+        hasMedicalEmergency: true,
+        notes: 'Water level breached 4.2 ft ground level in residential alleyway. 12 residents trapped on 1st floor terraces; elderly citizen requires dialysis support.',
+        status: 'DISPATCHED',
+        dispatchedUnit: 'NDRF 11th Bn Quick Response Boat Unit 02 (ETA: 8 mins)',
+        createdAt: new Date(now - 600000).toISOString(),
+        updatedAt: new Date(now - 120000).toISOString(),
+      },
+      {
         id: 'sos_req_delhi_01',
         reporterName: 'Aarav Sharma',
         phone: '+91 98110 44821',
