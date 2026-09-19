@@ -386,7 +386,7 @@ export default function LandingPage() {
                     <div className={styles.opsCardBody}>
                       <div className={styles.opsBadgeRow}>
                         <span className={latestSos ? styles.opsUrgentBadge : styles.opsStandbyBadge}>
-                          <span>{latestSos ? '⚡ CRITICAL RESCUE SIGNAL' : '🟢 STANDBY BEACON ACTIVE'}</span>
+                          <span>{latestSos ? '⚡ CRITICAL RESCUE SIGNAL' : 'STANDBY BEACON ACTIVE'}</span>
                         </span>
                         <span className={styles.opsTimestamp}>
                           {latestSos && latestSos.location

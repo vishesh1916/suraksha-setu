@@ -88,7 +88,6 @@ export function Navbar() {
               </span>
               <div className={styles.brandTitleWrap}>
                 <span className={styles.brandTitle}>{t.appName}</span>
-                <span className={styles.brandBadge}>NATIONAL NETWORK</span>
               </div>
             </Link>
           </div>
